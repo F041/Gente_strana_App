@@ -48,7 +48,7 @@ fun UserItem(user: User) {
     ) {
         // Display the profile picture
         Image(
-            painter = rememberAsyncImagePainter(user.profilePicUrl),
+            painter = rememberAsyncImagePainter(user.profilePicUrl.trim()),
             contentDescription = "Profile Picture of ${user.username}",
             modifier = Modifier
                 .size(64.dp)
@@ -60,6 +60,7 @@ fun UserItem(user: User) {
             Text(text = user.username, style = MaterialTheme.typography.titleMedium)
             Text(text = user.bio, style = MaterialTheme.typography.bodyMedium)
             Text(text = user.description, style = MaterialTheme.typography.bodySmall)
+            Text(text = "URL: ${user.profilePicUrl}", style = MaterialTheme.typography.bodySmall)
         }
     }
 }
