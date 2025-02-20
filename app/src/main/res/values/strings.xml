@@ -1,3 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_name">Gente strana</string>
+    <string name="app_name">GenteStrana</string>
+    <string name="speaks">Parla</string>
+    <string name="languages_spoken">Lingue parlate</string>
+    <string name="user_profile">Profilo utente</string>
+    <string name="chat_with_user">Chatta con %s</string>
+
+    <string name="back">indietro</string>
+    <string name="next">successivo</string>
+    <string name="previous">precedente</string>
+
+
+
+
+    <!-- Sostituisci "your_client_id_here" con il valore client ID ottenuto dalla console Firebase -->
+    <string name="default_web_client_id">1:534267923003:android:177d8fe01f43783a756a1e</string>
 </resources>

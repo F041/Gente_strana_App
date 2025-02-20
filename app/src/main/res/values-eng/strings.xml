@@ -1,0 +1,11 @@
+<resources>
+    <string name="app_name">Quirky people</string>
+    <string name="speaks">Speaks</string>
+    <string name="languages_spoken">Languages spoken</string>
+    <string name="user_profile">User Profile</string>
+    <string name="chat_with_user">Chat with %s</string>
+
+    <string name="back">back</string>
+    <string name="next">next</string>
+    <string name="previous">previous</string>
+</resources>

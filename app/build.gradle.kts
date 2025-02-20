@@ -2,7 +2,7 @@ plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
     alias(libs.plugins.kotlin.compose)
-    id("com.google.gms.google-services")
+    id("com.google.gms.google-services") // Firebase services plugin
 }
 
 android {
@@ -20,12 +20,11 @@ android {
     }
 
     buildFeatures {
-        compose = true
+        compose = true // Enable Jetpack Compose
     }
 
-    // Add the composeOptions block to specify the Kotlin compiler extension version for Compose
     composeOptions {
-        kotlinCompilerExtensionVersion = "1.5.0" // Replace with the appropriate version if needed
+        kotlinCompilerExtensionVersion = "1.5.0" // Matches Compose version
     }
 
     buildTypes {
@@ -37,17 +36,18 @@ android {
             )
         }
     }
+
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_11
         targetCompatibility = JavaVersion.VERSION_11
     }
+
     kotlinOptions {
         jvmTarget = "11"
     }
 }
 
 dependencies {
-    // Existing dependencies...
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)
     implementation(libs.androidx.activity.compose)
@@ -58,24 +58,24 @@ dependencies {
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
-    androidTestImplementation(platform(libs.androidx.compose.bom))
-    androidTestImplementation(libs.androidx.ui.test.junit4)
-    debugImplementation(libs.androidx.ui.tooling)
-    debugImplementation(libs.androidx.ui.test.manifest)
-    // Import the Firebase BoM
-    implementation(platform("com.google.firebase:firebase-bom:33.9.0"))
-    implementation("com.google.firebase:firebase-firestore-ktx")    // When using the BoM, don't specify versions in Firebase dependencies
-    implementation("com.google.firebase:firebase-analytics")
-    // Add the dependencies for any other desired Firebase products
-    // https://firebase.google.com/docs/android/setup#available-libraries
-    implementation("androidx.compose.material3:material3:1.1.1")
-    implementation("io.coil-kt:coil-compose:2.4.0")
-    implementation("androidx.compose.ui:ui-tooling-preview:1.5.0")
+    androidTestImplementation("androidx.compose.ui:ui-test-junit4:1.5.0")
     debugImplementation("androidx.compose.ui:ui-tooling:1.5.0")
+    implementation(platform("com.google.firebase:firebase-bom:33.9.0"))
+    implementation("com.google.firebase:firebase-firestore-ktx")
+    implementation("com.google.firebase:firebase-analytics")
+    implementation("io.coil-kt:coil-compose:2.4.0")
     implementation("androidx.navigation:navigation-compose:2.7.0")
     implementation("androidx.compose.material:material-icons-extended:1.5.0")
     implementation("com.google.firebase:firebase-auth-ktx")
-    implementation("io.coil-kt:coil-compose:2.2.2")
+    implementation("com.google.firebase:firebase-messaging-ktx")
+    implementation("io.coil-kt:coil-compose:2.3.0")
+    implementation("com.google.firebase:firebase-storage-ktx")
+    implementation ("com.google.android.gms:play-services-auth:20.5.0")
+    implementation ("org.jetbrains.kotlin:kotlin-stdlib:1.9.0")
+    implementation ("androidx.compose.foundation:foundation:1.6.0")
+    implementation ("androidx.compose.material3:material3:1.2.0")
+    implementation ("com.google.dagger:hilt-android:2.48")
+    implementation ("androidx.hilt:hilt-navigation-compose:1.1.0")
+    implementation ("androidx.lifecycle:lifecycle-viewmodel-compose:2.6.2")
 }
-
 

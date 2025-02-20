@@ -3,24 +3,21 @@ package com.gentestrana
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
-import androidx.compose.runtime.*
-import androidx.compose.material3.*
-import com.google.firebase.auth.FirebaseAuth
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
+import androidx.navigation.compose.rememberNavController
+import com.gentestrana.ui.theme.GenteStranaTheme
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContent {
-            MaterialTheme {
-                MainScreen()
+            GenteStranaTheme {
+                Surface {
+                    val navController = rememberNavController()
+                    AppNavHost(navController = navController)
+                }
             }
         }
     }
 }
-
-@Composable
-fun MainScreen() {
-    // For testing purposes, display the list of users.
-    UsersListScreen()
-}
-
