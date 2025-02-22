@@ -26,7 +26,9 @@ sealed class BottomNavItem(
     )
     object Chat : BottomNavItem("chat", "Chat", Icons.Default.Chat)
     object Profile : BottomNavItem("profile", "Profile", Icons.Default.Person)
-    object Services : BottomNavItem("services", "Services", Icons.Default.BusinessCenter)
+    //  services will become a part of Gente Strana, but for your own social you can delete it
+
+//    object Services : BottomNavItem("services", "Services", Icons.Default.BusinessCenter)
 }
 
 @Composable
@@ -35,7 +37,8 @@ fun BottomNavigationBar(navController: NavHostController) {
         BottomNavItem.Community,
         BottomNavItem.Chat,
         BottomNavItem.Profile,
-        BottomNavItem.Services
+ //  services will become a part of Gente Strana, but for your own social you can delete it
+//        BottomNavItem.Services
     )
 
     NavigationBar {

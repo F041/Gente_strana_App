@@ -87,9 +87,10 @@ fun MainTabsScreen(navController: NavHostController) {
                     navController = navController
                 )
             }
-            composable("services") {
-                ServicesScreen()
-            }
+//  services will become a part of Gente Strana, but for your own social you can delete it
+//            composable("services") {
+//                ServicesScreen()
+//            }
         }
     }
 }

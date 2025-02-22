@@ -21,6 +21,11 @@ import kotlinx.coroutines.tasks.await
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.ui.draw.clip
 import coil.compose.AsyncImage
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
+import kotlinx.coroutines.launch
+import android.text.format.DateUtils
+
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -130,37 +135,54 @@ fun ChatScreen(docId: String, navController: NavController) {
 }
 
 
+
+// Caching globale per gli URL delle foto profilo (evita richieste ripetute a Firestore)
+private val profilePicCache = mutableMapOf<String, String>()
+
 @Composable
 fun MessageRow(chatMessage: ChatMessage, currentUserId: String) {
     val isSentByCurrentUser = chatMessage.sender == currentUserId
-
-    // Stato che conterrà l'URL della foto profilo del mittente
+    val coroutineScope = rememberCoroutineScope()
     val profilePicUrl = remember { mutableStateOf("") }
 
-    // Recuperiamo l'URL dal documento dell'utente su Firestore
+    // Recupera l'avatar (con caching, come già implementato)
     LaunchedEffect(chatMessage.sender) {
-        try {
-            val userDoc = Firebase.firestore.collection("users")
-                .document(chatMessage.sender)
-                .get()
-                .await()
-            val url = userDoc.getString("profilePicUrl")
-                ?: "https://icons.veryicon.com/png/o/system/ali-mom-icon-library/random-user.png"
-            profilePicUrl.value = url
-        } catch (e: Exception) {
-            // In caso di errore, usiamo un'immagine di default
-            profilePicUrl.value = "https://icons.veryicon.com/png/o/system/ali-mom-icon-library/random-user.png"
+        if (profilePicCache.containsKey(chatMessage.sender)) {
+            profilePicUrl.value = profilePicCache[chatMessage.sender]!!
+        } else {
+            coroutineScope.launch {
+                try {
+                    val userDoc = Firebase.firestore.collection("users")
+                        .document(chatMessage.sender)
+                        .get()
+                        .await()
+
+                    val picList = userDoc.get("profilePicUrl") as? List<String>
+                    val url = picList?.firstOrNull()
+                        ?: "https://icons.veryicon.com/png/o/system/ali-mom-icon-library/random-user.png"
+
+                    profilePicCache[chatMessage.sender] = url
+                    profilePicUrl.value = url
+                } catch (e: Exception) {
+                    profilePicUrl.value = "https://icons.veryicon.com/png/o/system/ali-mom-icon-library/random-user.png"
+                }
+            }
         }
     }
 
-    // Layout del singolo messaggio
+    // Calcola il timestamp relativo
+    val relativeTime = DateUtils.getRelativeTimeSpanString(
+        chatMessage.timestamp.toDate().time,
+        System.currentTimeMillis(),
+        DateUtils.MINUTE_IN_MILLIS
+    ).toString()
+
     Row(
         modifier = Modifier
             .fillMaxWidth()
             .padding(horizontal = 8.dp, vertical = 4.dp),
         horizontalArrangement = if (isSentByCurrentUser) Arrangement.End else Arrangement.Start
     ) {
-        // Se il messaggio è inviato dall'altro utente, l'avatar sta a sinistra
         if (!isSentByCurrentUser) {
             AsyncImage(
                 model = profilePicUrl.value,
@@ -172,7 +194,7 @@ fun MessageRow(chatMessage: ChatMessage, currentUserId: String) {
             Spacer(modifier = Modifier.width(8.dp))
         }
 
-        // Bolla del messaggio
+        // Bolla del messaggio con Column per messaggio e timestamp
         Box(
             modifier = Modifier
                 .background(
@@ -184,17 +206,24 @@ fun MessageRow(chatMessage: ChatMessage, currentUserId: String) {
                 )
                 .padding(12.dp)
         ) {
-            Text(
-                text = chatMessage.message,
-                style = MaterialTheme.typography.bodyMedium,
-                color = if (isSentByCurrentUser)
-                    MaterialTheme.colorScheme.onPrimary
-                else
-                    MaterialTheme.colorScheme.onSurfaceVariant
-            )
+            Column {
+                Text(
+                    text = chatMessage.message,
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = if (isSentByCurrentUser)
+                        MaterialTheme.colorScheme.onPrimary
+                    else
+                        MaterialTheme.colorScheme.onSurfaceVariant
+                )
+                Spacer(modifier = Modifier.height(4.dp))
+                Text(
+                    text = relativeTime,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
+                )
+            }
         }
 
-        // Se il messaggio è inviato dall'utente corrente, l'avatar sta a destra
         if (isSentByCurrentUser) {
             Spacer(modifier = Modifier.width(8.dp))
             AsyncImage(
@@ -207,6 +236,7 @@ fun MessageRow(chatMessage: ChatMessage, currentUserId: String) {
         }
     }
 }
+
 
 fun sendMessage(chatId: String, sender: String, message: String) {
     val messageData = ChatMessage(

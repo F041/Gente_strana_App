@@ -1,5 +1,6 @@
 package com.gentestrana.screens
 
+import android.util.Log
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -10,60 +11,82 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.firestore.Query
 import com.google.firebase.firestore.ktx.firestore
 import com.google.firebase.ktx.Firebase
 import kotlinx.coroutines.tasks.await
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+import kotlinx.coroutines.awaitCancellation
 
 @Composable
 fun ChatListScreen(navController: NavController) {
     val db = Firebase.firestore
     val currentUserId = FirebaseAuth.getInstance().currentUser?.uid
     val chats = remember { mutableStateListOf<Chat>() }
-    val fetchedChatIds = remember { mutableSetOf<String>() } // Per evitare duplicati
+    val fetchedChatIds = remember { mutableSetOf<String>() }
 
-    // Fetch chats from Firestore
     LaunchedEffect(currentUserId) {
         if (currentUserId != null) {
-            val chatDocs = db.collection("chats")
+            val query = db.collection("chats")
                 .whereArrayContains("participants", currentUserId)
-                .get()
-                .await()
 
-            chats.clear()
-            fetchedChatIds.clear() // Reset per evitare duplicati
+            // Aggiungi lo SnapshotListener per aggiornamenti in tempo reale
+            val listener = query.addSnapshotListener { snapshot, error ->
+                if (error != null) {
+                    Log.e("ChatList", "Errore nel listener", error)
+                    return@addSnapshotListener
+                }
 
-            chatDocs.documents.forEach { doc ->
-                val chatId = doc.id
+                // Elabora i documenti in un coroutine separato
+                CoroutineScope(Dispatchers.IO).launch {
+                    val newChats = mutableListOf<Chat>()
+                    val tempFetchedIds = mutableSetOf<String>()
 
-                // Se la chat è già stata aggiunta, la ignoriamo
-                if (!fetchedChatIds.contains(chatId)) {
-                    fetchedChatIds.add(chatId) // Segnala che questa chat è già stata elaborata
+                    snapshot?.documents?.forEach { doc ->
+                        val chatId = doc.id
+                        if (tempFetchedIds.contains(chatId)) return@forEach
 
-                    val participants = doc.get("participants") as? List<String> ?: emptyList()
-                    val otherUserId = participants.firstOrNull { it != currentUserId && it.isNotBlank() }
+                        tempFetchedIds.add(chatId)
 
-                    if (otherUserId != null) {
-                        val otherUserSnapshot = db.collection("users").document(otherUserId).get().await()
-                        val otherUserName = otherUserSnapshot.getString("username") ?: "Unknown"
+                        // Elaborazione partecipanti e ultimo messaggio
+                        val participants = doc.get("participants") as? List<String> ?: emptyList()
+                        val otherUserId = participants.firstOrNull { it != currentUserId }
 
-                        val lastMessageSnapshot = db.collection("chats")
-                            .document(chatId)
-                            .collection("messages")
-                            .orderBy("timestamp", com.google.firebase.firestore.Query.Direction.DESCENDING)
-                            .limit(1)
-                            .get().await()
-                        val lastMessage = lastMessageSnapshot.documents.firstOrNull()?.getString("message") ?: "No messages yet"
+                        otherUserId?.let {
+                            val otherUser = db.collection("users").document(it).get().await()
+                            val username = otherUser.getString("username") ?: "Sconosciuto"
 
-                        chats.add(
-                            Chat(
-                                id = chatId,
-                                participantName = otherUserName,
-                                lastMessage = lastMessage
-                            )
-                        )
+                            val lastMessage = db.collection("chats")
+                                .document(chatId)
+                                .collection("messages")
+                                .orderBy("timestamp", Query.Direction.DESCENDING)
+                                .limit(1)
+                                .get()
+                                .await()
+                                .documents
+                                .firstOrNull()
+                                ?.getString("message") ?: "Nessun messaggio"
+
+                            newChats.add(Chat(chatId, username, lastMessage))
+                        }
+                    }
+
+                    // Aggiorna lo stato UI sul main thread
+                    withContext(Dispatchers.Main) {
+                        chats.clear()
+                        chats.addAll(newChats)
+                        fetchedChatIds.clear()
+                        fetchedChatIds.addAll(tempFetchedIds)
                     }
                 }
             }
+
+            // Pulizia quando il composable viene rimosso
+            awaitCancellation()
+            listener.remove()
         }
     }
 
