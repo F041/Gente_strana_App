@@ -18,6 +18,9 @@ import com.gentestrana.ui.theme.*
 import com.gentestrana.utils.computeAgeFromTimestamp
 import androidx.compose.ui.res.stringResource
 import com.gentestrana.R
+import com.gentestrana.utils.getFlagEmoji
+import com.gentestrana.utils.getLanguageName
+import androidx.compose.ui.platform.LocalContext
 
 @Composable
 fun UserProfileCard(
@@ -97,7 +100,7 @@ fun UserProfileCard(
                         )
                         user.spokenLanguages.forEach { code ->
                             Text(
-                                text = "${getFlagEmoji(code)} ",
+                                text = "${getFlagEmoji(LocalContext.current, code)} ", // <-- Modificato!
                                 style = MaterialTheme.typography.bodyMedium,
                                 color = NeuroPrimary,
                                 modifier = Modifier.padding(vertical = 5.dp)
@@ -108,25 +111,4 @@ fun UserProfileCard(
             }
         }
     }
-}
-
-
-// Helper function to get flag emoji
-private fun getFlagEmoji(code: String): String = when (code.lowercase()) {
-    "it" -> "🇮🇹"
-    "en" -> "🇬🇧"
-    "es" -> "🇪🇸"
-    "fr" -> "🇫🇷"
-    "de" -> "🇩🇪"
-    else -> "🌍"
-}
-
-// Helper function to get language name
-private fun getLanguageName(code: String): String = when (code.lowercase()) {
-    "it" -> "Italiano"
-    "en" -> "English"
-    "es" -> "Español"
-    "fr" -> "Français"
-    "de" -> "Deutsch"
-    else -> code
 }

@@ -4,7 +4,6 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
@@ -19,10 +18,7 @@ fun UserPicsGallery(
     modifier: Modifier = Modifier,
     imageSize: Int = 160
 ) {
-    val scrollState = rememberLazyListState()
-
     LazyRow(
-        state = scrollState,
         horizontalArrangement = Arrangement.spacedBy(8.dp),
         modifier = modifier
     ) {
@@ -30,10 +26,10 @@ fun UserPicsGallery(
             Image(
                 painter = rememberAsyncImagePainter(
                     model = url.ifEmpty {
-                        "https://icons.veryicon.com/png/o/system/ali-mom-icon-library/random-user.png"
+                        "https://icons.veryicon.com/png/o/system/ali-mom-icon-library/random-user.png" // Sostituisci con URL reale
                     }
                 ),
-                contentDescription = "User picture",
+                contentDescription = null,
                 contentScale = ContentScale.Crop,
                 modifier = Modifier
                     .size(imageSize.dp)

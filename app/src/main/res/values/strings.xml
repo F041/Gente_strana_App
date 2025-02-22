@@ -15,4 +15,7 @@
 
     <!-- Sostituisci "your_client_id_here" con il valore client ID ottenuto dalla console Firebase -->
     <string name="default_web_client_id">1:534267923003:android:177d8fe01f43783a756a1e</string>
+    <string name="photos">foto</string>
+    <string name="close">chiudi</string>
+    <string name="profile_picture">immagine profilo</string>
 </resources>

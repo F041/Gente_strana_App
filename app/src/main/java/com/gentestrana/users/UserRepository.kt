@@ -9,6 +9,7 @@ import com.google.firebase.firestore.SetOptions
 import com.google.firebase.firestore.ktx.firestore
 import com.google.firebase.ktx.Firebase
 import com.gentestrana.utils.uploadProfileImage
+import com.google.firebase.Timestamp
 
 class UserRepository {
 
@@ -16,8 +17,7 @@ class UserRepository {
     private val firestore = Firebase.firestore
 
     /**
-     * Registra un nuovo utente con email e password e, se presente, carica l'immagine profilo.
-     * Sta roba va AGGIORNATA
+     * Registers a new user with email and password, and uploads a profile image if provided.
      */
     fun registerUserAndUploadImage(
         email: String,
@@ -35,7 +35,7 @@ class UserRepository {
                     onFailure("User ID is null")
                     return@addOnSuccessListener
                 }
-                // Dati iniziali per l'utente
+                // Initial user data
                 val userData = mapOf(
                     "username" to username,
                     "bio" to bio,
@@ -47,14 +47,14 @@ class UserRepository {
                     .set(userData)
                     .addOnSuccessListener {
                         if (selectedImageUri != null) {
-                            // Usa la funzione centralizzata per caricare l'immagine
+                            // Use centralized function to upload the image
                             uploadProfileImage(uid, selectedImageUri) { imageUrl ->
                                 if (imageUrl.isNotEmpty()) {
-                                    // Aggiorna Firestore con l'URL della foto profilo
+                                    // Update Firestore with the profile photo URL
                                     firestore.collection("users").document(uid)
                                         .update("profilePicUrl", imageUrl)
                                         .addOnSuccessListener {
-                                            // Aggiorna anche il profilo in FirebaseAuth
+                                            // Also update the profile in FirebaseAuth
                                             val user = auth.currentUser
                                             val profileUpdates = userProfileChangeRequest {
                                                 photoUri = Uri.parse(imageUrl)
@@ -77,7 +77,7 @@ class UserRepository {
                                 }
                             }
                         } else {
-                            // Se non è stata selezionata un'immagine, aggiorna solo il displayName
+                            // If no image was selected, update only the displayName
                             val user = auth.currentUser
                             val profileUpdates = userProfileChangeRequest {
                                 displayName = username
@@ -102,7 +102,30 @@ class UserRepository {
     }
 
     /**
-     * Aggiorna il profilo utente in Firestore e FirebaseAuth.
+     * Adds a new profile image URL to the user's profilePicUrl list.
+     */
+    fun addProfileImage(
+        docId: String,
+        newImageUrl: String,
+        onSuccess: () -> Unit,
+        onFailure: (String?) -> Unit
+    ) {
+        firestore.collection("users").document(docId).get()
+            .addOnSuccessListener { document ->
+                val user = document.toObject(User::class.java)
+                val currentImages = user?.profilePicUrl ?: emptyList()
+                val updatedImages = currentImages + newImageUrl
+
+                firestore.collection("users").document(docId)
+                    .update("profilePicUrl", updatedImages)
+                    .addOnSuccessListener { onSuccess() }
+                    .addOnFailureListener { e -> onFailure(e.message) }
+            }
+            .addOnFailureListener { e -> onFailure(e.message) }
+    }
+
+    /**
+     * Updates the user profile in Firestore and FirebaseAuth.
      */
     fun updateUserProfile(
         uid: String,
@@ -146,8 +169,7 @@ class UserRepository {
     }
 
     /**
-     * Autentica l'utente su Firebase utilizzando un ID token ottenuto tramite Google.
-     * Questa funzione incapsula la chiamata a signInWithCredential.
+     * Authenticates the user on Firebase using a Google ID token.
      */
     fun signInWithGoogle(
         idToken: String,
@@ -158,11 +180,38 @@ class UserRepository {
         auth.signInWithCredential(credential)
             .addOnCompleteListener { task ->
                 if (task.isSuccessful) {
-                    // Qui potresti, se necessario, sincronizzare il documento utente su Firestore
+                    // Here, you could synchronize the user document on Firestore if needed
                     onSuccess()
                 } else {
                     onFailure(task.exception?.localizedMessage ?: "Authentication failed.")
                 }
+            }
+    }
+
+    /**
+     * Fetches a user by their document ID (Firestore document ID, which should match their Firebase UID).
+     */
+    fun getUser(
+        docId: String,
+        onSuccess: (User) -> Unit,
+        onFailure: (Exception) -> Unit
+    ) {
+        firestore.collection("users").document(docId).get()
+            .addOnSuccessListener { document ->
+                if (document.exists()) {
+                    // Ensure the User class has a `docId` field
+                    val user = document.toObject(User::class.java)?.copy(docId = document.id)
+                    if (user != null) {
+                        onSuccess(user)
+                    } else {
+                        onFailure(Exception("User data conversion failed"))
+                    }
+                } else {
+                    onFailure(Exception("User not found"))
+                }
+            }
+            .addOnFailureListener { e ->
+                onFailure(e)
             }
     }
 }

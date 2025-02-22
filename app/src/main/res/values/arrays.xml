@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string-array name="supported_language_codes">
+        <item>en</item>  <!-- Inglese -->
+        <item>zh</item>  <!-- Cinese -->
+        <item>hi</item>  <!-- Hindi -->
+        <item>es</item>  <!-- Spagnolo -->
+        <item>fr</item>  <!-- Francese -->
+        <item>ar</item>  <!-- Arabo -->
+        <item>bn</item>  <!-- Bengalese -->
+        <item>ru</item>  <!-- Russo -->
+        <item>pt</item>  <!-- Portoghese -->
+        <item>id</item>  <!-- Indonesiano -->
+        <item>de</item>  <!-- Tedesco -->
+        <item>ja</item>  <!-- Giapponese -->
+        <item>sw</item>  <!-- Swahili -->
+        <item>ko</item>  <!-- Coreano -->
+        <item>it</item>  <!-- Italiano -->
+        <item>tr</item>  <!-- Turco -->
+        <item>vi</item>  <!-- Vietnamita -->
+        <item>ta</item>  <!-- Tamil -->
+        <item>te</item>  <!-- Telugu -->
+        <item>mr</item>  <!-- Marathi -->
+        <item>ur</item>  <!-- Urdu -->
+        <item>fa</item>  <!-- Persiano (Farsi) -->
+        <item>gu</item>  <!-- Gujarati -->
+        <item>pl</item>  <!-- Polacco -->
+        <item>uk</item>  <!-- Ucraino -->
+        <item>my</item>  <!-- Birmano -->
+        <item>ml</item>  <!-- Malayalam -->
+        <item>kn</item>  <!-- Kannada -->
+        <item>th</item>  <!-- Thai -->
+        <item>nl</item>  <!-- Olandese -->
+        <item>ms</item>  <!-- Malese -->
+        <item>ro</item>  <!-- Rumeno -->
+        <item>el</item>  <!-- Greco -->
+        <item>hu</item>  <!-- Ungherese -->
+        <item>sv</item>  <!-- Svedese -->
+        <item>da</item>  <!-- Danese -->
+        <item>fi</item>  <!-- Finlandese -->
+        <item>no</item>  <!-- Norvegese -->
+        <item>cs</item>  <!-- Ceco -->
+        <item>sk</item>  <!-- Slovacco -->
+        <item>hr</item>  <!-- Croato -->
+        <item>sr</item>  <!-- Serbo -->
+        <item>bg</item>  <!-- Bulgaro -->
+        <item>he</item>  <!-- Ebraico -->
+        <item>iw</item>  <!-- Ebraico (vecchio codice, ora he) -->
+        <item>ar</item>  <!-- Arabo (già presente, ripetuto per errore?) -->
+        <item>fil</item> <!-- Filippino -->
+        <item>tl</item>  <!-- Tagalog (vecchio codice, ora fil) -->
+        <item>yue</item> <!-- Cantonese -->
+        <item>jv</item>  <!-- Giavanese -->
+        <item>ha</item>  <!-- Hausa -->
+    </string-array>
+</resources>

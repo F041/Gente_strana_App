@@ -31,6 +31,30 @@ import com.gentestrana.utils.uploadProfileImage
 import com.gentestrana.users.User
 import java.text.SimpleDateFormat
 import java.util.*
+import androidx.compose.material.icons.filled.Add
+import com.google.firebase.firestore.FieldValue
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.TextButton
+
+/**
+ * Funzione di validazione per le lingue parlate.
+ */
+
+fun isValidSpokenLanguages(languagesText: String): Boolean {
+    if (languagesText.isBlank()) {
+        return false // Consideriamo non valido se è vuoto (puoi cambiare questa regola)
+    }
+    val languages = languagesText.split(",")
+    for (lang in languages) {
+        val trimmedLang = lang.trim()
+        if (trimmedLang.length != 2) {
+            return true // Errore: codice lingua non di 2 lettere
+        }
+        // Qui potresti aggiungere controlli più complessi, tipo verificare se il codice
+        // è in una lista di codici lingua validi, se necessario.
+    }
+    return false // Nessun errore trovato
+}
 
 /**
  * Schermata del profilo personale.
@@ -52,6 +76,8 @@ fun PersonalProfileScreen(
     userProfilePicUrl: List<String>,
     navController: NavHostController
 ) {
+    var showAddImageDialog by remember { mutableStateOf(false) }
+    var newImageUrl by remember { mutableStateOf("") }
     val context = LocalContext.current
     val auth = FirebaseAuth.getInstance()
     val uid = auth.currentUser?.uid ?: return
@@ -87,6 +113,7 @@ fun PersonalProfileScreen(
     ) }
     var birthTimestamp by remember { mutableStateOf(0L) }  // Timestamp della data di nascita
     var sex by remember { mutableStateOf("Undefined") }
+    var isSpokenLanguagesError by remember { mutableStateOf(false) } // NUOVO stato per l'errore lingue
     var spokenLanguagesText by remember { mutableStateOf("") }
     var location by remember { mutableStateOf("") }
     var isUploading by remember { mutableStateOf(false) }
@@ -108,7 +135,7 @@ fun PersonalProfileScreen(
             profilePicUrlState = user.profilePicUrl.firstOrNull()
                 ?: "https://icons.veryicon.com/png/o/system/ali-mom-icon-library/random-user.png"
             // Usa la proprietà birthTimeMillis
-            birthTimestamp = user.birthTimestamp
+            birthTimestamp = user.birthTimestamp // Use the computed Long directly
             birthDateText = if (birthTimestamp != 0L) {
                 val sdf = SimpleDateFormat("dd/MM/yyyy", Locale.getDefault())
                 sdf.format(Date(birthTimestamp))
@@ -124,6 +151,11 @@ fun PersonalProfileScreen(
             TopAppBar(
                 title = { Text("Personal Profile") },
                 actions = {
+                    // Pulsante per aggiungere immagini
+                    IconButton(onClick = { showAddImageDialog = true }) {
+                        Icon(Icons.Default.Add, "Aggiungi immagine")
+                    }
+                    // Pulsante di logout esistente
                     IconButton(onClick = {
                         auth.signOut()
                         navController.navigate("login") {
@@ -139,6 +171,7 @@ fun PersonalProfileScreen(
                 }
             )
         }
+
     ) { paddingValues ->
         Column(
             modifier = Modifier
@@ -169,7 +202,7 @@ fun PersonalProfileScreen(
                             uploadProfileImage(uid, newImageUri!!) { imageUrl ->
                                 if (imageUrl.isNotEmpty()) {
                                     firestore.collection("users").document(uid)
-                                        .update("profilePicUrl", listOf(imageUrl))
+                                        .update("profilePicUrl", FieldValue.arrayUnion(imageUrl)) // Aggiunge alla lista
                                         .addOnSuccessListener {
                                             profilePicUrlState = imageUrl
                                             newImageUri = null
@@ -214,7 +247,16 @@ fun PersonalProfileScreen(
             ProfileTextField(value = bio, onValueChange = { bio = it }, label = "Bio")
             Spacer(modifier = Modifier.height(8.dp))
             // Campo per Description (argomenti), separati da virgola
-            ProfileTextField(value = descriptionText, onValueChange = { descriptionText = it }, label = "Description (comma separated)")
+            ProfileTextField(
+                value = spokenLanguagesText,
+                onValueChange = { newText -> // Cambiamo nome da 'it' a 'newText' per chiarezza
+                    spokenLanguagesText = newText // 1. Aggiorna spokenLanguagesText (come prima)
+                    isSpokenLanguagesError = isValidSpokenLanguages(newText) // 2. Chiama isValidSpokenLanguages e 3. Aggiorna isSpokenLanguagesError
+                },
+                label = "Spoken Languages",
+                placeholder = "es. it, en, fr",
+                isError = isSpokenLanguagesError
+            )
             Spacer(modifier = Modifier.height(8.dp))
             // Campo per la data di nascita tramite DatePickerDialog
             DateOfBirthPicker(
@@ -232,7 +274,6 @@ fun PersonalProfileScreen(
             }, label = "Sex (M, F, Undefined)")
             Spacer(modifier = Modifier.height(8.dp))
             // Campo per Lingue parlate, come stringa separata da virgola
-            ProfileTextField(value = spokenLanguagesText, onValueChange = { spokenLanguagesText = it }, label = "Spoken Languages (comma separated)")
             Spacer(modifier = Modifier.height(8.dp))
             // Campo per Location (nazione)
             ProfileTextField(value = location, onValueChange = { location = it }, label = "Location (Country)")
@@ -250,8 +291,7 @@ fun PersonalProfileScreen(
                         "description" to descriptionText.split(",").map { it.trim() },
                         "profilePicUrl" to listOf(profilePicUrlState),
                         // Salva il campo come Timestamp, non come Long
-                        "rawBirthTimestamp" to com.google.firebase.Timestamp(Date(birthTimestamp)),
-                        "sex" to sex,
+                        "rawBirthTimestamp" to com.google.firebase.Timestamp(Date(birthTimestamp)), // Use rawBirthTimestamp                        "sex" to sex,
                         "spokenLanguages" to spokenLanguagesText.split(",").map { it.trim() },
                         "location" to location
                     )
@@ -282,6 +322,49 @@ fun PersonalProfileScreen(
             }
         }
     }
+    // Dialog per aggiungere immagini via URL
+    if (showAddImageDialog) {
+        AlertDialog(
+            onDismissRequest = { showAddImageDialog = false },
+            title = { Text("Aggiungi immagine") },
+            text = {
+                Column {
+                    TextField(
+                        value = newImageUrl,
+                        onValueChange = { newImageUrl = it },
+                        label = { Text("Incolla URL immagine") },
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                }
+            },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        // Aggiungi l'URL alla lista esistente
+                        if (newImageUrl.isNotBlank()) {
+                            firestore.collection("users").document(uid)
+                                .update("profilePicUrl", FieldValue.arrayUnion(newImageUrl))
+                                .addOnSuccessListener {
+                                    showAddImageDialog = false
+                                    newImageUrl = ""
+                                    Toast.makeText(context, "Immagine aggiunta!", Toast.LENGTH_SHORT).show()
+                                }
+                                .addOnFailureListener { e ->
+                                    Toast.makeText(context, "Errore: ${e.message}", Toast.LENGTH_SHORT).show()
+                                }
+                        }
+                    }
+                ) {
+                    Text("Aggiungi")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showAddImageDialog = false }) {
+                    Text("Annulla")
+                }
+            }
+        )
+    }
 }
 
 /**
@@ -292,12 +375,16 @@ fun ProfileTextField(
     value: String,
     onValueChange: (String) -> Unit,
     label: String,
+    placeholder: String? = null,
+    isError: Boolean = false, // NUOVO: Aggiunto parametro isError, di tipo Boolean, default false
     modifier: Modifier = Modifier
 ) {
     OutlinedTextField(
         value = value,
         onValueChange = onValueChange,
         label = { Text(label) },
+        placeholder = placeholder?.let { { Text(it) } },
+        isError = isError, // NUOVO: Passa il parametro isError al OutlinedTextField
         modifier = modifier.fillMaxWidth()
     )
 }

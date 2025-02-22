@@ -5,4 +5,4 @@ data class FilterState(
     val filterType: FilterType = FilterType.ALL
 )
 
-enum class FilterType { ALL, SPEAKS }
+enum class FilterType { ALL }

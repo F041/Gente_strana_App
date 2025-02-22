@@ -1,5 +1,4 @@
-// File: app/src/main/java/com/gentestrana/ChatListScreen.kt
-package com.gentestrana
+package com.gentestrana.screens
 
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -20,6 +19,7 @@ fun ChatListScreen(navController: NavController) {
     val db = Firebase.firestore
     val currentUserId = FirebaseAuth.getInstance().currentUser?.uid
     val chats = remember { mutableStateListOf<Chat>() }
+    val fetchedChatIds = remember { mutableSetOf<String>() } // Per evitare duplicati
 
     // Fetch chats from Firestore
     LaunchedEffect(currentUserId) {
@@ -30,30 +30,38 @@ fun ChatListScreen(navController: NavController) {
                 .await()
 
             chats.clear()
-            chatDocs.documents.forEach { doc ->
-                val participants = doc.get("participants") as List<String>
-                val otherUserId = participants.firstOrNull { it != currentUserId }
-                if (otherUserId != null) {
-                    val otherUser = db.collection("users").document(otherUserId).get().await()
-                    val otherUserName = otherUser.getString("username") ?: "Unknown"
-                    val lastMessage = db.collection("chats")
-                        .document(doc.id)
-                        .collection("messages")
-                        .orderBy("timestamp", com.google.firebase.firestore.Query.Direction.DESCENDING)
-                        .limit(1)
-                        .get()
-                        .await()
-                        .documents
-                        .firstOrNull()
-                        ?.getString("message") ?: "No messages yet"
+            fetchedChatIds.clear() // Reset per evitare duplicati
 
-                    chats.add(
-                        Chat(
-                            id = doc.id,
-                            participantName = otherUserName,
-                            lastMessage = lastMessage
+            chatDocs.documents.forEach { doc ->
+                val chatId = doc.id
+
+                // Se la chat è già stata aggiunta, la ignoriamo
+                if (!fetchedChatIds.contains(chatId)) {
+                    fetchedChatIds.add(chatId) // Segnala che questa chat è già stata elaborata
+
+                    val participants = doc.get("participants") as? List<String> ?: emptyList()
+                    val otherUserId = participants.firstOrNull { it != currentUserId && it.isNotBlank() }
+
+                    if (otherUserId != null) {
+                        val otherUserSnapshot = db.collection("users").document(otherUserId).get().await()
+                        val otherUserName = otherUserSnapshot.getString("username") ?: "Unknown"
+
+                        val lastMessageSnapshot = db.collection("chats")
+                            .document(chatId)
+                            .collection("messages")
+                            .orderBy("timestamp", com.google.firebase.firestore.Query.Direction.DESCENDING)
+                            .limit(1)
+                            .get().await()
+                        val lastMessage = lastMessageSnapshot.documents.firstOrNull()?.getString("message") ?: "No messages yet"
+
+                        chats.add(
+                            Chat(
+                                id = chatId,
+                                participantName = otherUserName,
+                                lastMessage = lastMessage
+                            )
                         )
-                    )
+                    }
                 }
             }
         }

@@ -8,4 +8,8 @@
     <string name="back">back</string>
     <string name="next">next</string>
     <string name="previous">previous</string>
+    <string name="photos">photos</string>
+    <string name="close">chiudi</string>
+    <string name="profile_picture">profile picture</string>
+
 </resources>

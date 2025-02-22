@@ -1,4 +1,3 @@
-// File: app/src/main/java/com/gentestrana/NavGraph.kt
 package com.gentestrana
 
 import androidx.compose.foundation.layout.padding
@@ -55,7 +54,7 @@ fun AppNavHost(navController: NavHostController) {
             }
             composable("chat/{docId}") { backStackEntry ->
                 val docId = backStackEntry.arguments?.getString("docId") ?: ""
-                ChatScreen(docId = docId)
+                ChatScreen(docId = docId, navController = navController)  // ✅ Passes navController
             }
         }
     }
