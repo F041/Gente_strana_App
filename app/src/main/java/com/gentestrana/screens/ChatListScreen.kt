@@ -1,129 +1,113 @@
 package com.gentestrana.screens
 
 import android.util.Log
-import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
-import androidx.compose.material3.*
 import androidx.compose.runtime.*
-import androidx.compose.ui.Modifier
-import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import com.google.firebase.auth.FirebaseAuth
-import com.google.firebase.firestore.Query
-import com.google.firebase.firestore.ktx.firestore
-import com.google.firebase.ktx.Firebase
-import kotlinx.coroutines.tasks.await
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import kotlinx.coroutines.awaitCancellation
+import com.google.accompanist.swiperefresh.SwipeRefresh
+import com.google.accompanist.swiperefresh.rememberSwipeRefreshState
+import com.gentestrana.chat.Chat
+import com.gentestrana.chat.ChatRepository
+import com.gentestrana.components.ChatList
+import com.google.firebase.firestore.ListenerRegistration
+
 
 @Composable
 fun ChatListScreen(navController: NavController) {
-    val db = Firebase.firestore
+    val messageListeners = remember { mutableStateMapOf<String, ListenerRegistration>() }
+    val repository = remember { ChatRepository() }
     val currentUserId = FirebaseAuth.getInstance().currentUser?.uid
     val chats = remember { mutableStateListOf<Chat>() }
-    val fetchedChatIds = remember { mutableSetOf<String>() }
+    var isRefreshing by remember { mutableStateOf(false) }
+    var listenerRegistration by remember { mutableStateOf<ListenerRegistration?>(null) }
 
+    // Funzione di caricamento
+    fun loadChats(forceUpdate: Boolean = false) {
+        if (currentUserId == null) return
+
+        CoroutineScope(Dispatchers.IO).launch {
+            try {
+                if (forceUpdate) isRefreshing = true
+                val newChats = repository.getChats(currentUserId)
+                    .sortedByDescending { it.timestamp } // from last message to first
+                chats.clear()
+                chats.addAll(newChats)
+            } catch (e: Exception) {
+                Log.e("ChatList", "Error loading chats", e)
+            } finally {
+                isRefreshing = false
+            }
+        }
+    }
+
+    LaunchedEffect(chats) {
+        // Rimuovi listener per chat non più presenti
+
+        val currentChatIds = chats.map { it.id }.toSet()
+        messageListeners.keys.filterNot { currentChatIds.contains(it) }.forEach { chatId ->
+            messageListeners[chatId]?.remove()
+            messageListeners.remove(chatId)
+        }
+
+        // Aggiungi nuovi listener per le chat correnti
+        chats.forEach { chat ->
+            if (!messageListeners.containsKey(chat.id)) {
+                val listener = repository.listenForMessageStatusUpdates(chat.id) { newStatus ->
+                    val index = chats.indexOfFirst { it.id == chat.id }
+                    if (index != -1) {
+                        val updatedChat = chats[index].copy(lastMessageStatus = newStatus)
+                        chats[index] = updatedChat
+                    }
+                }
+                messageListeners[chat.id] = listener
+            }
+        }
+    }
+
+    // Gestione degli aggiornamenti in tempo reale
     LaunchedEffect(currentUserId) {
-        if (currentUserId != null) {
-            val query = db.collection("chats")
-                .whereArrayContains("participants", currentUserId)
-
-            // Aggiungi lo SnapshotListener per aggiornamenti in tempo reale
-            val listener = query.addSnapshotListener { snapshot, error ->
-                if (error != null) {
-                    Log.e("ChatList", "Errore nel listener", error)
-                    return@addSnapshotListener
-                }
-
-                // Elabora i documenti in un coroutine separato
+        currentUserId?.let { userId ->
+            listenerRegistration = repository.registerChatsListener(userId) { docs ->
                 CoroutineScope(Dispatchers.IO).launch {
-                    val newChats = mutableListOf<Chat>()
-                    val tempFetchedIds = mutableSetOf<String>()
-
-                    snapshot?.documents?.forEach { doc ->
-                        val chatId = doc.id
-                        if (tempFetchedIds.contains(chatId)) return@forEach
-
-                        tempFetchedIds.add(chatId)
-
-                        // Elaborazione partecipanti e ultimo messaggio
-                        val participants = doc.get("participants") as? List<String> ?: emptyList()
-                        val otherUserId = participants.firstOrNull { it != currentUserId }
-
-                        otherUserId?.let {
-                            val otherUser = db.collection("users").document(it).get().await()
-                            val username = otherUser.getString("username") ?: "Sconosciuto"
-
-                            val lastMessage = db.collection("chats")
-                                .document(chatId)
-                                .collection("messages")
-                                .orderBy("timestamp", Query.Direction.DESCENDING)
-                                .limit(1)
-                                .get()
-                                .await()
-                                .documents
-                                .firstOrNull()
-                                ?.getString("message") ?: "Nessun messaggio"
-
-                            newChats.add(Chat(chatId, username, lastMessage))
-                        }
+                    val updates = docs.mapNotNull { doc ->
+                        repository.processChatDocument(doc, userId)
                     }
-
-                    // Aggiorna lo stato UI sul main thread
                     withContext(Dispatchers.Main) {
-                        chats.clear()
-                        chats.addAll(newChats)
-                        fetchedChatIds.clear()
-                        fetchedChatIds.addAll(tempFetchedIds)
+                        updates.forEach { updatedChat ->
+                            val index = chats.indexOfFirst { it.id == updatedChat.id }
+                            if (index != -1) chats[index] = updatedChat else chats.add(updatedChat)
+                        }
+                        chats.sortByDescending { it.timestamp } // from last message to first
                     }
                 }
             }
-
-            // Pulizia quando il composable viene rimosso
-            awaitCancellation()
-            listener.remove()
         }
     }
 
-    // Display the list of chats
-    LazyColumn(modifier = Modifier.fillMaxSize()) {
-        items(chats) { chat ->
-            ChatListItem(chat = chat) {
-                navController.navigate("chat/${chat.id}")
-            }
+    SwipeRefresh(
+        state = rememberSwipeRefreshState(isRefreshing),
+        onRefresh = {
+            loadChats(forceUpdate = true)
+            chats.sortByDescending { it.timestamp }
         }
-    }
-}
-
-@Composable
-fun ChatListItem(chat: Chat, onClick: () -> Unit) {
-    Card(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(8.dp)
-            .clickable(onClick = onClick)
     ) {
-        Column(modifier = Modifier.padding(16.dp)) {
-            Text(
-                text = chat.participantName,
-                style = MaterialTheme.typography.titleMedium
-            )
-            Spacer(modifier = Modifier.height(4.dp))
-            Text(
-                text = chat.lastMessage,
-                style = MaterialTheme.typography.bodyMedium
-            )
+        ChatList(
+            chats = chats,
+            onChatClick = { chat -> navController.navigate("chat/${chat.id}") }
+        )
+
+    }
+
+    DisposableEffect(Unit) {
+        onDispose {
+            listenerRegistration?.remove()
         }
     }
 }
 
-data class Chat(
-    val id: String,
-    val participantName: String,
-    val lastMessage: String
-)
+
+

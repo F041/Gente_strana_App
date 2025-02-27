@@ -1,14 +1,46 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">GenteStrana</string>
-    <string name="speaks">Parla</string>
-    <string name="languages_spoken">Lingue parlate</string>
-    <string name="user_profile">Profilo utente</string>
-    <string name="chat_with_user">Chatta con %s</string>
 
+// Zona profilo
+    <string name="personal_profile">profilo personale</string>
+    <string name="change_profile_picture">cambia immagine profilo</string>
+    <string name="upload_new_profile_picture">carica nuova immagine profilo</string>
+    <string name="profile_picture_updated">immagine aggiornata</string>
+
+    <string name="speaks">parla</string>
+    <string name="languages_spoken">lingue parlate</string>
+    <string name="select_languages">seleziona lingue</string>
+    <string name="search_hint">cerca una lingua...</string>
+    <string name="selected_languages">lingue selezionate</string>
+    <string name="user_profile">profilo utente</string>
+    <string name="edit">modifica</string>
+    <string name="save">salva</string>
+    <string name="cancel">cancella</string>
+    <string name="first_name">nome</string>
+    <string name="name_placeholder">metti SOLO il tuo primo nome, es. Marco</string>
+    <string name="bio_placeholder">es .mi piace x,y,z, a scuola andavo bene e leggo fiction</string>
+    <string name="bio_title">parla di te</string>
+    <string name="topics_title">i miei argomenti</string>
+    <string name="topics_placeholder">es. parliamo di tennis amatoriale</string>
+    <string name="add">aggiungi</string>
+    <string name="set_birhdate">seleziona data di nascita</string>
+
+    <string name="save_profile">salva profilo</string>
+
+
+// Zona chat
+
+
+    <string name="chat_with_user">Chatta con %s</string>
+    <string name="users_search_bar"> Cerca per argomento, membro</string>
+    <string name="write_message"> Scrivi un messaggio</string>
+
+// Zona misc
     <string name="back">indietro</string>
     <string name="next">successivo</string>
     <string name="previous">precedente</string>
+
 
 
 

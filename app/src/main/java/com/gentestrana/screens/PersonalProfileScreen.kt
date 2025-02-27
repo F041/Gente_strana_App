@@ -1,10 +1,7 @@
 @file:OptIn(ExperimentalMaterial3Api::class)
-
 package com.gentestrana.screens
 
-import android.app.DatePickerDialog
 import android.net.Uri
-import android.util.Log
 import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
@@ -16,45 +13,23 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Logout
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import coil.compose.rememberAsyncImagePainter
+import com.gentestrana.R
 import com.google.firebase.auth.FirebaseAuth
-import com.google.firebase.auth.ktx.userProfileChangeRequest
-import com.google.firebase.firestore.SetOptions
-import com.google.firebase.firestore.ktx.firestore
-import com.google.firebase.ktx.Firebase
-import com.gentestrana.utils.uploadProfileImage
+import com.gentestrana.ui_controller.ProfileViewModel
 import com.gentestrana.users.User
-import java.text.SimpleDateFormat
-import java.util.*
-import androidx.compose.material.icons.filled.Add
-import com.google.firebase.firestore.FieldValue
-import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.TextButton
+import com.gentestrana.components.DateOfBirthPicker
+import com.gentestrana.components.ProfileBioBox
+import com.gentestrana.components.ProfileLanguagesField
+import com.gentestrana.components.ProfileTextField
+import com.gentestrana.components.ProfileTopicsList
 
-/**
- * Funzione di validazione per le lingue parlate.
- */
-
-fun isValidSpokenLanguages(languagesText: String): Boolean {
-    if (languagesText.isBlank()) {
-        return false // Consideriamo non valido se è vuoto (puoi cambiare questa regola)
-    }
-    val languages = languagesText.split(",")
-    for (lang in languages) {
-        val trimmedLang = lang.trim()
-        if (trimmedLang.length != 2) {
-            return true // Errore: codice lingua non di 2 lettere
-        }
-        // Qui potresti aggiungere controlli più complessi, tipo verificare se il codice
-        // è in una lista di codici lingua validi, se necessario.
-    }
-    return false // Nessun errore trovato
-}
 
 /**
  * Schermata del profilo personale.
@@ -62,100 +37,62 @@ fun isValidSpokenLanguages(languagesText: String): Boolean {
  * Utilizza il modello [User] per recuperare e aggiornare i dati dell'utente.
  *
  * Campi principali:
+ * - **profilePicUrl**: lista di per le immagini del profilo. Il primo elemento è l'immagine principale.
  * - **username**: nome utente.
+ * - **topics**: lista di argomenti (gestita in UI come stringa separata da virgola).
  * - **bio**: breve descrizione personale.
- * - **description**: lista di argomenti (gestita in UI come stringa separata da virgola).
- * - **profilePicUrl**: lista di URL per le immagini del profilo. Il primo elemento è l'immagine principale.
+ *
  * - **birthTimestamp**: timestamp della data di nascita; la UI visualizza la data formattata ("dd/MM/yyyy") e la aggiorna tramite DatePicker.
  * - **sex**: valore ammesso "M", "F" o "Undefined" (la validazione è gestita in UI).
  * - **spokenLanguages**: lingue parlate, gestite come stringa separata da virgola.
  * - **location**: paese, ottenuto ad esempio dal GPS al primo utilizzo.
  */
+
+
 @Composable
 fun PersonalProfileScreen(
-    userProfilePicUrl: List<String>,
     navController: NavHostController
 ) {
-    var showAddImageDialog by remember { mutableStateOf(false) }
-    var newImageUrl by remember { mutableStateOf("") }
+    // Otteniamo il ViewModel (situato nella cartella ui_controller)
+    val profileViewModel: ProfileViewModel = viewModel()
     val context = LocalContext.current
     val auth = FirebaseAuth.getInstance()
     val uid = auth.currentUser?.uid ?: return
-    val firestore = Firebase.firestore
 
-    // Recupera i dati utente da Firestore
-    val userState = produceState<User?>(initialValue = null) {
-        firestore.collection("users").document(uid).get()
-            .addOnSuccessListener { document ->
-                value = document.toObject(User::class.java)
-            }
-            .addOnFailureListener { e ->
-                Log.e("PersonalProfileScreen", "Error fetching user data", e)
-            }
-    }
+    // Stati osservati dal ViewModel
+    val username by profileViewModel.username.collectAsState()
+    val bio by profileViewModel.bio.collectAsState()
+    val topicsText by profileViewModel.topicsText.collectAsState()
+    val profilePicUrl by profileViewModel.profilePicUrl.collectAsState()
+    var birthTimestamp by remember { mutableStateOf(0L) }
+    val topicsList = profileViewModel.topicsText.collectAsState().value
+        .split(",") // Divide la stringa in base alla virgola
+        .map { it.trim() } // Rimuove spazi extra
+        .filter { it.isNotEmpty() } // Evita elementi vuoti
 
-    // Mostra un loader se i dati non sono ancora caricati
-    if (userState.value == null) {
-        Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-            CircularProgressIndicator()
-        }
-        return
-    }
+    val spokenLanguages by profileViewModel.spokenLanguages // Nessun .collectAsState()
 
-    // Stati modificabili per i campi del profilo
-    var username by remember { mutableStateOf("") }
-    var birthDateText by remember { mutableStateOf("") }
-    var bio by remember { mutableStateOf("") }
-    var descriptionText by remember { mutableStateOf("") }
-    var profilePicUrlState by remember { mutableStateOf(
-        if (userProfilePicUrl.isNotEmpty()) userProfilePicUrl.first()
-        else "https://icons.veryicon.com/png/o/system/ali-mom-icon-library/random-user.png"
-    ) }
-    var birthTimestamp by remember { mutableStateOf(0L) }  // Timestamp della data di nascita
-    var sex by remember { mutableStateOf("Undefined") }
-    var isSpokenLanguagesError by remember { mutableStateOf(false) } // NUOVO stato per l'errore lingue
-    var spokenLanguagesText by remember { mutableStateOf("") }
-    var location by remember { mutableStateOf("") }
+    // Altri stati locali per campi non ancora gestiti nel ViewModel
     var isUploading by remember { mutableStateOf(false) }
     var newImageUri by remember { mutableStateOf<Uri?>(null) }
 
-    // Launcher per la selezione di una nuova immagine
+    // Launcher per selezionare una nuova immagine dalla galleria
     val imagePickerLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.GetContent()
     ) { uri: Uri? ->
         newImageUri = uri
     }
 
-    // Popola gli stati dai dati recuperati
-    LaunchedEffect(userState.value) {
-        userState.value?.let { user ->
-            username = user.username
-            bio = user.bio
-            descriptionText = user.description.joinToString(", ")
-            profilePicUrlState = user.profilePicUrl.firstOrNull()
-                ?: "https://icons.veryicon.com/png/o/system/ali-mom-icon-library/random-user.png"
-            // Usa la proprietà birthTimeMillis
-            birthTimestamp = user.birthTimestamp // Use the computed Long directly
-            birthDateText = if (birthTimestamp != 0L) {
-                val sdf = SimpleDateFormat("dd/MM/yyyy", Locale.getDefault())
-                sdf.format(Date(birthTimestamp))
-            } else ""
-            sex = user.sex
-            spokenLanguagesText = user.spokenLanguages.joinToString(", ")
-            location = user.location
-        }
+    LaunchedEffect(Unit) {
+        profileViewModel.loadUserData()
     }
 
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Personal Profile") },
+                title = { Text(stringResource(id = R.string.personal_profile))},
                 actions = {
-                    // Pulsante per aggiungere immagini
-                    IconButton(onClick = { showAddImageDialog = true }) {
-                        Icon(Icons.Default.Add, "Aggiungi immagine")
-                    }
-                    // Pulsante di logout esistente
+                    // Pulsante di logout
                     IconButton(onClick = {
                         auth.signOut()
                         navController.navigate("login") {
@@ -171,7 +108,6 @@ fun PersonalProfileScreen(
                 }
             )
         }
-
     ) { paddingValues ->
         Column(
             modifier = Modifier
@@ -181,257 +117,129 @@ fun PersonalProfileScreen(
                 .verticalScroll(rememberScrollState())
         ) {
             Spacer(modifier = Modifier.height(16.dp))
-            // Visualizza l'immagine principale del profilo
+            // Mostra l'immagine del profilo: se è presente una nuova immagine, la usa, altrimenti quella gestita dal ViewModel
             Image(
-                painter = rememberAsyncImagePainter(newImageUri ?: profilePicUrlState),
+                painter = rememberAsyncImagePainter(newImageUri ?: profilePicUrl),
                 contentDescription = "Profile Picture",
                 modifier = Modifier.size(100.dp)
             )
             Spacer(modifier = Modifier.height(8.dp))
-            // Bottone per selezionare una nuova immagine
-            Button(onClick = { imagePickerLauncher.launch("image/*") },
-                modifier = Modifier.fillMaxWidth()) {
-                Text("Change Profile Picture")
+            // Bottone per scegliere una nuova immagine dalla galleria
+            Button(
+                onClick = { imagePickerLauncher.launch("image/*") },
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Text(text = stringResource(R.string.change_profile_picture))
+
             }
             if (newImageUri != null) {
                 Spacer(modifier = Modifier.height(8.dp))
-                Box(modifier = Modifier.fillMaxWidth()) {
-                    Button(
-                        onClick = {
-                            isUploading = true
-                            uploadProfileImage(uid, newImageUri!!) { imageUrl ->
-                                if (imageUrl.isNotEmpty()) {
-                                    firestore.collection("users").document(uid)
-                                        .update("profilePicUrl", FieldValue.arrayUnion(imageUrl)) // Aggiunge alla lista
-                                        .addOnSuccessListener {
-                                            profilePicUrlState = imageUrl
-                                            newImageUri = null
-                                            isUploading = false
-                                            Toast.makeText(context, "Profile picture updated", Toast.LENGTH_SHORT).show()
-                                            val user = FirebaseAuth.getInstance().currentUser
-                                            val profileUpdates = userProfileChangeRequest {
-                                                photoUri = Uri.parse(imageUrl)
-                                            }
-                                            user?.updateProfile(profileUpdates)
-                                        }
-                                        .addOnFailureListener { e ->
-                                            isUploading = false
-                                            Toast.makeText(context, "Failed to update picture", Toast.LENGTH_SHORT).show()
-                                        }
-                                } else {
-                                    isUploading = false
-                                    Toast.makeText(context, "Image upload failed", Toast.LENGTH_SHORT).show()
-                                }
+                Button(
+                    onClick = {
+                        isUploading = true
+                        newImageUri?.let { uri ->
+                            profileViewModel.uploadNewProfileImage(uri) { downloadUrl ->
+                                // Se downloadUrl è vuoto, il ViewModel imposterà il fallback
+                                isUploading = false
+                                newImageUri = null
+                                Toast.makeText(
+                                    context, // Assuming 'context' is available in your scope
+                                    context.getString(R.string.profile_picture_updated), // Use getString to get resource
+                                    Toast.LENGTH_SHORT
+                                ).show()
                             }
-                        },
-                        modifier = Modifier.fillMaxWidth(),
-                        enabled = !isUploading
-                    ) {
-                        if (isUploading) {
-                            CircularProgressIndicator(
-                                modifier = Modifier.size(20.dp),
-                                color = MaterialTheme.colorScheme.onPrimary,
-                                strokeWidth = 2.dp
-                            )
-                        } else {
-                            Text("Upload New Picture")
                         }
+                    },
+                    modifier = Modifier.fillMaxWidth(),
+                    enabled = !isUploading
+                ) {
+                    if (isUploading) {
+                        CircularProgressIndicator(
+                            modifier = Modifier.size(20.dp),
+                            color = MaterialTheme.colorScheme.onPrimary,
+                            strokeWidth = 2.dp
+                        )
+                    } else {
+                        Text(stringResource(id = R.string.upload_new_profile_picture))
                     }
                 }
             }
             Spacer(modifier = Modifier.height(16.dp))
             // Campo per Username
-            ProfileTextField(value = username, onValueChange = { username = it }, label = "Username")
-            Spacer(modifier = Modifier.height(8.dp))
-            // Campo per Bio
-            ProfileTextField(value = bio, onValueChange = { bio = it }, label = "Bio")
-            Spacer(modifier = Modifier.height(8.dp))
-            // Campo per Description (argomenti), separati da virgola
             ProfileTextField(
-                value = spokenLanguagesText,
-                onValueChange = { newText -> // Cambiamo nome da 'it' a 'newText' per chiarezza
-                    spokenLanguagesText = newText // 1. Aggiorna spokenLanguagesText (come prima)
-                    isSpokenLanguagesError = isValidSpokenLanguages(newText) // 2. Chiama isValidSpokenLanguages e 3. Aggiorna isSpokenLanguagesError
-                },
-                label = "Spoken Languages",
-                placeholder = "es. it, en, fr",
-                isError = isSpokenLanguagesError
+                value = username,
+                onValueChange = { profileViewModel.setUsername(it) },
+                label = stringResource(id = R.string.first_name),
+                placeholder = stringResource(id = R.string.name_placeholder),
+                maxLength = 13
             )
             Spacer(modifier = Modifier.height(8.dp))
-            // Campo per la data di nascita tramite DatePickerDialog
+
+            // Campo per Topics (ex description)
+            ProfileTopicsList(
+                title = stringResource(id = R.string.topics_title),
+                topics = topicsList, // Ora è una lista di stringhe, non più una singola stringa
+                placeholder = stringResource(id = R.string.topics_placeholder),
+                newTopicMaxLength = 200,
+                onValueChange = { updatedTopics ->
+                    // Convertiamo la lista aggiornata in una stringa prima di inviarla al ViewModel
+                    profileViewModel.setTopics(updatedTopics.joinToString(", "))
+                }
+            )
+
+            // Campo per Bio
+            ProfileBioBox(
+                initialContent = bio,
+                onValueChange = { updatedBio -> profileViewModel.setBio(updatedBio) },
+                modifier = Modifier.padding(16.dp),
+                maxLength = 800,
+            )
+
+            Spacer(modifier = Modifier.height(8.dp))
+
             DateOfBirthPicker(
+                context = LocalContext.current,
                 birthTimestamp = birthTimestamp,
                 onDateSelected = { newTimestamp ->
                     birthTimestamp = newTimestamp
                 }
             )
-            Spacer(modifier = Modifier.height(8.dp))
-            // Campo per Sex
-            ProfileTextField(value = sex, onValueChange = { newSex ->
-                if (newSex == "M" || newSex == "F" || newSex == "Undefined") {
-                    sex = newSex
-                }
-            }, label = "Sex (M, F, Undefined)")
-            Spacer(modifier = Modifier.height(8.dp))
-            // Campo per Lingue parlate, come stringa separata da virgola
-            Spacer(modifier = Modifier.height(8.dp))
-            // Campo per Location (nazione)
-            ProfileTextField(value = location, onValueChange = { location = it }, label = "Location (Country)")
+
             Spacer(modifier = Modifier.height(16.dp))
+
+            ProfileLanguagesField(
+                selectedLanguages = spokenLanguages,
+                onLanguagesChanged = { newLanguages ->
+                    profileViewModel.setSpokenLanguages(newLanguages)
+                },
+                modifier = Modifier.fillMaxWidth()
+            )
+
+            Spacer(modifier = Modifier.height(16.dp))
+
             // Bottone per salvare gli aggiornamenti del profilo
             Button(
                 onClick = {
-                    if (username.isBlank()) {
-                        Toast.makeText(context, "Username cannot be empty", Toast.LENGTH_SHORT).show()
-                        return@Button
-                    }
-                    val updatedData = mapOf(
-                        "username" to username,
-                        "bio" to bio,
-                        "description" to descriptionText.split(",").map { it.trim() },
-                        "profilePicUrl" to listOf(profilePicUrlState),
-                        // Salva il campo come Timestamp, non come Long
-                        "rawBirthTimestamp" to com.google.firebase.Timestamp(Date(birthTimestamp)), // Use rawBirthTimestamp                        "sex" to sex,
-                        "spokenLanguages" to spokenLanguagesText.split(",").map { it.trim() },
-                        "location" to location
+                    profileViewModel.updateProfile(
+                        updatedUsername = username,
+                        updatedBio = bio,
+                        updatedTopics = topicsText,
+                        updatedProfilePicUrl = profilePicUrl,
+                        onSuccess = {
+                            Toast.makeText(context, "Profile updated successfully", Toast.LENGTH_SHORT).show()
+                        },
+                        onFailure = { error ->
+                            Toast.makeText(context, "Update failed: $error", Toast.LENGTH_SHORT).show()
+                        }
                     )
-                    firestore.collection("users").document(uid)
-                        .set(updatedData, SetOptions.merge())
-                        .addOnSuccessListener {
-                            val user = FirebaseAuth.getInstance().currentUser
-                            val profileUpdates = userProfileChangeRequest {
-                                displayName = username
-                                photoUri = Uri.parse(profilePicUrlState)
-                            }
-                            user?.updateProfile(profileUpdates)
-                                ?.addOnCompleteListener { task ->
-                                    if (task.isSuccessful) {
-                                        Toast.makeText(context, "Profile updated successfully", Toast.LENGTH_SHORT).show()
-                                    } else {
-                                        Toast.makeText(context, "Firebase profile update failed", Toast.LENGTH_SHORT).show()
-                                    }
-                                }
-                        }
-                        .addOnFailureListener { e ->
-                            Toast.makeText(context, "Update failed: ${e.message}", Toast.LENGTH_SHORT).show()
-                        }
                 },
                 modifier = Modifier.fillMaxWidth()
-            ) {
-                Text("Save Profile")
+            )
+            {
+                Text(text = stringResource(R.string.save_profile))
             }
         }
-    }
-    // Dialog per aggiungere immagini via URL
-    if (showAddImageDialog) {
-        AlertDialog(
-            onDismissRequest = { showAddImageDialog = false },
-            title = { Text("Aggiungi immagine") },
-            text = {
-                Column {
-                    TextField(
-                        value = newImageUrl,
-                        onValueChange = { newImageUrl = it },
-                        label = { Text("Incolla URL immagine") },
-                        modifier = Modifier.fillMaxWidth()
-                    )
-                }
-            },
-            confirmButton = {
-                Button(
-                    onClick = {
-                        // Aggiungi l'URL alla lista esistente
-                        if (newImageUrl.isNotBlank()) {
-                            firestore.collection("users").document(uid)
-                                .update("profilePicUrl", FieldValue.arrayUnion(newImageUrl))
-                                .addOnSuccessListener {
-                                    showAddImageDialog = false
-                                    newImageUrl = ""
-                                    Toast.makeText(context, "Immagine aggiunta!", Toast.LENGTH_SHORT).show()
-                                }
-                                .addOnFailureListener { e ->
-                                    Toast.makeText(context, "Errore: ${e.message}", Toast.LENGTH_SHORT).show()
-                                }
-                        }
-                    }
-                ) {
-                    Text("Aggiungi")
-                }
-            },
-            dismissButton = {
-                TextButton(onClick = { showAddImageDialog = false }) {
-                    Text("Annulla")
-                }
-            }
-        )
-    }
-}
 
-/**
- * Funzione helper per creare un OutlinedTextField a tutta larghezza.
- */
-@Composable
-fun ProfileTextField(
-    value: String,
-    onValueChange: (String) -> Unit,
-    label: String,
-    placeholder: String? = null,
-    isError: Boolean = false, // NUOVO: Aggiunto parametro isError, di tipo Boolean, default false
-    modifier: Modifier = Modifier
-) {
-    OutlinedTextField(
-        value = value,
-        onValueChange = onValueChange,
-        label = { Text(label) },
-        placeholder = placeholder?.let { { Text(it) } },
-        isError = isError, // NUOVO: Passa il parametro isError al OutlinedTextField
-        modifier = modifier.fillMaxWidth()
-    )
-}
-
-/**
- * Composable per selezionare la data di nascita tramite DatePickerDialog.
- */
-@Composable
-fun DateOfBirthPicker(
-    birthTimestamp: Long,
-    onDateSelected: (Long) -> Unit
-) {
-    val context = LocalContext.current
-    val calendar = remember { Calendar.getInstance() }
-    if (birthTimestamp > 0L) {
-        calendar.timeInMillis = birthTimestamp
-    }
-    var showDialog by remember { mutableStateOf(false) }
-
-    if (showDialog) {
-        DatePickerDialog(
-            context,
-            { _, selectedYear, selectedMonth, selectedDay ->
-                val newCalendar = Calendar.getInstance().apply {
-                    set(Calendar.YEAR, selectedYear)
-                    set(Calendar.MONTH, selectedMonth)
-                    set(Calendar.DAY_OF_MONTH, selectedDay)
-                }
-                onDateSelected(newCalendar.timeInMillis)
-                showDialog = false
-            },
-            calendar.get(Calendar.YEAR),
-            calendar.get(Calendar.MONTH),
-            calendar.get(Calendar.DAY_OF_MONTH)
-        ).show()
     }
 
-    Button(
-        onClick = { showDialog = true },
-        modifier = Modifier.fillMaxWidth()
-    ) {
-        val displayText = if (birthTimestamp > 0L) {
-            val sdf = SimpleDateFormat("dd/MM/yyyy", Locale.getDefault())
-            sdf.format(Date(birthTimestamp))
-        } else {
-            "Set Date of Birth"
-        }
-        Text(text = displayText)
-    }
 }

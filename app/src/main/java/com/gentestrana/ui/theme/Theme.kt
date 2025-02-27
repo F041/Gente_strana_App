@@ -1,6 +1,5 @@
 package com.gentestrana.ui.theme
 
-import android.app.Activity
 import android.os.Build
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.material3.MaterialTheme
@@ -9,28 +8,34 @@ import androidx.compose.material3.dynamicDarkColorScheme
 import androidx.compose.material3.dynamicLightColorScheme
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 
-private val DarkColorScheme = darkColorScheme(
-    primary = Purple80,
-    secondary = PurpleGrey80,
-    tertiary = Pink80
+// **NEW: Define Neuro Light and Dark Color Schemes**
+private val NeuroDarkColorScheme = darkColorScheme(
+    primary = NeuroPrimary,       // Example: Use NeuroPrimary as primary
+    secondary = NeuroSecondary,     // Example: Use NeuroSecondary as secondary
+    tertiary = NeuroAccent,      // Example: Use NeuroAccent as tertiary
+    background = NeuroBackground,   // Example: Use NeuroBackground as background
+    surface = NeuroSurface,      // Example: Use NeuroSurface as surface
+    onPrimary = Color.White,      // Example: Adjust 'on' colors for contrast
+    onSecondary = Color.White,
+    onTertiary = Color.Black,
+    onBackground = NeuroPrimary,   // Example: 'onBackground' should contrast with background
+    onSurface = NeuroPrimary      // Example: 'onSurface' should contrast with surface
 )
 
-private val LightColorScheme = lightColorScheme(
-    primary = Purple40,
-    secondary = PurpleGrey40,
-    tertiary = Pink40
-
-    /* Other default colors to override
-    background = Color(0xFFFFFBFE),
-    surface = Color(0xFFFFFBFE),
-    onPrimary = Color.White,
+private val NeuroLightColorScheme = lightColorScheme(
+    primary = NeuroPrimary,       // Example: Use NeuroPrimary as primary
+    secondary = NeuroSecondary,     // Example: Use NeuroSecondary as secondary
+    tertiary = NeuroAccent,      // Example: Use NeuroAccent as tertiary
+    background = NeuroBackground,   // Example: Use NeuroBackground as background
+    surface = NeuroSurface,      // Example: Use NeuroSurface as surface
+    onPrimary = Color.White,      // Example: Adjust 'on' colors for contrast
     onSecondary = Color.White,
-    onTertiary = Color.White,
-    onBackground = Color(0xFF1C1B1F),
-    onSurface = Color(0xFF1C1B1F),
-    */
+    onTertiary = Color.Black,
+    onBackground = NeuroPrimary,   // Example: 'onBackground' should contrast with background
+    onSurface = NeuroPrimary      // Example: 'onSurface' should contrast with surface
 )
 
 @Composable
@@ -46,8 +51,8 @@ fun GenteStranaTheme(
             if (darkTheme) dynamicDarkColorScheme(context) else dynamicLightColorScheme(context)
         }
 
-        darkTheme -> DarkColorScheme
-        else -> LightColorScheme
+        darkTheme -> NeuroDarkColorScheme // **Use NeuroDarkColorScheme**
+        else -> NeuroLightColorScheme // **Use NeuroLightColorScheme**
     }
 
     MaterialTheme(

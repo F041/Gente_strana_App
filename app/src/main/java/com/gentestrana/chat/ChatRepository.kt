@@ -1,15 +1,26 @@
+
 package com.gentestrana.chat
 
+import android.util.Log
 import com.gentestrana.users.User
 import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.firestore.DocumentSnapshot
 import com.google.firebase.firestore.FieldValue
 import com.google.firebase.firestore.FirebaseFirestore
+import com.google.firebase.firestore.ListenerRegistration
+import com.google.firebase.firestore.Query
 import kotlinx.coroutines.tasks.await
+import kotlinx.coroutines.channels.awaitClose
+import kotlinx.coroutines.flow.callbackFlow
+import kotlinx.coroutines.launch
+import com.google.firebase.Timestamp
 
-object ChatRepository {
+class ChatRepository(
+    private val db: FirebaseFirestore = FirebaseFirestore.getInstance(), // ✅ Dipendenza iniettata
+    private val auth: FirebaseAuth = FirebaseAuth.getInstance() // ✅ Dipendenza iniettata
+) {
     suspend fun createNewChat(user: User): String {
-        val db = FirebaseFirestore.getInstance()
-        val currentUserId = FirebaseAuth.getInstance().currentUser?.uid
+        val currentUserId = auth.currentUser?.uid
             ?: throw IllegalStateException("Utente non loggato")
 
         // Check if a chat already exists between the two users
@@ -37,4 +48,186 @@ object ChatRepository {
         val documentRef = db.collection("chats").add(chatData).await()
         return documentRef.id
     }
+    suspend fun processChatDocument(doc: DocumentSnapshot, currentUserId: String): Chat? {
+        return try {
+            val participants = doc.get("participants") as? List<String> ?: emptyList()
+            val otherUserId = participants.firstOrNull { it != currentUserId } ?: return null
+
+            val otherUser = db.collection("users")
+                .document(otherUserId)
+                .get()
+                .await()
+
+            val userObj = otherUser.toObject(User::class.java)
+            val profilePicList = otherUser["profilePicUrl"] as? List<String> ?: emptyList()
+            val firstPhotoUrl = profilePicList.firstOrNull() ?: "res/drawable/random_user.webp"
+
+            val lastMessageQuery = db.collection("chats")
+                .document(doc.id)
+                .collection("messages")
+                .orderBy("timestamp", Query.Direction.DESCENDING)
+                .limit(1)
+                .get()
+                .await()
+
+            val lastMessageDoc = lastMessageQuery.documents.firstOrNull()
+            val lastMessageText = lastMessageDoc?.getString("message") ?: "No messages"
+            val timestamp = lastMessageDoc?.getTimestamp("timestamp") ?: Timestamp.now()
+            val lastMessageStatus = when (lastMessageDoc?.getString("status")) {
+                "DELIVERED" -> MessageStatus.DELIVERED
+                "READ" -> MessageStatus.READ
+                else -> MessageStatus.SENT
+            }
+
+            Chat(
+                id = doc.id,
+                participantId = otherUserId, // Aggiunto il participantId
+                participantName = userObj?.username ?: "Unknown",
+                lastMessage = lastMessageText,
+                photoUrl = firstPhotoUrl,
+                lastMessageStatus = lastMessageStatus,
+                timestamp = timestamp // Ora usiamo Timestamp direttamente
+            )
+        } catch (e: Exception) {
+            Log.e("ChatRepository", "Error processing document", e)
+            null
+        }
+    }
+
+    fun registerChatsListener(
+        currentUserId: String,
+        onUpdate: (List<DocumentSnapshot>) -> Unit
+    ): ListenerRegistration {
+        return db.collection("chats")
+            .whereArrayContains("participants", currentUserId)
+            .addSnapshotListener { snapshot, error ->
+                if (error != null) {
+                    Log.e("ChatRepository", "Chats listener error", error)
+                    return@addSnapshotListener
+                }
+                snapshot?.documents?.let(onUpdate)
+            }
+    }
+    fun getCurrentUserId(): String? = auth.currentUser?.uid
+    suspend fun getChats(currentUserId: String): List<Chat> {
+        return try {
+            val chatDocs = db.collection("chats")
+                .whereArrayContains("participants", currentUserId)
+                .get()
+                .await()
+
+            chatDocs.documents.mapNotNull { doc ->
+                processChatDocument(doc, currentUserId)
+            }
+        } catch (e: Exception) {
+            Log.e("ChatRepository", "Error getting chats", e)
+            emptyList()
+        }
+    }
+    fun getChatsFlow(currentUserId: String) = callbackFlow {
+        val listenerRegistration = db.collection("chats")
+            .whereArrayContains("participants", currentUserId)
+            .addSnapshotListener { snapshot, error ->
+                if (error != null) {
+                    close(error)
+                    return@addSnapshotListener
+                }
+                if (snapshot != null) {
+                    // Usiamo launch per chiamare la funzione sospesa processChatDocument
+                    launch {
+                        val chats = snapshot.documents.mapNotNull { doc ->
+                            processChatDocument(doc, currentUserId)
+                        }
+                        trySend(chats).isSuccess
+                    }
+                }
+            }
+        awaitClose { listenerRegistration.remove() }
+    }
+    fun listenForMessageStatusUpdates(
+        chatId: String,
+        onUpdate: (MessageStatus) -> Unit
+    ): ListenerRegistration {
+        Log.d("STATUS_DEBUG", "Registrato listener per chat: $chatId")
+
+        return db.collection("chats/$chatId/messages")
+            .orderBy("timestamp", Query.Direction.DESCENDING)
+            .limit(1)
+            .addSnapshotListener { snapshot, error ->
+                if (error != null) {
+                    Log.e("STATUS_DEBUG", "Listener error: ${error.message}")
+                    return@addSnapshotListener
+                }
+
+                Log.d("STATUS_DEBUG", "Nuovo snapshot ricevuto. Docs: ${snapshot?.documents?.size}")
+
+                snapshot?.documents?.firstOrNull()?.let { doc ->
+                    val status = when (doc.getString("status")) {
+                        "DELIVERED" -> MessageStatus.DELIVERED
+                        "READ" -> MessageStatus.READ
+                        else -> MessageStatus.SENT
+                    }
+                    Log.d("STATUS_DEBUG", "Nuovo stato: $status")
+                    onUpdate(status)
+                }
+            }
+    }
+    suspend fun markMessagesAsRead(chatId: String) {
+        try {
+            val currentUserId = auth.currentUser?.uid ?: return
+            Log.d("DEBUG", "UserID: $currentUserId - ChatID: $chatId")
+
+            val messagesRef = db.collection("chats/$chatId/messages")
+            val query = messagesRef
+                .whereIn("status", listOf("SENT", "DELIVERED"))
+                .whereNotEqualTo("sender", currentUserId)
+                .get()
+                .await()
+            Log.d("DEBUG", "Trovati ${query.documents.size} messaggi da aggiornare")
+
+            // Verifica che ci siano documenti da aggiornare
+            if (query.isEmpty) return
+
+            val batch = db.batch()
+            query.documents.forEach { doc ->
+                // Aggiungi controllo per evitare aggiornamenti non necessari
+                if(doc.getString("status") != "READ") {
+                    batch.update(doc.reference, "status", "READ")
+                }
+            }
+            batch.commit().await()
+
+        } catch (e: Exception) {
+            Log.e("DEBUG", "ERRORE in markMessagesAsRead: ${e.message}")
+            throw e
+        }
+    }
+
+    suspend fun markMessagesAsDelivered(chatId: String, currentUserId: String){
+        Log.d("Repo", "Marca DELIVERED per chat: $chatId")
+        val currentUserId = auth.currentUser?.uid ?: return
+
+        val messagesRef = db.collection("chats/$chatId/messages")
+
+        val query = messagesRef
+            .whereEqualTo("status", "SENT")
+            .whereNotEqualTo("sender", currentUserId)
+            .get()
+            .await()
+
+        val batch = db.batch()
+        query.documents.forEach { doc ->
+            batch.update(doc.reference, "status", "DELIVERED")
+        }
+        batch.commit().await()
+        Log.d("Repo", "${query.documents.size} messaggi marcati come DELIVERED")
+    }
 }
+
+
+
+
+
+
+
+

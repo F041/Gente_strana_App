@@ -25,7 +25,6 @@ fun RegistrationScreen(onRegistrationSuccess: () -> Unit) {
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
     var username by remember { mutableStateOf("") }
-    var bio by remember { mutableStateOf("") }
     var isLoading by remember { mutableStateOf(false) }
     var errorMessage by remember { mutableStateOf<String?>(null) }
 
@@ -57,7 +56,8 @@ fun RegistrationScreen(onRegistrationSuccess: () -> Unit) {
                 value = email,
                 onValueChange = { email = it },
                 label = { Text("Email") },
-                modifier = Modifier.fillMaxWidth()
+                modifier = Modifier.fillMaxWidth(),
+                placeholder = { Text("usa la tua migliore mail") }, // cambiare con string
             )
             Spacer(modifier = Modifier.height(8.dp))
 
@@ -65,6 +65,7 @@ fun RegistrationScreen(onRegistrationSuccess: () -> Unit) {
                 value = password,
                 onValueChange = { password = it },
                 label = { Text("Password") },
+                placeholder = { Text("password forte ma non banale") }, // cambiare con string
                 modifier = Modifier.fillMaxWidth()
             )
             Spacer(modifier = Modifier.height(8.dp))
@@ -72,18 +73,11 @@ fun RegistrationScreen(onRegistrationSuccess: () -> Unit) {
             OutlinedTextField(
                 value = username,
                 onValueChange = { username = it },
-                label = { Text("Username") },
+                label = { Text("First name") },// cambiare con string
+                placeholder = { Text("Marco, Giovanna, solo il PRIMO nome") }, // cambiare con string
                 modifier = Modifier.fillMaxWidth()
             )
             Spacer(modifier = Modifier.height(8.dp))
-
-            OutlinedTextField(
-                value = bio,
-                onValueChange = { bio = it },
-                label = { Text("Bio") },
-                modifier = Modifier.fillMaxWidth()
-            )
-            Spacer(modifier = Modifier.height(16.dp))
 
             Button(
                 onClick = { imagePickerLauncher.launch("image/*") },
@@ -103,7 +97,7 @@ fun RegistrationScreen(onRegistrationSuccess: () -> Unit) {
                 )
             }
 
-            Spacer(modifier = Modifier.height(16.dp))
+            Spacer(modifier = Modifier.height(8.dp))
 
             Button(
                 onClick = {
@@ -112,7 +106,6 @@ fun RegistrationScreen(onRegistrationSuccess: () -> Unit) {
                         email = email,
                         password = password,
                         username = username,
-                        bio = bio,
                         selectedImageUri = selectedImageUri,
                         context = context,
                         onSuccess = {
@@ -142,7 +135,6 @@ fun registerUserAndUploadImage(
     email: String,
     password: String,
     username: String,
-    bio: String,
     selectedImageUri: Uri?,
     context: android.content.Context,
     onSuccess: () -> Unit,
@@ -160,7 +152,6 @@ fun registerUserAndUploadImage(
 
             val userData = mapOf(
                 "username" to username,
-                "bio" to bio,
                 "profilePicUrl" to "",
                 "age" to 0,
                 "sex" to ""

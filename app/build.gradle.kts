@@ -76,6 +76,14 @@ dependencies {
     implementation ("androidx.compose.material3:material3:1.2.0")
     implementation ("com.google.dagger:hilt-android:2.48")
     implementation ("androidx.hilt:hilt-navigation-compose:1.1.0")
+    implementation ("com.google.accompanist:accompanist-swiperefresh:0.32.0")
     implementation ("androidx.lifecycle:lifecycle-viewmodel-compose:2.6.2")
+    implementation("com.google.accompanist:accompanist-navigation-animation:0.32.0")
+
+    testImplementation ("junit:junit:4.13.2")              // Framework per test
+    testImplementation ("org.mockito:mockito-core:5.3.1")  // Per creare oggetti "finti" (mock)
+    testImplementation ("org.mockito.kotlin:mockito-kotlin:4.1.0") // Estensioni Kotlin per Mockito
+    testImplementation ("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.7.3") // Test per coroutine
+
 }
 

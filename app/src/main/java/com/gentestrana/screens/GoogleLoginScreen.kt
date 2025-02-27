@@ -15,6 +15,7 @@ import com.google.android.gms.auth.api.signin.GoogleSignInAccount
 import com.google.android.gms.auth.api.signin.GoogleSignInClient
 import com.google.android.gms.auth.api.signin.GoogleSignInOptions
 
+// come portare nome su google account come Username-firstname?
 @Composable
 fun GoogleLoginScreen(
     onLoginSuccess: () -> Unit,
@@ -55,5 +56,6 @@ fun GoogleLoginScreen(
         launcher.launch(signInIntent)
     }) {
         Text("Sign in with Google")
+        // stringabile
     }
 }

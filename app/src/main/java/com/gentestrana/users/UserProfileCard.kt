@@ -19,7 +19,6 @@ import com.gentestrana.utils.computeAgeFromTimestamp
 import androidx.compose.ui.res.stringResource
 import com.gentestrana.R
 import com.gentestrana.utils.getFlagEmoji
-import com.gentestrana.utils.getLanguageName
 import androidx.compose.ui.platform.LocalContext
 
 @Composable
@@ -72,10 +71,10 @@ fun UserProfileCard(
                     )
                     Spacer(Modifier.height(4.dp))
                     Text(
-                        text = if (user.description[0].length > 80) {
-                            user.description[0].take(80) + "..."
+                        text = if (user.topics[0].length > 80) {
+                            user.topics[0].take(80) + "..."
                         } else {
-                            user.description[0]
+                            user.topics[0]
                         },
                         color = NeuroSecondary,
                         fontFamily = FontFamily.SansSerif,

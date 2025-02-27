@@ -59,7 +59,8 @@ fun ProfileContent(
     currentDescriptionIndex: Int,
     coroutineScope: CoroutineScope,
     onProfileImageClick: () -> Unit,
-    navController: NavHostController
+    navController: NavHostController, // Parametro per la navigazione
+    onStartChat: () -> Unit // <-- Parametro aggiunto qui
 ) {
     Column(
         modifier = Modifier
@@ -186,20 +187,9 @@ fun ProfileContent(
             }
         }
 
+        // Pulsante "Chatta"
         Button(
-            onClick = {
-                coroutineScope.launch {
-                    try {
-                        // Always create a new chat document
-                        val chatDocId = ChatRepository.createNewChat(user)
-                        // Navigate to the ChatScreen with the new chat ID
-                        navController.navigate("chat/$chatDocId")
-                    } catch (e: Exception) {
-                        // Handle errors (e.g., show a snackbar or log the error)
-                        Log.e("UserProfileScreen", "Error creating chat: ${e.message}")
-                    }
-                }
-            },
+            onClick = onStartChat, // <-- Usa il parametro onStartChat
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(16.dp)

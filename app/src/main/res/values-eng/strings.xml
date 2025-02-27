@@ -1,10 +1,43 @@
 <resources>
     <string name="app_name">Quirky people</string>
-    <string name="speaks">Speaks</string>
-    <string name="languages_spoken">Languages spoken</string>
-    <string name="user_profile">User Profile</string>
-    <string name="chat_with_user">Chat with %s</string>
 
+
+    // Zona profilo
+    <string name="personal_profile">personal profile</string>
+    <string name="user_profile">User Profile</string>
+    <string name="change_profile_picture">change profile picture</string>
+    <string name="upload_new_profile_picture">upload new profilepicture</string>
+    <string name="profile_picture_updated">image updated</string>
+
+    <string name="speaks">speaks</string>
+    <string name="languages_spoken">languages spoken</string>
+    <string name="select_languages">select languages</string>
+    <string name="search_hint">search a language...</string>
+    <string name="selected_languages">selected languages</string>
+    <string name="edit">edit</string>
+    <string name="save">save</string>
+    <string name="cancel">cancel</string>
+    <string name="first_name">first name</string>
+    <string name="name_placeholder">put JUST you first name, eg. Mark</string>
+    <string name="bio_placeholder">eg. I like x,y,z in school I performed well and I read fiction</string>
+    <string name="bio_title">Describe yourself</string>
+    <string name="topics_title">My topics</string>
+    <string name="topics_placeholder">eg. I want to talk about tennis </string>
+    <string name="add">Add</string>
+    <string name="set_birhdate">Pick birthdate</string>
+
+    <string name="save_profile">save profile</string>
+
+
+
+    // Zona chat
+
+    <string name="chat_with_user">Chat with %s</string>
+    <string name="users_search_bar"> Search by topic, member</string>
+    <string name="write_message">write a message</string>
+
+
+    // Zona misc
     <string name="back">back</string>
     <string name="next">next</string>
     <string name="previous">previous</string>

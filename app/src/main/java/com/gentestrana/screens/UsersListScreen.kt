@@ -1,21 +1,19 @@
 package com.gentestrana.screens
 
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavHostController
-import coil.compose.rememberAsyncImagePainter
+import com.gentestrana.R
 import com.gentestrana.users.User
 import com.gentestrana.components.FilterState
 import com.gentestrana.users.UserProfileCard
@@ -30,7 +28,7 @@ fun UsersListScreen(navController: NavHostController) {
     val currentUser = FirebaseAuth.getInstance().currentUser
     val profilePicUrls = remember(currentUser) {
         when (val url = currentUser?.photoUrl?.toString()) {
-            null -> listOf("https://icons.veryicon.com/png/o/system/ali-mom-icon-library/random-user.png")
+            null -> listOf(R.drawable.random_user)
             else -> listOf(url)
         }
     }
@@ -54,7 +52,7 @@ fun UsersListScreen(navController: NavHostController) {
     val filteredUsers = usersState.value
         .filter { user ->
             user.username.contains(filterState.value.searchQuery, ignoreCase = true) ||
-                    user.description.any { it.contains(filterState.value.searchQuery, ignoreCase = true) }
+                    user.topics.any { it.contains(filterState.value.searchQuery, ignoreCase = true) }
         }
 
     Scaffold(
@@ -71,7 +69,7 @@ fun UsersListScreen(navController: NavHostController) {
                             onValueChange = {
                                 filterState.value = filterState.value.copy(searchQuery = it)
                             },
-                            placeholder = { Text("Find members, topics") },
+                            placeholder = { Text(stringResource(R.string.users_search_bar))},
                             modifier = Modifier.fillMaxWidth(),
                             colors = TextFieldDefaults.colors(
                                 focusedContainerColor = Color.Transparent,
@@ -86,17 +84,6 @@ fun UsersListScreen(navController: NavHostController) {
                         )
                     }
                 },
-                actions =  {
-                    IconButton(onClick = { navController.navigate("profile") }) {
-                        Image(
-                            painter = rememberAsyncImagePainter(profilePicUrls.first()),
-                            contentDescription = "Profile",
-                            modifier = Modifier
-                                .size(40.dp)
-                                .clip(CircleShape)
-                        )
-                    }
-                }
             )
         }
     ) { paddingValues ->

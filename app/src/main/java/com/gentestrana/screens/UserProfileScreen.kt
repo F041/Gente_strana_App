@@ -3,7 +3,6 @@ package com.gentestrana.screens
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
-
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
@@ -16,17 +15,22 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
 import com.gentestrana.R
+import com.gentestrana.chat.ChatRepository
 import com.gentestrana.users.User
 import com.gentestrana.users.UserPicsGallery
 import com.gentestrana.users.UserRepository
+import kotlinx.coroutines.launch
+
 
 @OptIn(ExperimentalFoundationApi::class, ExperimentalMaterial3Api::class)
 @Composable
 fun UserProfileScreen(
     docId: String,
-    navController: NavHostController
+    navController: NavHostController,
+
 ) {
     val userRepository = remember { UserRepository() }
+    val chatRepository = remember { ChatRepository() } // <-- Aggiungi questa linea
     var showGallery by remember { mutableStateOf(false) }
     var showAddImageDialog by remember { mutableStateOf(false) }
     var newImageUrl by remember { mutableStateOf("") }
@@ -45,7 +49,7 @@ fun UserProfileScreen(
     }
 
     val user = userState.value!!
-    val descriptionItems = user.description
+    val descriptionItems = user.topics
     val scrollState = rememberLazyListState()
     var currentDescriptionIndex by remember { mutableStateOf(0) }
     val coroutineScope = rememberCoroutineScope()
@@ -80,7 +84,17 @@ fun UserProfileScreen(
                 currentDescriptionIndex = currentDescriptionIndex,
                 coroutineScope = coroutineScope,
                 onProfileImageClick = { showGallery = true },
-                navController = navController
+                navController = navController, // Passa navController
+                onStartChat = { // Lambda per avviare la chat
+                    coroutineScope.launch {
+                        try {
+                            val chatId = chatRepository.createNewChat(user)
+                            navController.navigate("chat/$chatId")
+                        } catch (e: Exception) {
+                            // Gestisci l'errore (es. mostra un Snackbar)
+                        }
+                    }
+                }
             )
         }
     }

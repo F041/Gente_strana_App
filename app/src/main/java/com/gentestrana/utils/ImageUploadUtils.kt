@@ -10,6 +10,7 @@ import com.google.firebase.storage.ktx.storage
  * @param imageUri The URI of the selected image.
  * @param onComplete Callback that returns the download URL if successful, or an empty string on failure.
  */
+
 fun uploadProfileImage(uid: String, imageUri: Uri, onComplete: (String) -> Unit) {
     val storageRef = Firebase.storage.reference.child("profile_images/$uid.jpg")
     storageRef.putFile(imageUri)
