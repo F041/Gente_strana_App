@@ -1,3 +1,5 @@
+Quirky people: find (neurodiverse) people like you
+
 This app looks a bit like Tandem, the language exchange app, and connected2me. It has 2 languages, Italian and English, you can see it in res/values/strings and res/values-en/strings
 The user interace of the screenshots you see, might change in the future
 
