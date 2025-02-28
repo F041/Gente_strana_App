@@ -1,4 +1,4 @@
-This app looks a bit like Tandem, the language exchange app, and connected2me. 
+This app looks a bit like Tandem, the language exchange app, and connected2me. It has 2 languages, Italian and English, you can see it in res/values/strings and res/values-en/strings
 
 The user interace of the screenshots you see, might change in the future
 
@@ -15,6 +15,8 @@ to do:
 - profile pics gallery of user
 - fix topics in profilecard and uniform it to personalProfileScreen
 - sort usersListScreen by last active and remove the user's personal profile from the list
+
+if you fork this, you'd need to edit some strings in res/values/strings and res/values-en/strings, like the appname. 
 
 
 
