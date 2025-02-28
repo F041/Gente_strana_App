@@ -12,7 +12,7 @@ to do:
 - fix topics in profilecard and uniform it to personalProfileScreen
 - sort usersListScreen by last active and remove the user's personal profile from the list
 
-if you fork this, you'd need to edit some strings in res/values/strings and res/values-en/strings, like the appname. 
+if you fork this, you'd need to edit some strings in res/values/strings and res/values-en/strings, like the appname. And of course you'd need your own Firebase instance on google. Tham means also spitting blood with Firestore Database rules.
 
 
 
