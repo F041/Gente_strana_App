@@ -6,7 +6,6 @@ import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.*
@@ -35,7 +34,8 @@ fun MessageRow(
     chatMessage: ChatMessage,
     currentUserId: String,
     showAvatar: Boolean,
-    onDelete: () -> Unit
+    onDelete: (() -> Unit)? // Ora accetta un parametro nullable
+
 ) {
     val isCurrentUser = (chatMessage.sender == currentUserId)
     val rowAlignment = if (isCurrentUser) Alignment.CenterEnd else Alignment.CenterStart
@@ -45,29 +45,25 @@ fun MessageRow(
     val profilePicUrlState = remember { mutableStateOf("") }
 
     LaunchedEffect(chatMessage.sender) {
-        // Se il messaggio già contiene un URL, usalo
-        if (chatMessage.profilePicUrl.isNotBlank()) {
-            profilePicUrlState.value = chatMessage.profilePicUrl
+        // Resto del codice invariato
+        if (profilePicCache.containsKey(chatMessage.sender)) {
+            profilePicUrlState.value = profilePicCache[chatMessage.sender]!!
         } else {
-            // Se non è presente, prova a recuperarlo dalla cache o da Firestore
-            if (profilePicCache.containsKey(chatMessage.sender)) {
-                profilePicUrlState.value = profilePicCache[chatMessage.sender]!!
-            } else {
-                try {
-                    val userDoc = Firebase.firestore.collection("users")
-                        .document(chatMessage.sender)
-                        .get()
-                        .await()
-                    val picList = userDoc.get("profilePicUrl") as? List<String>
-                    val url = picList?.firstOrNull()
-                        ?: "https://icons.veryicon.com/png/o/system/ali-mom-icon-library/random-user.png"
-                    profilePicCache[chatMessage.sender] = url
-                    profilePicUrlState.value = url
-                } catch (e: Exception) {
-                    profilePicUrlState.value = "https://icons.veryicon.com/png/o/system/ali-mom-icon-library/random-user.png"
-                }
+            try {
+                val userDoc = Firebase.firestore.collection("users")
+                    .document(chatMessage.sender)
+                    .get()
+                    .await()
+                val picList = userDoc.get("profilePicUrl") as? List<String>
+                val url = picList?.firstOrNull()
+                    ?: "https://icons.veryicon.com/png/o/system/ali-mom-icon-library/random-user.png"
+                profilePicCache[chatMessage.sender] = url
+                profilePicUrlState.value = url
+            } catch (e: Exception) {
+                profilePicUrlState.value = "https://icons.veryicon.com/png/o/system/ali-mom-icon-library/random-user.png"
             }
         }
+        // }
     }
 
     Box(modifier = Modifier.fillMaxWidth()) {
@@ -103,7 +99,12 @@ fun MessageRow(
                     .padding(8.dp)
                     .combinedClickable(
                         onClick = {},
-                        onLongClick = { if (isCurrentUser) onDelete() }
+                        onLongClick = {
+                            // Doppio controllo per sicurezza
+                            if (isCurrentUser && onDelete != null) {
+                                onDelete()
+                            }
+                        }
                     )
             ) {
                 Column {

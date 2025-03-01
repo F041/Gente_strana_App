@@ -32,9 +32,13 @@
 
     // Zona chat
 
-    <string name="chat_with_user">Chat with %s</string>
+    <string name="chat_with_user">chat with %s</string>
     <string name="users_search_bar"> Search by topic, member</string>
     <string name="write_message">write a message</string>
+
+    // Zona Utente
+    <string name="user_bio">about me</string>
+    <string name="topics_box">topics</string>
 
 
     // Zona misc

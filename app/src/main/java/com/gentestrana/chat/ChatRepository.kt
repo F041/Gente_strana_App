@@ -179,8 +179,7 @@ class ChatRepository(
 
             val messagesRef = db.collection("chats/$chatId/messages")
             val query = messagesRef
-                .whereIn("status", listOf("SENT", "DELIVERED"))
-                .whereNotEqualTo("sender", currentUserId)
+                .whereEqualTo("status", "DELIVERED")
                 .get()
                 .await()
             Log.d("DEBUG", "Trovati ${query.documents.size} messaggi da aggiornare")
@@ -191,7 +190,7 @@ class ChatRepository(
             val batch = db.batch()
             query.documents.forEach { doc ->
                 // Aggiungi controllo per evitare aggiornamenti non necessari
-                if(doc.getString("status") != "READ") {
+                if (doc.getString("sender") != currentUserId) {
                     batch.update(doc.reference, "status", "READ")
                 }
             }
@@ -203,20 +202,25 @@ class ChatRepository(
         }
     }
 
-    suspend fun markMessagesAsDelivered(chatId: String, currentUserId: String){
-        Log.d("Repo", "Marca DELIVERED per chat: $chatId")
-        val currentUserId = auth.currentUser?.uid ?: return
-
+    suspend fun markMessagesAsDelivered(chatId: String, currentUserId: String) {
         val messagesRef = db.collection("chats/$chatId/messages")
 
+        // Cerca SOLO i messaggi dell'altro utente con status SENT
         val query = messagesRef
             .whereEqualTo("status", "SENT")
             .whereNotEqualTo("sender", currentUserId)
             .get()
             .await()
 
+        // Controllo aggiuntivo
+        val validDocs = query.documents.filter { doc ->
+            val participants = db.collection("chats").document(chatId).get().await()
+                .get("participants") as? List<String> ?: emptyList()
+            participants.contains(currentUserId)
+        }
+
         val batch = db.batch()
-        query.documents.forEach { doc ->
+        validDocs.forEach { doc ->
             batch.update(doc.reference, "status", "DELIVERED")
         }
         batch.commit().await()

@@ -58,7 +58,6 @@ class ProfileViewModel : ViewModel() {
             }
     }
 
-    // Funzione per aggiornare il profilo
     fun updateProfile(
         updatedUsername: String,
         updatedBio: String,
@@ -72,13 +71,11 @@ class ProfileViewModel : ViewModel() {
             "bio" to updatedBio,
             "topics" to updatedTopics.split(",").map { it.trim() },
             "profilePicUrl" to listOf(updatedProfilePicUrl)
-            // Aggiungi altri campi se necessario
         )
 
         firestore.collection("users").document(uid)
-            .set(updatedData)
+            .update(updatedData) // causa del permission denied che affligge da 5 giorni?
             .addOnSuccessListener {
-                // Aggiorna lo stato locale se necessario
                 _username.value = updatedUsername
                 _bio.value = updatedBio
                 _topicsText.value = updatedTopics
@@ -89,6 +86,7 @@ class ProfileViewModel : ViewModel() {
                 onFailure(e.message ?: "Errore sconosciuto")
             }
     }
+
 
     // Funzione per gestire l'upload dell'immagine (semplificata, la funzione uploadProfileImage esistente può essere integrata qui)
     fun uploadNewProfileImage(newImageUri: android.net.Uri, onComplete: (String) -> Unit) {

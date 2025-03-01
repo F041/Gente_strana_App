@@ -31,10 +31,9 @@
 
 // Zona chat
 
-
-    <string name="chat_with_user">Chatta con %s</string>
-    <string name="users_search_bar"> Cerca per argomento, membro</string>
-    <string name="write_message"> Scrivi un messaggio</string>
+    <string name="chat_with_user">chatta con %s</string>
+    <string name="users_search_bar"> cerca per argomento, membro</string>
+    <string name="write_message"> scrivi un messaggio</string>
 
 // Zona misc
     <string name="back">indietro</string>
@@ -42,7 +41,9 @@
     <string name="previous">precedente</string>
 
 
-
+// Zona Utente
+    <string name="user_bio">su di me</string>
+    <string name="topics_box">argomenti</string>
 
 
     <!-- Sostituisci "your_client_id_here" con il valore client ID ottenuto dalla console Firebase -->

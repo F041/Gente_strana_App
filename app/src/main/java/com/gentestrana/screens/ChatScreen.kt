@@ -32,7 +32,7 @@ import kotlinx.coroutines.delay
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ChatScreen(docId: String, navController: NavController) {
-    Log.d("ChatScreen", "docId: $docId")  // Log per debug
+    // Log.d("ChatScreen", "docId: $docId")  // Log per debug
     val db = Firebase.firestore
     val currentUser = Firebase.auth.currentUser
     val currentUserId = currentUser?.uid
@@ -58,11 +58,6 @@ fun ChatScreen(docId: String, navController: NavController) {
                     // 3. Marca i messaggi come DELIVERED
                     repository.markMessagesAsDelivered(docId, currentUserId)
 
-                    // 4. Attendi 1 secondo prima di READ (solo per debug)
-                    delay(1000L)
-
-                    // 5. Marca i messaggi come READ
-                    repository.markMessagesAsRead(docId)
 
                     // 6. Aggiorna l'UI in tempo reale
                     db.collection("chats/$docId/messages")
@@ -116,6 +111,7 @@ fun ChatScreen(docId: String, navController: NavController) {
 
 
     // Stato per la lista dei messaggi
+// In ChatScreen.kt
     val messagesState = produceState<List<ChatMessage>>(initialValue = emptyList()) {
         db.collection("chats")
             .document(docId)
@@ -126,9 +122,17 @@ fun ChatScreen(docId: String, navController: NavController) {
                     Log.e("ChatScreen", "Error fetching messages: ${e.message}")
                     return@addSnapshotListener
                 }
-                value = snapshot?.documents?.mapNotNull { doc ->
-                    doc.toObject(ChatMessage::class.java)?.copy(id = doc.id)
+
+                // Forza il refresh dello stato della chat
+                val messages = snapshot?.documents?.mapNotNull { doc ->
+                    try {
+                        doc.toObject(ChatMessage::class.java)?.copy(id = doc.id)
+                    } catch (e: Exception) {
+                        Log.e("ChatScreen", "Error parsing message ${doc.id}", e)
+                        null
+                    }
                 } ?: emptyList()
+                value = messages
             }
     }
 
@@ -199,10 +203,12 @@ fun ChatScreen(docId: String, navController: NavController) {
                                     chatMessage = message,
                                     currentUserId = currentUser.uid,
                                     showAvatar = isFirstInBlock,
-                                    onDelete = {
-                                        messageToDelete = message.id
-                                        showDeleteDialog = true
-                                    }
+                                    onDelete = if (message.sender == currentUser.uid) {
+                                        {
+                                            messageToDelete = message.id
+                                            showDeleteDialog = true
+                                        }
+                                    } else null // Passa null per i messaggi altrui
                                 )
                             }
                         }
@@ -284,6 +290,8 @@ fun sendMessage(chatId: String, sender: String, message: String) {
         "timestamp" to Timestamp.now(),
         "status" to "SENT"  // Vediamo se così ste regole funzionano...
     )
+    // Log dei campi inviati
+    Log.d("SEND_DEBUG", "Campi inviati: ${messageData.keys.joinToString()}")
 
     db.collection("chats")
         .document(chatId)
@@ -309,8 +317,6 @@ fun deleteMessage(chatId: String, messageId: String) {
             // To delete with unit test
             Log.e("ChatScreen", "Errore eliminazione messaggio", e)
         }
-
-
 }
 
 

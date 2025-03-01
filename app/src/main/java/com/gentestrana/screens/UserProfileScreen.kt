@@ -79,10 +79,8 @@ fun UserProfileScreen(
             ProfileContent(
                 user = user,
                 padding = padding,
-                descriptionItems = descriptionItems,
-                scrollState = scrollState,
-                currentDescriptionIndex = currentDescriptionIndex,
-                coroutineScope = coroutineScope,
+                //scrollState = scrollState,
+                //currentDescriptionIndex = currentDescriptionIndex,
                 onProfileImageClick = { showGallery = true },
                 navController = navController, // Passa navController
                 onStartChat = { // Lambda per avviare la chat

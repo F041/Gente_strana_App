@@ -5,11 +5,9 @@ import android.net.Uri
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.GoogleAuthProvider
 import com.google.firebase.auth.ktx.userProfileChangeRequest
-import com.google.firebase.firestore.SetOptions
 import com.google.firebase.firestore.ktx.firestore
 import com.google.firebase.ktx.Firebase
 import com.gentestrana.utils.uploadProfileImage
-import com.google.firebase.Timestamp
 
 class UserRepository {
 
@@ -122,50 +120,6 @@ class UserRepository {
                     .addOnFailureListener { e -> onFailure(e.message) }
             }
             .addOnFailureListener { e -> onFailure(e.message) }
-    }
-
-    /**
-     * Updates the user profile in Firestore and FirebaseAuth.
-     */
-    fun updateUserProfile(
-        uid: String,
-        username: String,
-        bio: String,
-        description: String,
-        profilePicUrl: String,
-        age: Int,
-        sex: String,
-        onSuccess: () -> Unit,
-        onFailure: (String?) -> Unit
-    ) {
-        val updatedData = mapOf(
-            "username" to username,
-            "bio" to bio,
-            "description" to description,
-            "profilePicUrl" to profilePicUrl,
-            "age" to age,
-            "sex" to sex
-        )
-        firestore.collection("users").document(uid)
-            .set(updatedData, SetOptions.merge())
-            .addOnSuccessListener {
-                val user = auth.currentUser
-                val profileUpdates = userProfileChangeRequest {
-                    displayName = username
-                    photoUri = if (profilePicUrl.isNotEmpty()) Uri.parse(profilePicUrl) else null
-                }
-                user?.updateProfile(profileUpdates)
-                    ?.addOnCompleteListener { task ->
-                        if (task.isSuccessful) {
-                            onSuccess()
-                        } else {
-                            onFailure(task.exception?.message)
-                        }
-                    }
-            }
-            .addOnFailureListener { e ->
-                onFailure(e.message)
-            }
     }
 
     /**
