@@ -12,7 +12,8 @@ import com.google.firebase.storage.ktx.storage
  */
 
 fun uploadProfileImage(uid: String, imageUri: Uri, onComplete: (String) -> Unit) {
-    val storageRef = Firebase.storage.reference.child("profile_images/$uid.jpg")
+    // Modifica il percorso per includere la cartella userId
+    val storageRef = Firebase.storage.reference.child("profile_images/${uid}/${uid}.jpg")
     storageRef.putFile(imageUri)
         .addOnSuccessListener {
             storageRef.downloadUrl.addOnSuccessListener { downloadUri ->

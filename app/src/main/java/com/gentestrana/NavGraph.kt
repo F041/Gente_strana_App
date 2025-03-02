@@ -50,7 +50,6 @@ fun AppNavHost(navController: NavHostController) {
             composable("mainTabs") {
                 MainTabsScreen(navController)
             }
-
             composable("userProfile/{docId}") { backStackEntry ->
                 val docId = backStackEntry.arguments?.getString("docId") ?: ""
                 UserProfileScreen(docId = docId, navController = navController)
@@ -65,7 +64,16 @@ fun AppNavHost(navController: NavHostController) {
                 val docId = backStackEntry.arguments?.getString("docId") ?: ""
                 ChatScreen(docId = docId, navController = navController)
             }
+        }
 
+        composable("profile_pictures_screen") {
+            val savedStateHandle = navController.previousBackStackEntry?.savedStateHandle
+            val imageUrls = savedStateHandle?.get<List<String>>("imageUrls") ?: emptyList()
+
+            ProfilePicturesScreen(
+                imageUrls = imageUrls,
+//                onAddImage = { /* Aggiungere logica di caricamento */ }
+            )
         }
     }
 }

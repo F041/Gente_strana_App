@@ -30,7 +30,7 @@ fun UserPicsGallery(
                     }
                 ),
                 contentDescription = null,
-                contentScale = ContentScale.Crop,
+                contentScale = ContentScale.None, // Mostra immagine originale
                 modifier = Modifier
                     .size(imageSize.dp)
                     .clip(MaterialTheme.shapes.medium)

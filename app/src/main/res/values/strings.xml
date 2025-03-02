@@ -35,20 +35,21 @@
     <string name="users_search_bar"> cerca per argomento, membro</string>
     <string name="write_message"> scrivi un messaggio</string>
 
+
+// Zona Utente
+    <string name="photos">foto</string>
+    <string name="user_bio">su di me</string>
+    <string name="topics_box">argomenti</string>
+
 // Zona misc
     <string name="back">indietro</string>
     <string name="next">successivo</string>
     <string name="previous">precedente</string>
-
-
-// Zona Utente
-    <string name="user_bio">su di me</string>
-    <string name="topics_box">argomenti</string>
+    <string name="close">chiudi</string>
+    <string name="profile_picture">immagine profilo</string>
 
 
     <!-- Sostituisci "your_client_id_here" con il valore client ID ottenuto dalla console Firebase -->
     <string name="default_web_client_id">1:534267923003:android:177d8fe01f43783a756a1e</string>
-    <string name="photos">foto</string>
-    <string name="close">chiudi</string>
-    <string name="profile_picture">immagine profilo</string>
+
 </resources>

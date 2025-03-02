@@ -6,14 +6,19 @@ import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Logout
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
@@ -114,15 +119,26 @@ fun PersonalProfileScreen(
                 .fillMaxSize()
                 .padding(paddingValues)
                 .padding(16.dp)
-                .verticalScroll(rememberScrollState())
+                .verticalScroll(rememberScrollState()),
+            horizontalAlignment = Alignment.CenterHorizontally
         ) {
             Spacer(modifier = Modifier.height(16.dp))
-            // Mostra l'immagine del profilo: se è presente una nuova immagine, la usa, altrimenti quella gestita dal ViewModel
-            Image(
-                painter = rememberAsyncImagePainter(newImageUri ?: profilePicUrl),
-                contentDescription = "Profile Picture",
-                modifier = Modifier.size(100.dp)
-            )
+            // Mostra l'immagine del profilo
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth(0.4f) // <--- Usa una frazione di fillMaxWidth, es. 0.5f (50% della larghezza)
+                    .aspectRatio(1f)
+                    .clip(RoundedCornerShape(8.dp))
+                    .background(MaterialTheme.colorScheme.surfaceVariant)
+                    .align(Alignment.CenterHorizontally) // Centra il Box orizzontalmente (opzionale)
+            ) {
+                Image(
+                    painter = rememberAsyncImagePainter(newImageUri ?: profilePicUrl),
+                    contentDescription = "Profile Picture",
+                    modifier = Modifier.fillMaxSize(), // Mantieni fillMaxSize per riempire il Box (ora più piccolo)
+                    contentScale = ContentScale.Crop
+                )
+            }
             Spacer(modifier = Modifier.height(8.dp))
             // Bottone per scegliere una nuova immagine dalla galleria
             Button(
@@ -130,7 +146,6 @@ fun PersonalProfileScreen(
                 modifier = Modifier.fillMaxWidth()
             ) {
                 Text(text = stringResource(R.string.change_profile_picture))
-
             }
             if (newImageUri != null) {
                 Spacer(modifier = Modifier.height(8.dp))
@@ -217,6 +232,8 @@ fun PersonalProfileScreen(
 
             Spacer(modifier = Modifier.height(16.dp))
 
+
+
             // Bottone per salvare gli aggiornamenti del profilo
             Button(
                 onClick = {
@@ -239,7 +256,5 @@ fun PersonalProfileScreen(
                 Text(text = stringResource(R.string.save_profile))
             }
         }
-
     }
-
 }

@@ -7,6 +7,7 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowForward
@@ -17,6 +18,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
@@ -29,6 +31,7 @@ import com.gentestrana.utils.getFlagEmoji
 import com.gentestrana.utils.getLanguageName
 import com.gentestrana.components.TopicsBox
 import com.gentestrana.components.BioBox
+import com.gentestrana.users.UserPicsGallery
 
 @Composable
 fun ProfileContent(
@@ -49,35 +52,37 @@ fun ProfileContent(
             text = "${user.username}, ${computeAgeFromTimestamp(user.birthTimestamp)}",
             style = MaterialTheme.typography.headlineMedium,
             modifier = Modifier
-                .padding(16.dp)
+                .padding(horizontal = 16.dp)
                 .align(Alignment.CenterHorizontally)
         )
+
+        Spacer(modifier = Modifier.height(8.dp)) // 8 perché senno vedo uno spazio aggiuntivo
+        // per niente elegante ma pazienza
 
         // Immagine profilo
         Box(
             modifier = Modifier
-                .fillMaxWidth()
-                .padding(16.dp)
-                .clickable(onClick = onProfileImageClick),
-            contentAlignment = Alignment.Center
+                .fillMaxWidth(0.4f) // <--- Usa una frazione di fillMaxWidth, es. 0.5f
+                .aspectRatio(1f)     // <--- Forza aspect ratio 1:1 (quadrato)
+                .clip(RoundedCornerShape(8.dp)) // <--- Bordi arrotondati
+                .background(MaterialTheme.colorScheme.surfaceVariant) // <--- Sfondo (opzionale)
+                .align(Alignment.CenterHorizontally) // <--- Centra il Box orizzontalmente
+                .clickable { // <--- Mantieni il comportamento clickable
+                    navController.currentBackStackEntry?.savedStateHandle?.set("imageUrls", user.profilePicUrl)
+                    navController.navigate("profile_pictures_screen")
+                },
+            contentAlignment = Alignment.Center // <--- Mantieni contentAlignment
         ) {
-            LazyRow(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(16.dp),
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
-                items(user.profilePicUrl) { imageUrl ->
-                    Image(
-                        painter = rememberAsyncImagePainter(imageUrl),
-                        contentDescription = "Gallery image",
-                        modifier = Modifier
-                            .size(120.dp)
-                            .clip(MaterialTheme.shapes.medium)
-                    )
-                }
-            }
+            Image(
+                painter = rememberAsyncImagePainter(user.profilePicUrl.firstOrNull()), // Prendi la prima immagine per ora
+                contentDescription = "Profile Picture",
+                modifier = Modifier.fillMaxSize(), // <--- Image riempie il Box
+                contentScale = ContentScale.Crop // <--- contentScale Crop
+            )
         }
+
+        Spacer(modifier = Modifier.height(16.dp))
+
 
         // Contenitore esterno con larghezza fissa per TopicsBox e BioBox
         Box(
@@ -134,3 +139,5 @@ fun ProfileContent(
         }
     }
 }
+
+

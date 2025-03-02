@@ -79,6 +79,8 @@ dependencies {
     implementation ("com.google.accompanist:accompanist-swiperefresh:0.32.0")
     implementation ("androidx.lifecycle:lifecycle-viewmodel-compose:2.6.2")
     implementation("com.google.accompanist:accompanist-navigation-animation:0.32.0")
+    implementation ("com.google.accompanist:accompanist-pager:0.28.0")
+
 
     testImplementation ("junit:junit:4.13.2")              // Framework per test
     testImplementation ("org.mockito:mockito-core:5.3.1")  // Per creare oggetti "finti" (mock)

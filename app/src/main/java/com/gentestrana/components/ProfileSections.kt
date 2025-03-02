@@ -1,8 +1,8 @@
 package com.gentestrana.components
 
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
@@ -25,67 +25,68 @@ import androidx.compose.ui.platform.LocalConfiguration
 
 import com.gentestrana.R
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
-import androidx.compose.foundation.lazy.grid.GridCells
-import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.layout.ContentScale
 import coil.compose.rememberAsyncImagePainter
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.ui.layout.ContentScale
+import com.google.accompanist.pager.*
 
+@OptIn(ExperimentalPagerApi::class)
 @Composable
-fun ProfilePicturesScreen(
+fun ProfilePhotoCarousel(
     imageUrls: List<String>,
-    modifier: Modifier = Modifier,
-    onAddImage: (() -> Unit)? = null
+    modifier: Modifier = Modifier
 ) {
-    Column(
-        modifier = modifier
-            .fillMaxSize()
-            .padding(16.dp)
-    ) {
-        // Titolo centrato
-        Text(
-            text = "LE TUE FOTO",  // In seguito potrai sostituirlo con stringResource(R.string.profile_pictures_title)
-            style = MaterialTheme.typography.headlineMedium,
-            modifier = Modifier.align(Alignment.CenterHorizontally)
-        )
-        Spacer(modifier = Modifier.height(16.dp))
+    val pagerState = rememberPagerState()
 
-        // Griglia di immagini
-        LazyVerticalGrid(
-            columns = GridCells.Fixed(2),
-            verticalArrangement = Arrangement.spacedBy(8.dp),
-            horizontalArrangement = Arrangement.spacedBy(8.dp),
-            modifier = Modifier.fillMaxSize()
-        ) {
-            items(imageUrls) { url ->
-                // Mostra ogni immagine in un box quadrato
-                androidx.compose.foundation.Image(
-                    painter = rememberAsyncImagePainter(url),
-                    contentDescription = null,
-                    contentScale = ContentScale.Crop,
+    Column(modifier = modifier) {
+        HorizontalPager(
+            count = imageUrls.size,
+            state = pagerState,
+            modifier = Modifier
+                .fillMaxWidth()
+        ) { page ->
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth(1f)
+                    .aspectRatio(1f)
+                    .fillMaxSize()
+                    .padding(8.dp)
+            ) {
+                Image(
+                    painter = rememberAsyncImagePainter( // <-- Aggiungi painter
+                        model = imageUrls[page] // Usa l'URL corretto
+                    ),
+                    contentDescription = "foto utente",
+                    contentScale = ContentScale.Fit,
                     modifier = Modifier
-                        .aspectRatio(1f)
+                        .fillMaxSize()
                         .clip(RoundedCornerShape(8.dp))
                 )
             }
-            // Se ci sono meno di 5 foto, mostra un box "Aggiungi foto"
-            if (imageUrls.size < 5) {
-                item {
-                    Box(
-                        modifier = Modifier
-                            .aspectRatio(1f)
-                            .clip(RoundedCornerShape(8.dp))
-                            .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.2f))
-                            .clickable { onAddImage?.invoke() },
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Text(
-                            text = "+",
-                            style = MaterialTheme.typography.headlineLarge
-                        )
-                    }
+        }
+
+        // Indicatori (pallini) sotto il carosello
+        Row(
+            horizontalArrangement = Arrangement.Center,
+            verticalAlignment = Alignment.CenterVertically,
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(top = 8.dp)
+        ) {
+            for (i in imageUrls.indices) {
+                val color = if (i == pagerState.currentPage) {
+                    MaterialTheme.colorScheme.primary
+                } else {
+                    MaterialTheme.colorScheme.onSurface.copy(alpha = 0.3f)
                 }
+                Box(
+                    modifier = Modifier
+                        .size(12.dp)
+                        .padding(2.dp)
+                        .clip(CircleShape)
+                        .background(color)
+                )
             }
         }
     }

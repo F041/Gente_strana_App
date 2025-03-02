@@ -2,6 +2,9 @@ package com.gentestrana.users
 
 import com.google.firebase.Timestamp
 import com.google.firebase.firestore.PropertyName
+import java.util.Calendar
+import java.util.TimeZone
+
 /**
 
 Modello dati per l'utente.
@@ -48,8 +51,13 @@ data class User(
     // Proprietà calcolata per ottenere il timestamp in millisecondi
     val birthTimestamp: Long
         get() = when (rawBirthTimestamp) {
-            is Timestamp -> rawBirthTimestamp.toDate().time
-            is Long -> rawBirthTimestamp
+            is Timestamp -> {
+                // Converti il Timestamp di Firebase in Calendar UTC
+                val cal = Calendar.getInstance(TimeZone.getTimeZone("UTC")).apply {
+                    timeInMillis = rawBirthTimestamp.toDate().time
+                }
+                cal.timeInMillis // Restituisci timestamp UTC
+            }
             else -> 0L
         }
 }
