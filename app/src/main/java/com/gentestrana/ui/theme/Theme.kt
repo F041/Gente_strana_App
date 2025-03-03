@@ -22,8 +22,9 @@ private val NeuroDarkColorScheme = darkColorScheme(
     onSecondary = Color.White,
     onTertiary = Color.Black,
     onBackground = NeuroPrimary,   // Example: 'onBackground' should contrast with background
-    onSurface = NeuroPrimary      // Example: 'onSurface' should contrast with surface
-)
+    onSurface = NeuroPrimary,      // Example: 'onSurface' should contrast with surface
+    secondaryContainer = NeuroBeige // non ha senso metterlo anche qui
+    )
 
 private val NeuroLightColorScheme = lightColorScheme(
     primary = NeuroPrimary,       // Example: Use NeuroPrimary as primary
@@ -35,8 +36,9 @@ private val NeuroLightColorScheme = lightColorScheme(
     onSecondary = Color.White,
     onTertiary = Color.Black,
     onBackground = NeuroPrimary,   // Example: 'onBackground' should contrast with background
-    onSurface = NeuroPrimary      // Example: 'onSurface' should contrast with surface
-)
+    onSurface = NeuroPrimary,      // Example: 'onSurface' should contrast with surface
+    secondaryContainer = NeuroBeige
+    )
 
 @Composable
 fun GenteStranaTheme(

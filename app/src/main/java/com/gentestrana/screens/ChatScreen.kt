@@ -26,8 +26,6 @@ import com.gentestrana.R
 import com.gentestrana.chat.ChatRepository
 import com.gentestrana.chat.DateSeparatorRow
 import com.gentestrana.utils.getDateSeparator
-import com.google.firebase.firestore.DocumentChange
-import kotlinx.coroutines.delay
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -42,73 +40,41 @@ fun ChatScreen(docId: String, navController: NavController) {
     // Stato per il nome del destinatario
     var recipientName by remember { mutableStateOf("Nome destinatario") }
 
+    // In ChatScreen.kt
     LaunchedEffect(docId, currentUserId) {
         if (currentUserId != null) {
             try {
-                val repository = ChatRepository()
-
-                // 1. Ottieni i partecipanti alla chat
-                val chatDoc = db.collection("chats").document(docId).get().await()
-                val participants = chatDoc.get("participants") as? List<String> ?: emptyList()
-
-                // 2. Identifica l'altro utente
-                val otherUserId = participants.firstOrNull { it != currentUserId }
-
-                if (otherUserId != null) {
-                    // 3. Marca i messaggi come DELIVERED
-                    repository.markMessagesAsDelivered(docId, currentUserId)
-
-
-                    // 6. Aggiorna l'UI in tempo reale
-                    db.collection("chats/$docId/messages")
-                        .whereEqualTo("sender", otherUserId)
-                        .addSnapshotListener { snapshot, _ ->
-                            snapshot?.documentChanges?.forEach { change ->
-                                if (change.type == DocumentChange.Type.MODIFIED) {
-                                    val newStatus = change.document.getString("status")
-                                    Log.d("StatusUpdate", "Nuovo stato: $newStatus")
-                                }
-                            }
-                        }
-                }
-            } catch (e: Exception) {
-                Log.e("ChatScreen", "Errore aggiornamento stato messaggi", e)
-            }
-        }
-    }
-
-    // Recupero ottimizzato del nome del destinatario
-    LaunchedEffect(docId, currentUserId) {
-        if (currentUserId != null) {
-            try {
+                // Recupera il documento della chat una sola volta
                 val chatDocSnapshot = db.collection("chats").document(docId).get().await()
                 val participants = chatDocSnapshot.get("participants") as? List<String> ?: emptyList()
+
+                // Identifica l'altro utente
                 val otherUserId = participants.firstOrNull { it != currentUserId && it.isNotBlank() }
+
                 if (otherUserId != null) {
+                    // Aggiorna il nome del destinatario
                     val userDoc = db.collection("users").document(otherUserId).get().await()
                     recipientName = userDoc.getString("username") ?: "Sconosciuto"
-                }
-                // bestiale sto pezzo
-                if (otherUserId != null) {
-                    // Controlla se il current user è il destinatario
-                    val isRecipient = participants.any {
-                        it == currentUserId && it != otherUserId
-                    }
 
-                    if (isRecipient) {
-                        val repository = ChatRepository()
-                        repository.markMessagesAsRead(
-                            chatId = docId,
-                        )
-                    }
+                    // Chiama markMessagesAsDelivered per i messaggi dell'altro utente
+                    val repository = ChatRepository()
+                    repository.markMessagesAsDelivered(docId, currentUserId)
+
+                    // Se il currentUser è il destinatario (o in base alla logica desiderata),
+                    // marca i messaggi come letti
+                    // (qui puoi personalizzare la logica; ad esempio, se currentUser è effettivamente
+                    // il destinatario oppure in base ad altri controlli)
+                    repository.markMessagesAsRead(chatId = docId)
                 }
+
+                // Eventuale listener per aggiornamenti di messaggi può essere mantenuto separato,
+                // oppure integrato se il suo ambito è chiaro.
 
             } catch (e: Exception) {
-                Log.e("ChatScreen", "Errore nel recupero del destinatario: ${e.message}")
+                Log.e("ChatScreen", "Errore nel recupero e aggiornamento dati della chat: ${e.message}")
             }
         }
     }
-
 
     // Stato per la lista dei messaggi
 // In ChatScreen.kt

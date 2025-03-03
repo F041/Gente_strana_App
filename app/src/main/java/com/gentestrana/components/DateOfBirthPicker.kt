@@ -51,7 +51,7 @@ fun DateOfBirthPicker(
             // Cambiare con stringa?
             sdf.format(Date(birthTimestamp))
         } else {
-            stringResource(R.string.set_birhdate)
+            stringResource(R.string.set_birthdate)
         }
         Text(text = displayText)
     }

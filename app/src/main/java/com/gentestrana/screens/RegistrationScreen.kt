@@ -1,9 +1,11 @@
 package com.gentestrana.screens
 
 import android.net.Uri
+import android.util.Log
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -16,6 +18,16 @@ import com.google.firebase.auth.ktx.userProfileChangeRequest
 import com.google.firebase.firestore.ktx.firestore
 import com.google.firebase.ktx.Firebase
 import com.gentestrana.utils.uploadProfileImage
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Female
+import androidx.compose.material.icons.filled.Male
+import androidx.compose.material.icons.filled.QuestionMark
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.stringResource
+import com.gentestrana.R
+import androidx.compose.foundation.shape.RoundedCornerShape
 
 @Composable
 fun RegistrationScreen(onRegistrationSuccess: () -> Unit) {
@@ -27,6 +39,8 @@ fun RegistrationScreen(onRegistrationSuccess: () -> Unit) {
     var username by remember { mutableStateOf("") }
     var isLoading by remember { mutableStateOf(false) }
     var errorMessage by remember { mutableStateOf<String?>(null) }
+    var sex by remember { mutableStateOf("Undefined") } // Stato per il sesso selezionato
+
 
     var selectedImageUri by remember { mutableStateOf<Uri?>(null) }
     val imagePickerLauncher = rememberLauncherForActivityResult(
@@ -79,6 +93,77 @@ fun RegistrationScreen(onRegistrationSuccess: () -> Unit) {
             )
             Spacer(modifier = Modifier.height(8.dp))
 
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceAround,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                // Icona per Maschio
+                Column(
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    modifier = Modifier
+                        .clip(RoundedCornerShape(16.dp)) // Bordo arrotondato opzionale
+                        .background(if (sex == "M") MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.6f) else Color.Transparent) // Sfondo colorato se selezionato
+                        .padding(8.dp) // Padding interno per lo sfondo
+                ) {
+                    IconButton(onClick = {
+                        sex = "M"
+                        Log.d("RegistrationScreen", "Sesso selezionato: Maschio") // Aggiunto Log
+                    }) {
+                        Icon(
+                            imageVector = Icons.Filled.Male,
+                            contentDescription = stringResource(R.string.sex_male),
+                            tint = if (sex == "M") MaterialTheme.colorScheme.primary else Color.Gray
+                        )
+                    }
+                    Text(stringResource(R.string.sex_male))
+                }
+
+                // Icona per Femmina
+                Column(
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    modifier = Modifier
+                        .clip(RoundedCornerShape(16.dp)) // Bordo arrotondato opzionale
+                        .background(if (sex == "F") MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.6f) else Color.Transparent) // Sfondo colorato se selezionato
+                        .padding(8.dp) // Padding interno per lo sfondo
+                ) {
+                    IconButton(onClick = {
+                        sex = "F"
+                        Log.d("RegistrationScreen", "Sesso selezionato: Femmina") // Aggiunto Log
+                    }) {
+                        Icon(
+                            imageVector = Icons.Filled.Female,
+                            contentDescription = stringResource(R.string.sex_female),
+                            tint = if (sex == "F") MaterialTheme.colorScheme.primary else Color.Gray
+                        )
+                    }
+                    Text(stringResource(R.string.sex_female))
+                }
+
+                // Icona per Non definito
+                Column(
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    modifier = Modifier
+                        .clip(RoundedCornerShape(16.dp)) // Bordo arrotondato opzionale
+                        .background(if (sex == "Undefined") MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.6f) else Color.Transparent) // Sfondo colorato se selezionato
+                        .padding(8.dp) // Padding interno per lo sfondo
+                ) {
+                    IconButton(onClick = {
+                        sex = "Undefined"
+                        Log.d("RegistrationScreen", "Sesso selezionato: Non definito") // Aggiunto Log
+                    }) {
+                        Icon(
+                            imageVector = Icons.Filled.QuestionMark,
+                            contentDescription = stringResource(R.string.sex_undefined),
+                            tint = if (sex == "Undefined") MaterialTheme.colorScheme.primary else Color.Gray
+                        )
+                    }
+                    Text(stringResource(R.string.sex_undefined))
+                }
+            }
+            Spacer(modifier = Modifier.height(8.dp))
+
+
             Button(
                 onClick = { imagePickerLauncher.launch("image/*") },
                 modifier = Modifier.fillMaxWidth()
@@ -106,6 +191,7 @@ fun RegistrationScreen(onRegistrationSuccess: () -> Unit) {
                         email = email,
                         password = password,
                         username = username,
+                        sex = sex, // Passa la variabile sex
                         selectedImageUri = selectedImageUri,
                         context = context,
                         onSuccess = {
@@ -135,6 +221,7 @@ fun registerUserAndUploadImage(
     email: String,
     password: String,
     username: String,
+    sex: String, // Aggiunto parametro sex
     selectedImageUri: Uri?,
     context: android.content.Context,
     onSuccess: () -> Unit,
@@ -154,7 +241,7 @@ fun registerUserAndUploadImage(
                 "username" to username,
                 "profilePicUrl" to "",
                 "age" to 0,
-                "sex" to ""
+                "sex" to sex // Usa la variabile sex passata come parametro
             )
 
             firestore.collection("users").document(uid)

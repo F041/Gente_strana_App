@@ -38,7 +38,9 @@ class ProfileViewModel : ViewModel() {
     private val _spokenLanguages = mutableStateOf("")
     val spokenLanguages: State<String> get() = _spokenLanguages
 
-    // Altri stati (birthTimestamp, sex, spokenLanguages, location, ecc.) possono essere aggiunti qui
+    private val _location = MutableStateFlow("")
+    val location: StateFlow<String> = _location
+
 
     init {
         // Carica i dati dell'utente da Firestore
@@ -50,7 +52,7 @@ class ProfileViewModel : ViewModel() {
                     _bio.value = it.bio
                     _topicsText.value = it.topics.joinToString(", ")
                     _profilePicUrl.value = it.profilePicUrl.firstOrNull() ?: "res/drawable/random_user.webp"
-                    // Aggiorna gli altri stati se necessario
+                    _location.value = it.location ?: ""
                 }
             }
             .addOnFailureListener { e ->
@@ -70,7 +72,8 @@ class ProfileViewModel : ViewModel() {
             "username" to updatedUsername,
             "bio" to updatedBio,
             "topics" to updatedTopics.split(",").map { it.trim() },
-            "profilePicUrl" to listOf(updatedProfilePicUrl)
+            "profilePicUrl" to listOf(updatedProfilePicUrl),
+            "location" to _location.value
         )
 
         firestore.collection("users").document(uid)
@@ -112,6 +115,10 @@ class ProfileViewModel : ViewModel() {
         _bio.value = newBio
     }
 
+    fun setLocation(newLocation: String) {
+        _location.value = newLocation
+    }
+
     // Carica i dati iniziali dall'utente
     fun loadUserData() {
         viewModelScope.launch {
@@ -128,6 +135,7 @@ class ProfileViewModel : ViewModel() {
 //                println("5. Lingue trovate: $languages")
                 _spokenLanguages.value = languages
 //                println("6. Stato aggiornato: ${_spokenLanguages.value}")
+
             } catch (e: Exception) {
                 println("ERRORE durante il caricamento: ${e.message}")
             }

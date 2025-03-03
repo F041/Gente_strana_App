@@ -35,7 +35,7 @@ data class User(
     @PropertyName("profilePicUrl")
     val profilePicUrl: List<String> = listOf("res/drawable/random_user.webp"), // Sempre una lista
     val rawBirthTimestamp: Any? = null,
-    val sex: String = "Undefined",
+    val sex: String = "Undefined", // Campo per il sesso: "M", "F" o "Undefined"
     val docId: String = "",
     val fcmToken: String = "",
     val spokenLanguages: List<String> = emptyList(),
@@ -60,12 +60,4 @@ data class User(
             }
             else -> 0L
         }
-}
-
-// Lista di sex supportata
-enum class sex
-{
-    MALE,
-    FEMALE,
-    UNDEFINED,
 }

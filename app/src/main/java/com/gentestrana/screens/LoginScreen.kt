@@ -8,6 +8,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
+import com.gentestrana.R
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.FirebaseUser
 
@@ -51,8 +52,7 @@ fun LoginScreen(
         Button(
             onClick = {
                 if (email.isBlank() || password.isBlank()) {
-                    Toast.makeText(context, "Please fill in all fields", Toast.LENGTH_SHORT).show()
-                    return@Button
+                    Toast.makeText(context, context.getString(R.string.login_fill_fields), Toast.LENGTH_SHORT).show();                   return@Button
                 }
 
                 isLoading = true // Start loading
@@ -60,14 +60,10 @@ fun LoginScreen(
                     .addOnCompleteListener { task ->
                         isLoading = false // Stop loading
                         if (task.isSuccessful) {
-                            Toast.makeText(context, "Login successful!", Toast.LENGTH_SHORT).show()
+                            Toast.makeText(context, context.getString(R.string.login_successful), Toast.LENGTH_SHORT).show()
                             task.result?.user?.let { onLoginSuccess(it) }
                         } else {
-                            Toast.makeText(
-                                context,
-                                "Authentication failed: ${task.exception?.message}",
-                                Toast.LENGTH_SHORT
-                            ).show()
+                            Toast.makeText(context, context.getString(R.string.login_failed, task.exception?.message), Toast.LENGTH_SHORT).show()
                         }
                     }
             },
@@ -83,7 +79,7 @@ fun LoginScreen(
         Spacer(modifier = Modifier.height(16.dp))
         // Pulsante per navigare alla schermata di registrazione
         TextButton(onClick = onNavigateToRegistration) {
-            Text("Don't have an account? Register")
+            Text(context.getString(R.string.register_prompt))
         }
         Spacer(modifier = Modifier.height(16.dp))
         // Sezione per il login con Google

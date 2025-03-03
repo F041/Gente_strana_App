@@ -3,6 +3,7 @@ package com.gentestrana.utils
 import android.net.Uri
 import com.google.firebase.ktx.Firebase
 import com.google.firebase.storage.ktx.storage
+import kotlinx.coroutines.tasks.await
 
 /**
  * Uploads the profile image to Firebase Storage and returns the download URL via onComplete.
@@ -25,4 +26,29 @@ fun uploadProfileImage(uid: String, imageUri: Uri, onComplete: (String) -> Unit)
         .addOnFailureListener {
             onComplete("")
         }
+}
+
+suspend fun uploadMultipleImages(
+    uid: String,
+    uris: List<Uri>
+): List<String> {
+    val storage = Firebase.storage
+    val results = mutableListOf<String>()
+
+    uris.forEach { uri ->
+        val imageRef = storage.reference.child(
+            "users/$uid/gallery/${System.currentTimeMillis()}.jpg"
+        )
+
+        val downloadUrl = imageRef.putFile(uri)
+            .await()
+            .storage
+            .downloadUrl
+            .await()
+            .toString()
+
+        results.add(downloadUrl)
+    }
+
+    return results
 }

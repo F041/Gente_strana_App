@@ -55,8 +55,7 @@ fun MessageRow(
                     .get()
                     .await()
                 val picList = userDoc.get("profilePicUrl") as? List<String>
-                val url = picList?.firstOrNull()
-                    ?: "https://icons.veryicon.com/png/o/system/ali-mom-icon-library/random-user.png"
+                val url = picList?.firstOrNull() ?: "android.resource://com.gentestrana/drawable/random_user"
                 profilePicCache[chatMessage.sender] = url
                 profilePicUrlState.value = url
             } catch (e: Exception) {

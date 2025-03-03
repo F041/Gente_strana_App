@@ -2,30 +2,44 @@
 <resources>
     <string name="app_name">GenteStrana</string>
 
+// Zona login
+    <string name="login_fill_fields">compila tutti i campi</string>
+    <string name="login_successful">accesso avvenuto</string>
+    <string name="login_failed">autenticazione fallita: %1$s</string>
+    <string name="register_prompt">non hai un account? Registrati</string>
+
+
 // Zona profilo
     <string name="personal_profile">profilo personale</string>
     <string name="change_profile_picture">cambia immagine profilo</string>
     <string name="upload_new_profile_picture">carica nuova immagine profilo</string>
     <string name="profile_picture_updated">immagine aggiornata</string>
-
     <string name="speaks">parla</string>
     <string name="languages_spoken">lingue parlate</string>
     <string name="select_languages">seleziona lingue</string>
     <string name="search_hint">cerca una lingua...</string>
     <string name="selected_languages">lingue selezionate</string>
     <string name="user_profile">profilo utente</string>
+
+
     <string name="edit">modifica</string>
     <string name="save">salva</string>
     <string name="cancel">cancella</string>
     <string name="first_name">nome</string>
     <string name="name_placeholder">metti SOLO il tuo primo nome, es. Marco</string>
+    <string name="error_empty_field">questo campo non può essere vuoto</string>
+    <string name="error_min_length">inserisci almeno %1$d caratteri</string>
+
+
     <string name="bio_placeholder">es .mi piace x,y,z, a scuola andavo bene e leggo fiction</string>
     <string name="bio_title">parla di te</string>
     <string name="topics_title">i miei argomenti</string>
     <string name="topics_placeholder">es. parliamo di tennis amatoriale</string>
     <string name="add">aggiungi</string>
-    <string name="set_birhdate">seleziona data di nascita</string>
+    <string name="set_birthdate">seleziona data di nascita</string>
 
+    <string name="get_location">ottieni località</string>
+    <string name="your_location">la tua località</string>
     <string name="save_profile">salva profilo</string>
 
 
@@ -47,6 +61,9 @@
     <string name="previous">precedente</string>
     <string name="close">chiudi</string>
     <string name="profile_picture">immagine profilo</string>
+    <string name="sex_male">maschio</string>
+    <string name="sex_female">femmina</string>
+    <string name="sex_undefined">non definito</string>
 
 
     <!-- Sostituisci "your_client_id_here" con il valore client ID ottenuto dalla console Firebase -->

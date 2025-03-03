@@ -1,7 +1,10 @@
 @file:OptIn(ExperimentalMaterial3Api::class)
 package com.gentestrana.screens
 
+import android.content.Context
+import android.content.pm.PackageManager
 import android.net.Uri
+import android.util.Log
 import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
@@ -34,6 +37,8 @@ import com.gentestrana.components.ProfileBioBox
 import com.gentestrana.components.ProfileLanguagesField
 import com.gentestrana.components.ProfileTextField
 import com.gentestrana.components.ProfileTopicsList
+import com.gentestrana.utils.LocationUtils
+import com.gentestrana.utils.OperationResult
 
 
 /**
@@ -80,6 +85,42 @@ fun PersonalProfileScreen(
     // Altri stati locali per campi non ancora gestiti nel ViewModel
     var isUploading by remember { mutableStateOf(false) }
     var newImageUri by remember { mutableStateOf<Uri?>(null) }
+    var isLocationLoading by remember { mutableStateOf(false) }
+
+    // **INIZIO FUNZIONE getLocation (LOCAL FUNCTION) - SPOSTATA QUI**
+    fun getLocation(context: Context) {
+        isLocationLoading = true
+        // **USA DIRETTAMENTE requestCurrentLocationName (CHE GESTISCE GIA' GPS E NETWORK)**
+        // **USA DIRETTAMENTE requestCurrentLocationName (CHE GESTISCE GIA' GPS E NETWORK)**
+        LocationUtils.requestCurrentLocationName(context) { locationResult -> // Chiama DIRETTAMENTE requestCurrentLocationName
+            isLocationLoading = false // <-- NASCONDI ProgressIndicator (FINE localizzazione - successo o errore)
+            when (locationResult) {
+                is OperationResult.Success -> {
+                    // **CORREZIONE: Chiama setLocation DENTRO il case Success**
+                    profileViewModel.setLocation(locationResult.data) // <-- Chiama setLocation QUI, DENTRO Success
+                    // location = locationResult.data // NON serve più (location locale non usata)
+                }
+                is OperationResult.Error -> {
+                    Toast.makeText(context, "Errore localizzazione: ${locationResult.message}", Toast.LENGTH_LONG).show() // Mostra errore (se ENTRAMBI i provider falliscono)
+                    Log.w("PersonalProfileScreen", "Timeout localizzazione (Network e GPS): ${locationResult.message}") // Log WARNING invece di ERRORE
+                }
+            }
+        }
+    }
+    // **FINE FUNZIONE getLocation (LOCAL FUNCTION)**
+
+    // Launcher per la richiesta dei permessi di localizzazione
+    val locationPermissionLauncher = rememberLauncherForActivityResult(
+        ActivityResultContracts.RequestPermission()
+    ) { isGranted: Boolean ->
+        if (isGranted) {
+            // Permesso concesso, ora possiamo ottenere la posizione
+            getLocation(context)
+        } else {
+            // Permesso negato, gestisci la situazione (es. mostra un messaggio)
+            Toast.makeText(context, "Permesso di localizzazione negato", Toast.LENGTH_SHORT).show()
+        }
+    }
 
     // Launcher per selezionare una nuova immagine dalla galleria
     val imagePickerLauncher = rememberLauncherForActivityResult(
@@ -220,6 +261,58 @@ fun PersonalProfileScreen(
                 }
             )
 
+            Spacer(modifier = Modifier.height(16.dp))
+
+            // Bottone "Ottieni Località" - getLocation CHIAMATA DOPO LA DICHIARAZIONE
+            Button(
+                onClick = {
+                    if (androidx.core.content.ContextCompat.checkSelfPermission(context, android.Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
+                        getLocation(context)
+                    } else {
+                        locationPermissionLauncher.launch(android.Manifest.permission.ACCESS_FINE_LOCATION)
+                    }
+                },
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Text(stringResource(R.string.get_location))
+            }
+
+            Spacer(modifier = Modifier.height(8.dp))
+
+
+            // **SEZIONE ProgressIndicator e TESTO STATO (AGGIUNTA)**
+            if (isLocationLoading) { // Mostra ProgressIndicator SOLO se isLocationLoading è true
+                Column(
+                    horizontalAlignment = Alignment.CenterHorizontally, // Centra orizzontalmente
+                    modifier = Modifier.padding(vertical = 8.dp) // Padding verticale
+                ) {
+                    CircularProgressIndicator(modifier = Modifier.size(24.dp)) // ProgressIndicator
+                    Spacer(modifier = Modifier.height(4.dp))
+                    Text(
+                        text = "Ricerca della posizione...", // Testo di stato (stringabile) - OPZIONALE
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f) // Stile testo di stato
+                    )
+                }
+            }
+
+            Spacer(modifier = Modifier.height(8.dp))
+
+            // **SEZIONE UI PER MOSTRARE LA LOCALITÀ
+            val currentLocation = profileViewModel.location.collectAsState().value // <-- OTTIENI location DAL ViewModel
+            currentLocation?.let { locationName -> // Usa currentLocation (dal ViewModel)
+                Column(modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp)) {
+                    Text(
+                        text = stringResource(R.string.your_location).uppercase(),
+                        style = MaterialTheme.typography.titleMedium,
+                        modifier = Modifier.padding(bottom = 8.dp)
+                    )
+                    Text(
+                        text = locationName, // Mostra currentLocation (dal ViewModel)
+                        style = MaterialTheme.typography.bodyMedium
+                    )
+                }
+            }
             Spacer(modifier = Modifier.height(16.dp))
 
             ProfileLanguagesField(

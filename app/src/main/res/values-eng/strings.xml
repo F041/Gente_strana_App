@@ -1,6 +1,12 @@
 <resources>
     <string name="app_name">Quirky people</string>
 
+// Zona login
+    <string name="login_fill_fields">please fill in all fields</string>
+    <string name="login_successful">login successful!</string>
+    <string name="login_failed">authentication failed: %1$s</string>
+    <string name="register_prompt">no account? Register</string>
+
 
     // Zona profilo
     <string name="personal_profile">personal profile</string>
@@ -17,15 +23,22 @@
     <string name="edit">edit</string>
     <string name="save">save</string>
     <string name="cancel">cancel</string>
+
+
     <string name="first_name">first name</string>
     <string name="name_placeholder">put JUST you first name, eg. Mark</string>
+    <string name="error_empty_field">fill this field</string>
+    <string name="error_min_length">insert at least %1$d characters</string>
+
     <string name="bio_placeholder">eg. I like x,y,z in school I performed well and I read fiction</string>
     <string name="bio_title">Describe yourself</string>
     <string name="topics_title">My topics</string>
     <string name="topics_placeholder">eg. I want to talk about tennis </string>
     <string name="add">Add</string>
-    <string name="set_birhdate">Pick birthdate</string>
+    <string name="set_birthdate">Pick birthdate</string>
 
+    <string name="get_location">get location</string>
+    <string name="your_location">your location</string>
     <string name="save_profile">save profile</string>
 
 
@@ -48,5 +61,8 @@
     <string name="previous">previous</string>
     <string name="close">chiudi</string>
     <string name="profile_picture">profile picture</string>
+    <string name="sex_male">male</string>
+    <string name="sex_female">female</string>
+    <string name="sex_undefined">undefined</string>
 
 </resources>

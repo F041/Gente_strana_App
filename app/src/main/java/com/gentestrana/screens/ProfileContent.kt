@@ -4,13 +4,9 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.lazy.LazyRow
-import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowForward
 import androidx.compose.material3.Button
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -31,13 +27,12 @@ import com.gentestrana.utils.getFlagEmoji
 import com.gentestrana.utils.getLanguageName
 import com.gentestrana.components.TopicsBox
 import com.gentestrana.components.BioBox
-import com.gentestrana.users.UserPicsGallery
 
 @Composable
 fun ProfileContent(
     user: User,
     padding: PaddingValues,
-    onProfileImageClick: () -> Unit,
+    onProfileImageClick: () -> Unit, // da togliere?
     navController: NavHostController,
     onStartChat: () -> Unit
 ) {
