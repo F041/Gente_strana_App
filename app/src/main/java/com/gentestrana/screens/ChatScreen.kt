@@ -3,81 +3,63 @@ package com.gentestrana.screens
 import android.util.Log
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
-
+import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.Send
 import androidx.compose.material3.*
-import androidx.compose.material.icons.Icons
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
-import com.google.firebase.Timestamp
+import com.gentestrana.chat.ChatMessage
+import com.gentestrana.chat.MessageRow
+import com.gentestrana.chat.DateSeparatorRow
+import com.gentestrana.utils.getDateSeparator
 import com.google.firebase.auth.ktx.auth
 import com.google.firebase.firestore.ktx.firestore
 import com.google.firebase.ktx.Firebase
-import com.gentestrana.chat.ChatMessage
+import com.gentestrana.chat.ChatRepository
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.tasks.await
-import androidx.compose.material3.Text
-import com.gentestrana.chat.MessageRow
-import androidx.compose.foundation.lazy.rememberLazyListState
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.automirrored.filled.Send
+import androidx.compose.material.icons.Icons
 import androidx.compose.ui.res.stringResource
 import com.gentestrana.R
-import com.gentestrana.chat.ChatRepository
-import com.gentestrana.chat.DateSeparatorRow
-import com.gentestrana.utils.getDateSeparator
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ChatScreen(docId: String, navController: NavController) {
-    // Log.d("ChatScreen", "docId: $docId")  // Log per debug
     val db = Firebase.firestore
     val currentUser = Firebase.auth.currentUser
     val currentUserId = currentUser?.uid
     var showDeleteDialog by remember { mutableStateOf(false) }
     var messageToDelete by remember { mutableStateOf<String?>(null) }
-
-    // Stato per il nome del destinatario
     var recipientName by remember { mutableStateOf("Nome destinatario") }
 
-    // In ChatScreen.kt
+    // Blocco unico per recuperare il documento della chat, aggiornare lo stato e ottenere il nome destinatario
     LaunchedEffect(docId, currentUserId) {
         if (currentUserId != null) {
             try {
-                // Recupera il documento della chat una sola volta
                 val chatDocSnapshot = db.collection("chats").document(docId).get().await()
                 val participants = chatDocSnapshot.get("participants") as? List<String> ?: emptyList()
-
-                // Identifica l'altro utente
                 val otherUserId = participants.firstOrNull { it != currentUserId && it.isNotBlank() }
-
                 if (otherUserId != null) {
-                    // Aggiorna il nome del destinatario
                     val userDoc = db.collection("users").document(otherUserId).get().await()
                     recipientName = userDoc.getString("username") ?: "Sconosciuto"
 
-                    // Chiama markMessagesAsDelivered per i messaggi dell'altro utente
                     val repository = ChatRepository()
+                    // Aggiorna lo stato dei messaggi: li marca come DELIVERED e READ
                     repository.markMessagesAsDelivered(docId, currentUserId)
-
-                    // Se il currentUser è il destinatario (o in base alla logica desiderata),
-                    // marca i messaggi come letti
-                    // (qui puoi personalizzare la logica; ad esempio, se currentUser è effettivamente
-                    // il destinatario oppure in base ad altri controlli)
-                    repository.markMessagesAsRead(chatId = docId)
+                    repository.markMessagesAsRead(docId)
                 }
-
-                // Eventuale listener per aggiornamenti di messaggi può essere mantenuto separato,
-                // oppure integrato se il suo ambito è chiaro.
-
             } catch (e: Exception) {
                 Log.e("ChatScreen", "Errore nel recupero e aggiornamento dati della chat: ${e.message}")
             }
         }
     }
 
-    // Stato per la lista dei messaggi
-// In ChatScreen.kt
+    // Stato per i messaggi
     val messagesState = produceState<List<ChatMessage>>(initialValue = emptyList()) {
         db.collection("chats")
             .document(docId)
@@ -88,8 +70,6 @@ fun ChatScreen(docId: String, navController: NavController) {
                     Log.e("ChatScreen", "Error fetching messages: ${e.message}")
                     return@addSnapshotListener
                 }
-
-                // Forza il refresh dello stato della chat
                 val messages = snapshot?.documents?.mapNotNull { doc ->
                     try {
                         doc.toObject(ChatMessage::class.java)?.copy(id = doc.id)
@@ -102,24 +82,14 @@ fun ChatScreen(docId: String, navController: NavController) {
             }
     }
 
-    // Log per debug dei messaggi caricati
-    LaunchedEffect(messagesState.value) {
-        Log.d("ChatScreen", "Messaggi caricati: ${messagesState.value}")
-    }
-
-    // Stato per l'input
     var messageText by remember { mutableStateOf("") }
-
-    // Crea un LazyListState per gestire lo scroll
     val listState = rememberLazyListState()
 
-    // Effetto per scrollare all'ultimo messaggio quando la lista cambia
     LaunchedEffect(messagesState.value.size) {
         if (messagesState.value.isNotEmpty()) {
             listState.animateScrollToItem(messagesState.value.size - 1)
         }
     }
-
 
     Scaffold(
         topBar = {
@@ -138,32 +108,25 @@ fun ChatScreen(docId: String, navController: NavController) {
                     .fillMaxSize()
                     .padding(paddingValues)
             ) {
-                // LazyColumn con i messaggi e scroll automatico
                 LazyColumn(
-                    state = listState, // il tuo LazyListState per lo scroll automatico
+                    state = listState,
                     modifier = Modifier
                         .weight(1f)
                         .fillMaxWidth()
-                        .padding(horizontal = 8.dp), // space from borders of the screen
-                verticalArrangement = Arrangement.spacedBy(4.dp) // spazio fra messaggi, verticale
+                        .padding(horizontal = 8.dp),
+                    verticalArrangement = Arrangement.spacedBy(4.dp)
                 ) {
                     if (currentUser != null) {
-                        // Itera sui messaggi con forEachIndexed per avere l'indice
                         messagesState.value.forEachIndexed { index, message ->
-                            // Ottieni il separatore di data per il messaggio corrente
                             val currentSeparator = getDateSeparator(message.timestamp)
-                            // Ottieni il separatore di data del messaggio precedente (se esiste)
                             val previousSeparator = if (index > 0) getDateSeparator(messagesState.value[index - 1].timestamp) else ""
-                            // Se è il primo messaggio o se il separatore cambia, aggiungi una riga separatrice
                             if (index == 0 || currentSeparator != previousSeparator) {
                                 item {
                                     DateSeparatorRow(dateText = currentSeparator)
                                 }
                             }
-                            // Determina se il messaggio è il primo del blocco per mostrare l'avatar
                             val previousMessage = messagesState.value.getOrNull(index - 1)
                             val isFirstInBlock = previousMessage == null || previousMessage.sender != message.sender
-                            // Mostra il messaggio
                             item {
                                 MessageRow(
                                     chatMessage = message,
@@ -174,14 +137,12 @@ fun ChatScreen(docId: String, navController: NavController) {
                                             messageToDelete = message.id
                                             showDeleteDialog = true
                                         }
-                                    } else null // Passa null per i messaggi altrui
+                                    } else null
                                 )
                             }
                         }
                     }
                 }
-
-                // Sezione input
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -192,20 +153,28 @@ fun ChatScreen(docId: String, navController: NavController) {
                         value = messageText,
                         onValueChange = { messageText = it },
                         modifier = Modifier.weight(1f),
-                        placeholder = { Text(stringResource(R.string.write_message))}
+                        placeholder = { Text("Scrivi un messaggio") }
                     )
                     Button(
                         onClick = {
-                            if (messageText.isNotBlank() && currentUser != null)
-                            {
-                                sendMessage(docId, currentUser.uid, messageText)
-                                messageText = ""
+                            if (messageText.isNotBlank() && currentUser != null) {
+                                Log.d("ChatScreen", "Testo del messaggio prima dell'invio: '$messageText'")
+                                val messageToSend = messageText // Catturiamo il valore attuale
+                                messageText = "" // Ora resettiamo il campo
+                                CoroutineScope(Dispatchers.IO).launch {
+                                    try {
+                                        val repository = ChatRepository()
+                                        repository.sendMessage(docId, currentUser.uid, messageToSend)
+                                    } catch (e: Exception) {
+                                        Log.e("ChatScreen", "Errore nell'invio del messaggio", e)
+                                    }
+                                }
                             }
                         }
                     ) {
-                        Icon( // Sostituisci Text con Icon
-                            imageVector = Icons.AutoMirrored.Filled.Send, // Usa l'icona Send (Filled)
-                            contentDescription = "Invia messaggio" // Descrizione per accessibilità
+                        Icon(
+                            imageVector = Icons.AutoMirrored.Filled.Send,
+                            contentDescription = "Invia messaggio"
                         )
                     }
                 }
@@ -223,12 +192,20 @@ fun ChatScreen(docId: String, navController: NavController) {
                             onClick = {
                                 showDeleteDialog = false
                                 messageToDelete?.let { id ->
-                                    deleteMessage(docId, id)
+                                    CoroutineScope(Dispatchers.IO).launch {
+                                        try {
+                                            val repository = ChatRepository()
+                                            repository.deleteMessage(docId, id)
+                                        } catch (e: Exception) {
+                                            Log.e("ChatScreen", "Errore nell'eliminazione del messaggio", e)
+                                        }
+                                    }
                                 }
                                 messageToDelete = null
                             }
                         ) {
-                            Text("Conferma")
+                            Text(text = stringResource(id = R.string.confirm))
+
                         }
                     },
                     dismissButton = {
@@ -238,51 +215,11 @@ fun ChatScreen(docId: String, navController: NavController) {
                                 messageToDelete = null
                             }
                         ) {
-                            Text("Annulla")
+                            Text(text = stringResource(id = R.string.cancel))
                         }
                     }
                 )
             }
         }
-
     )
 }
-
-fun sendMessage(chatId: String, sender: String, message: String) {
-    val db = Firebase.firestore
-    val messageData = hashMapOf(
-        "sender" to sender,
-        "message" to message,
-        "timestamp" to Timestamp.now(),
-        "status" to "SENT"  // Vediamo se così ste regole funzionano...
-    )
-    // Log dei campi inviati
-    Log.d("SEND_DEBUG", "Campi inviati: ${messageData.keys.joinToString()}")
-
-    db.collection("chats")
-        .document(chatId)
-        .collection("messages")
-        .add(messageData)
-        .addOnFailureListener { e ->
-            Log.e("ChatScreen", "Errore durante l'invio del messaggio", e)
-        }
-}
-
-fun deleteMessage(chatId: String, messageId: String) {
-    val db = Firebase.firestore
-    db.collection("chats")
-        .document(chatId)
-        .collection("messages")
-        .document(messageId)
-        .delete()
-        .addOnSuccessListener {
-            // To delete with unit test
-            Log.d("ChatScreen", "Messaggio eliminato con successo")
-        }
-        .addOnFailureListener { e ->
-            // To delete with unit test
-            Log.e("ChatScreen", "Errore eliminazione messaggio", e)
-        }
-}
-
-

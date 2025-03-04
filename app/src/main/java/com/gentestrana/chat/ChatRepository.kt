@@ -226,6 +226,44 @@ class ChatRepository(
         batch.commit().await()
         Log.d("Repo", "${query.documents.size} messaggi marcati come DELIVERED")
     }
+
+    suspend fun sendMessage(chatId: String, sender: String, message: String) {
+        try {
+            Log.d("ChatRepository", "Invio messaggio: '$message'")
+            val messageData = hashMapOf(
+                "sender" to sender,
+                "message" to message,
+                "timestamp" to Timestamp.now(),
+                "status" to "SENT"
+            )
+            db.collection("chats")
+                .document(chatId)
+                .collection("messages")
+                .add(messageData)
+                .await()
+            Log.d("ChatRepository", "Messaggio inviato con successo")
+        } catch (e: Exception) {
+            Log.e("ChatRepository", "Errore durante l'invio del messaggio", e)
+            throw e
+        }
+    }
+
+
+    suspend fun deleteMessage(chatId: String, messageId: String) {
+        try {
+            db.collection("chats")
+                .document(chatId)
+                .collection("messages")
+                .document(messageId)
+                .delete()
+                .await()
+            Log.d("ChatRepository", "Messaggio eliminato con successo")
+        } catch (e: Exception) {
+            Log.e("ChatRepository", "Errore durante l'eliminazione del messaggio", e)
+            throw e
+        }
+    }
+
 }
 
 

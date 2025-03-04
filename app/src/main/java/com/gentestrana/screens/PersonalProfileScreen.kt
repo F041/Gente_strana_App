@@ -15,7 +15,7 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Logout
+import androidx.compose.material.icons.automirrored.filled.Logout
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -146,7 +146,7 @@ fun PersonalProfileScreen(
                         }
                     }) {
                         Icon(
-                            imageVector = Icons.Default.Logout,
+                            imageVector = Icons.AutoMirrored.Filled.Logout,
                             contentDescription = "Logout",
                             tint = MaterialTheme.colorScheme.primary
                         )
@@ -227,7 +227,10 @@ fun PersonalProfileScreen(
                 onValueChange = { profileViewModel.setUsername(it) },
                 label = stringResource(id = R.string.first_name),
                 placeholder = stringResource(id = R.string.name_placeholder),
-                maxLength = 13
+                minLength=2,
+                maxLength = 13,
+                errorMessage = "Too short", //stringabile
+                removeSpaces = true
             )
             Spacer(modifier = Modifier.height(8.dp))
 

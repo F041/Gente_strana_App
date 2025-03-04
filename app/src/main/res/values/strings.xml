@@ -24,7 +24,8 @@
 
     <string name="edit">modifica</string>
     <string name="save">salva</string>
-    <string name="cancel">cancella</string>
+    <string name="confirm">conferma</string>
+    <string name="cancel">annulla</string>
     <string name="first_name">nome</string>
     <string name="name_placeholder">metti SOLO il tuo primo nome, es. Marco</string>
     <string name="error_empty_field">questo campo non può essere vuoto</string>

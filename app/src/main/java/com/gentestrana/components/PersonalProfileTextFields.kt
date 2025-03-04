@@ -30,6 +30,13 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.gentestrana.R
 import com.gentestrana.ui.theme.commonProfileBoxModifier
+import android.content.Context
+import android.os.Build
+import android.os.VibrationEffect
+import android.os.Vibrator
+import androidx.compose.ui.platform.LocalContext
+import com.gentestrana.utils.removeSpaces
+
 
 // Composable per un campo di testo standard
 @Composable
@@ -38,27 +45,64 @@ fun ProfileTextField(
     onValueChange: (String) -> Unit,
     label: String,
     placeholder: String? = null,
+    minLength: Int = 0,  // proprietà per la lunghezza minima
     isError: Boolean = false,
     errorMessage: String? = null,
     maxLength: Int? = null,
+    removeSpaces: Boolean = false, // <-- nuovo parametro
     modifier: Modifier = Modifier,
     keyboardOptions: KeyboardOptions = KeyboardOptions.Default
 ) {
     var isFocused by remember { mutableStateOf(false) }
+    // Stato per tracciare se l'utente ha interagito con il campo
+    var hasInteracted by remember { mutableStateOf(false) }
     val focusModifier = Modifier.onFocusChanged { state ->
         isFocused = state.isFocused
     }
 
-    // Forza il limite di caratteri, se specificato
+    // Calcola se c'è un errore
+    val showError = value.isBlank() || (minLength > 0 && value.length < minLength)
+    // Messaggio d'errore da visualizzare
+    val displayErrorMessage = when {
+        value.isBlank() -> errorMessage ?: "Questo campo non può essere vuoto"
+        minLength > 0 && value.length < minLength -> errorMessage ?: "Inserisci almeno $minLength caratteri"
+        else -> null
+    }
+
+    // Forza il limite di caratteri se specificato e rimuove spazi se richiesto
     val newOnValueChange: (String) -> Unit = { newText ->
+        if (!hasInteracted) {
+            hasInteracted = true
+        }
+        // Usa la funzione utility se removeSpaces è true
+        val processedText = if (removeSpaces) {
+            removeSpaces(newText)
+        } else {
+            newText
+        }
         if (maxLength != null) {
-            if (newText.length <= maxLength) {
-                onValueChange(newText)
+            if (processedText.length <= maxLength) {
+                onValueChange(processedText)
             } else {
-                onValueChange(newText.substring(0, maxLength))
+                onValueChange(processedText.substring(0, maxLength))
             }
         } else {
-            onValueChange(newText)
+            onValueChange(processedText)
+        }
+    }
+
+    // Vibrazione solo se l'utente ha interagito e c'è un errore
+    val context = LocalContext.current
+    if (showError && hasInteracted) {
+        LaunchedEffect(showError, hasInteracted) {
+            val vibrator = context.getSystemService(Context.VIBRATOR_SERVICE) as? Vibrator
+            if (vibrator?.hasVibrator() == true) {
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                    vibrator.vibrate(VibrationEffect.createOneShot(200, VibrationEffect.DEFAULT_AMPLITUDE))
+                } else {
+                    vibrator.vibrate(200)
+                }
+            }
         }
     }
 
@@ -67,8 +111,8 @@ fun ProfileTextField(
             value = value,
             onValueChange = newOnValueChange,
             label = { Text(label) },
-            placeholder = if (placeholder != null) { { Text(placeholder) } } else null,
-            isError = isError,
+            placeholder = placeholder?.let { { Text(it) } },
+            isError = showError,
             keyboardOptions = keyboardOptions,
             modifier = Modifier.fillMaxWidth(),
             colors = TextFieldDefaults.outlinedTextFieldColors(
@@ -88,9 +132,9 @@ fun ProfileTextField(
                 color = if (value.length > maxLength) MaterialTheme.colorScheme.error else Color.Gray
             )
         }
-        if (isError && errorMessage != null) {
+        if (showError && displayErrorMessage != null) {
             Text(
-                text = errorMessage,
+                text = displayErrorMessage,
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(top = 4.dp),
