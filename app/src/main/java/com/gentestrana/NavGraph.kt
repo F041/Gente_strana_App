@@ -16,13 +16,25 @@ import com.gentestrana.screens.*
 
 
 @Composable
-fun AppNavHost(navController: NavHostController) {
+fun AppNavHost(navController: NavHostController,
+               onThemeChange: (AppTheme) -> Unit,
+               isOnboardingCompleted: () -> Boolean ) {
     val isLoggedIn = FirebaseAuth.getInstance().currentUser != null
-    val startDestination = if (isLoggedIn) "main" else "auth"
+    val startDestination = if (isOnboardingCompleted()) {
+        // Se onboarding COMPLETO
+        if (isLoggedIn) "main" else "auth"
+    // ...vai a "main" se loggato, altrimenti a "auth"
+    } else {
+        // Altrimenti (se onboarding NON COMPLETO)
+        "onboarding"
+        // ...vai a "onboarding"
+    }
 
     NavHost(
         navController = navController,
         startDestination = startDestination
+        // cambiare con = startDestination se testo con = "onboarding"
+        // "onboarding" l'ho usato quando ho creato il suo screen
     ) {
         // Authentication Flow
         navigation(startDestination = "login", route = "auth") {
@@ -48,7 +60,8 @@ fun AppNavHost(navController: NavHostController) {
         // Main Flow with Bottom Navigation
         navigation(startDestination = "mainTabs", route = "main") {
             composable("mainTabs") {
-                MainTabsScreen(navController)
+                // **MODIFICA: Passa onThemeChange a MainTabsScreen**
+                MainTabsScreen(navController, onThemeChange = onThemeChange) // 👈 PASSA onThemeChange!
             }
             composable("userProfile/{docId}") { backStackEntry ->
                 val docId = backStackEntry.arguments?.getString("docId") ?: ""
@@ -75,11 +88,16 @@ fun AppNavHost(navController: NavHostController) {
 //                onAddImage = { /* Aggiungere logica di caricamento */ }
             )
         }
+
+        composable("onboarding") {
+            OnboardingScreen(navController = navController)
+        }
     }
 }
 
 @Composable
-fun MainTabsScreen(navController: NavHostController) {
+fun MainTabsScreen(navController: NavHostController,
+                   onThemeChange: (AppTheme) -> Unit) {
     val tabsNavController = rememberNavController()
 
     Scaffold(
@@ -106,6 +124,13 @@ fun MainTabsScreen(navController: NavHostController) {
 //            composable("services") {
 //                ServicesScreen()
 //            }
+            composable("settings") {
+                SettingsScreen(navController = tabsNavController, onThemeChange = onThemeChange) // 👈 PASSA onThemeChange!
+            }
+
+            composable("changePassword") {
+                ChangePasswordScreen(navController = navController)
+            }
         }
     }
 }

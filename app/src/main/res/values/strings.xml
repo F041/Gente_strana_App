@@ -2,14 +2,23 @@
 <resources>
     <string name="app_name">GenteStrana</string>
 
-// Zona login
+    // Zona login
     <string name="login_fill_fields">compila tutti i campi</string>
     <string name="login_successful">accesso avvenuto</string>
     <string name="login_failed">autenticazione fallita: %1$s</string>
     <string name="register_prompt">non hai un account? Registrati</string>
 
+    // Zona imbarco
+    <string name="onboarding_screen1_title">Benvenuto in Gente Strana!</string>
+    <string name="onboarding_screen1_description">Unisciti a una community accogliente e inclusiva per persone neurodivergenti come te.</string>
+    <string name="onboarding_screen2_title">connettiti con persone affini</string>
+    <string name="onboarding_screen2_description">scopri profili di altri utenti neurodivergenti, con interessi e passioni simili.</string>
+    <string name="onboarding_screen3_title">chatta e condividi</string>
+    <string name="onboarding_screen3_description">inizia conversazioni, scambia messaggi e crea nuove amicizie in un ambiente sicuro e rispettoso.</string>
 
-// Zona profilo
+    <string name="onboarding_button_start">inizia</string>
+
+    // Zona profilo
     <string name="personal_profile">profilo personale</string>
     <string name="change_profile_picture">cambia immagine profilo</string>
     <string name="upload_new_profile_picture">carica nuova immagine profilo</string>
@@ -44,19 +53,43 @@
     <string name="save_profile">salva profilo</string>
 
 
-// Zona chat
+    // Zona chat
 
     <string name="chat_with_user">chatta con %s</string>
     <string name="users_search_bar"> cerca per argomento, membro</string>
     <string name="write_message"> scrivi un messaggio</string>
 
 
-// Zona Utente
+    // Zona Utente
     <string name="photos">foto</string>
     <string name="user_bio">su di me</string>
     <string name="topics_box">argomenti</string>
 
-// Zona misc
+
+    // Zona settings
+    <string name="change_password">cambia password</string>
+    <string name="change_password_instructions">inserisci la tua email e ti invieremo un link per reimpostare la password.</string>
+    <string name="email_address">indirizzo email</string>
+    <string name="send_reset_email_button">invia email di reimpostazione</string>
+    <string name="password_reset_email_sent">email di reimpostazione password inviata. Controlla la tua casella di posta (e la cartella spam).</string>
+    <string name="password_reset_failed">impossibile inviare l\'email di reimpostazione password: %1$s</string>
+
+    <string name="settings">impostazioni</string>
+    <string name="account_section">account</string>
+    <string name="delete_account">elimina account</string>
+    <string name="notifications_section">notifiche</string>
+    <string name="push_notifications">notifiche push</string>
+    <string name="theme_section">tema</string>
+    <string name="system_theme">sistema</string>
+    <string name="light_theme">chiaro</string>
+    <string name="dark_theme">scuro</string>
+    <string name="special_theme">speciale</string>
+    <string name="info_section">informazioni</string>
+    <string name="privacy_policy">privacy policy</string>
+    <string name="terms_of_service">termini di servizio</string>
+    <string name="app_version">versione app</string>
+
+    // Zona misc
     <string name="back">indietro</string>
     <string name="next">successivo</string>
     <string name="previous">precedente</string>

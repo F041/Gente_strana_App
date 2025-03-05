@@ -53,11 +53,9 @@ import com.gentestrana.utils.OperationResult
  * - **bio**: breve descrizione personale.
  *
  * - **birthTimestamp**: timestamp della data di nascita; la UI visualizza la data formattata ("dd/MM/yyyy") e la aggiorna tramite DatePicker.
- * - **sex**: valore ammesso "M", "F" o "Undefined" (la validazione è gestita in UI).
  * - **spokenLanguages**: lingue parlate, gestite come stringa separata da virgola.
  * - **location**: paese, ottenuto ad esempio dal GPS al primo utilizzo.
  */
-
 
 @Composable
 fun PersonalProfileScreen(
@@ -87,7 +85,7 @@ fun PersonalProfileScreen(
     var newImageUri by remember { mutableStateOf<Uri?>(null) }
     var isLocationLoading by remember { mutableStateOf(false) }
 
-    // **INIZIO FUNZIONE getLocation (LOCAL FUNCTION) - SPOSTATA QUI**
+    // **INIZIO FUNZIONE getLocation **
     fun getLocation(context: Context) {
         isLocationLoading = true
         // **USA DIRETTAMENTE requestCurrentLocationName (CHE GESTISCE GIA' GPS E NETWORK)**
@@ -327,8 +325,6 @@ fun PersonalProfileScreen(
             )
 
             Spacer(modifier = Modifier.height(16.dp))
-
-
 
             // Bottone per salvare gli aggiornamenti del profilo
             Button(

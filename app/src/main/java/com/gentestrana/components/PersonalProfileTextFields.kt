@@ -110,7 +110,7 @@ fun ProfileTextField(
         OutlinedTextField(
             value = value,
             onValueChange = newOnValueChange,
-            label = { Text(label) },
+            label = { Text(label, color = MaterialTheme.colorScheme.onSurfaceVariant) },
             placeholder = placeholder?.let { { Text(it) } },
             isError = showError,
             keyboardOptions = keyboardOptions,
@@ -168,14 +168,14 @@ fun ProfileBioBox(
     }
 
     Column(
-        modifier = modifier.then(commonProfileBoxModifier)
+        modifier = modifier.then(commonProfileBoxModifier())
     ) {
         // Titolo (occupa tutta la larghezza)
         Text(
             text = title.uppercase(),
             fontWeight = FontWeight.Bold,
             fontSize = 14.sp,
-            color = Color.Black,
+            color = MaterialTheme.colorScheme.onSurface,
             modifier = Modifier.fillMaxWidth()
         )
         Spacer(modifier = Modifier.height(8.dp))
@@ -197,7 +197,7 @@ fun ProfileBioBox(
             Text(
                 text = "${localText.length} / $maxLength",
                 fontSize = 12.sp,
-                color = if (localText.length > maxLength) MaterialTheme.colorScheme.error else Color.Gray,
+                color = if (localText.length > maxLength) MaterialTheme.colorScheme.error else Color.Gray, //gray da modificare
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(top = 4.dp),
@@ -208,7 +208,7 @@ fun ProfileBioBox(
             Text(
                 text = displayText,
                 fontSize = 14.sp,
-                color = if (localText.isEmpty()) Color.Gray else Color.Black,
+                color = if (localText.isEmpty()) MaterialTheme.colorScheme.onSurfaceVariant else MaterialTheme.colorScheme.onSurface,
                 modifier = Modifier.fillMaxWidth()
             )
         }

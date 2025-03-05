@@ -48,14 +48,14 @@ fun ProfileTopicsList(
     }
 
     Column(
-        modifier = modifier.then(commonProfileBoxModifier)
+        modifier = modifier.then(commonProfileBoxModifier())
     ) {
         // Titolo del box
         Text(
             text = title.uppercase(),
             fontWeight = FontWeight.Bold,
             fontSize = 14.sp,
-            color = Color.Black
+            color = MaterialTheme.colorScheme.onSurface
         )
         Spacer(modifier = Modifier.height(8.dp))
 
@@ -99,11 +99,7 @@ fun ProfileTopicsList(
                         newTopicText = ""
                     }
                 },
-                modifier = Modifier.align(Alignment.End),
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = NeuroSecondary,
-                    contentColor = Color.White
-                )
+                modifier = Modifier.align(Alignment.End)
             ) {
                 Text(text = stringResource(id = R.string.add))
             }

@@ -4,6 +4,7 @@ import android.app.DatePickerDialog
 import android.content.Context
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.material3.Button
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
@@ -53,6 +54,6 @@ fun DateOfBirthPicker(
         } else {
             stringResource(R.string.set_birthdate)
         }
-        Text(text = displayText)
+        Text(text = displayText, color = MaterialTheme.colorScheme.onSurface)
     }
 }

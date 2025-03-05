@@ -33,7 +33,7 @@ fun UserProfileCard(
             .fillMaxWidth()
             .clickable(onClick = onClick)
             .heightIn(min = 120.dp), // Enforce minimum card height
-        colors = CardDefaults.cardColors(containerColor = NeuroSurface)
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
     ) {
         Row(
             modifier = Modifier
@@ -66,7 +66,7 @@ fun UserProfileCard(
                 Column {
                     Text(
                         text = "${user.username.uppercase()}, $displayedAge",
-                        color = NeuroPrimary,
+                        color = MaterialTheme.colorScheme.onSurface,
                         fontSize = 15.sp
                     )
                     Spacer(Modifier.height(4.dp))
@@ -76,7 +76,7 @@ fun UserProfileCard(
                         } else {
                             user.topics[0]
                         },
-                        color = NeuroSecondary,
+                        color = MaterialTheme.colorScheme.onSurface,
                         fontFamily = FontFamily.SansSerif,
                         lineHeight = 20.sp
                     )
@@ -94,14 +94,14 @@ fun UserProfileCard(
                         Text(
                             text = stringResource(R.string.speaks) + ": ",
                             style = MaterialTheme.typography.bodyMedium,
-                            color = NeuroPrimary,
+                            color = MaterialTheme.colorScheme.onSurface,
                             modifier = Modifier.padding(end = 4.dp)
                         )
                         user.spokenLanguages.forEach { code ->
                             Text(
-                                text = "${getFlagEmoji(LocalContext.current, code)} ", // <-- Modificato!
+                                text = "${getFlagEmoji(LocalContext.current, code)} ",
                                 style = MaterialTheme.typography.bodyMedium,
-                                color = NeuroPrimary,
+                                color = MaterialTheme.colorScheme.onSurface,
                                 modifier = Modifier.padding(vertical = 5.dp)
                             )
                         }

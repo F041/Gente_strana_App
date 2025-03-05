@@ -28,6 +28,7 @@ sealed class BottomNavItem(
     //  services will become a part of Gente Strana, but for your own social you can delete it
 
 //    object Services : BottomNavItem("services", "Services", Icons.Default.BusinessCenter)
+    object Settings : BottomNavItem("settings", "Settings", Icons.Default.Settings)
 }
 
 @Composable
@@ -38,6 +39,7 @@ fun BottomNavigationBar(navController: NavHostController) {
         BottomNavItem.Profile,
  //  services will become a part of Gente Strana, but for your own social you can delete it
 //        BottomNavItem.Services
+        BottomNavItem.Settings
     )
 
     NavigationBar {

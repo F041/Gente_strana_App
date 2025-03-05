@@ -1,12 +1,21 @@
 <resources>
     <string name="app_name">Quirky people</string>
 
-// Zona login
+    // Zona login
     <string name="login_fill_fields">please fill in all fields</string>
     <string name="login_successful">login successful!</string>
     <string name="login_failed">authentication failed: %1$s</string>
     <string name="register_prompt">no account? Register</string>
 
+    // Zona onboarding
+    <string name="onboarding_screen1_title">welcome to Quirky People!</string>
+    <string name="onboarding_screen1_description">Join a welcoming and inclusive community for neurodivergent people like you.</string>
+    <string name="onboarding_screen2_title">Connect with like-minded people</string>
+    <string name="onboarding_screen2_description">Discover profiles of other neurodivergent users with similar interests and passions.</string>
+    <string name="onboarding_screen3_title">Chat and share</string>
+    <string name="onboarding_screen3_description">Start conversations, exchange messages, and make new friends in a safe and respectful environment.</string>
+
+    <string name="onboarding_button_start">get started</string>
 
     // Zona profilo
     <string name="personal_profile">personal profile</string>
@@ -18,7 +27,7 @@
     <string name="speaks">speaks</string>
     <string name="languages_spoken">languages spoken</string>
     <string name="select_languages">select languages</string>
-    <string name="search_hint">search a language...</string>
+    <string name="search_hint">search a language…</string>
     <string name="selected_languages">selected languages</string>
     <string name="edit">edit</string>
     <string name="save">save</string>
@@ -55,6 +64,28 @@
     <string name="user_bio">about me</string>
     <string name="topics_box">topics</string>
 
+    // Zona settings
+    <string name="change_password">change Password</string>
+    <string name="change_password_instructions">enter your email and we will send you a link to reset your password.</string>
+    <string name="email_address">email Address</string>
+    <string name="send_reset_email_button">send Reset Email</string>
+    <string name="password_reset_email_sent">password reset email sent. Check your inbox (and spam folder).</string>
+    <string name="password_reset_failed">failed to send password reset email: %1$s</string>
+
+    <string name="settings">settings</string>
+    <string name="account_section">account</string>
+    <string name="delete_account">delete account</string>
+    <string name="notifications_section">motifications</string>
+    <string name="push_notifications">push notifications</string>
+    <string name="theme_section">theme</string>
+    <string name="system_theme">system default</string>
+    <string name="light_theme">light</string>
+    <string name="dark_theme">dark</string>
+    <string name="special_theme">special</string>
+    <string name="info_section">information</string>
+    <string name="privacy_policy">privacy policy</string>
+    <string name="terms_of_service">terms of service</string>
+    <string name="app_version">app version</string>
 
     // Zona misc
     <string name="back">back</string>
