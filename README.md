@@ -27,6 +27,9 @@ The visual design of the app, as shown in the screenshots, might change as I dev
 ## Features
 * Connect with quirky people:  find and chat other neurodiverse individuals. You can find them via the topic, for example. Maybe you get along with people obsessed with trains or birds. Or that collects Pokemon cards.
 * Multilingual support: app available in both Italian and English.
+
+## Why "GS" as logo?
+As you read from the name of this repository, Gente Strana becomes the Italian version of Quirky People. The infinite became the symbol of neurodiverse people, hence the logo that reminds that symbol. A bit more difficult to create that with the initials Q and P of Quirky People. The dots inside the letters represent a social network. 
      
 
 ### To do:
