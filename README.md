@@ -1,8 +1,8 @@
 # Quirky people: find (neurodiverse) people like you
 
-<center>
+<p align="center">
   <img src="https://github.com/user-attachments/assets/193152b0-4ec0-4826-9fcf-d0329ca88158" alt="logo" width="200">
-</center>
+</p align="center">
 
 ## About
 an app designed to help people who belongs to the *neurodiverse group* to find and connect with others like them.  If you seek a community where you don't perceive yourself as a fish outside its bowl,  with people that experienced the same, this app aims to provide a space for that.
