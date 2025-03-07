@@ -27,6 +27,11 @@ The visual design of the app, as shown in the screenshots, might change as I dev
 ## Features
 * Connect with quirky people:  find and chat other neurodiverse individuals. You can find them via the topic, for example. Maybe you get along with people obsessed with trains or birds. Or that collects Pokemon cards.
 * Multilingual support: app available in both Italian and English.
+* Themes: dark, white, system (white) and "special".
+* You can report and or block users. This can happen in such community too. 
+
+## Why "GS" as logo?
+As you read from the name of this repository, Gente Strana becomes the Italian version of Quirky People. The infinite became the symbol of neurodiverse people, hence the logo that reminds that symbol. A bit more difficult to create that with the initials Q and P of Quirky People. The dots inside the letters represent a social network. 
      
 
 ### To do:
@@ -34,10 +39,13 @@ The visual design of the app, as shown in the screenshots, might change as I dev
 - fix topics in profilecard and uniform it to personalProfileScreen
 - sort usersListScreen by last active and remove the user's personal profile from the list
 - translations for bio, topics
+- speacial theme for who has dyslexia
+- facebook registration and login
 
 ### Customizing the App (For Developers)
 
 if you fork this, you'd need to edit some strings in ```res/values/strings``` and ```res/values-en/strings```, like the appname. And of course you'd need your own Firebase instance on google. Tham means also spitting blood with Firestore Database rules.
+This repo doesn't come with Firebase Functions, that help, for example, to manage notifications.
 
 
 ### Disclaimer
