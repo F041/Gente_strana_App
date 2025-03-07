@@ -8,11 +8,8 @@ import android.util.Log
 import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.compose.foundation.Image
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Logout
@@ -20,21 +17,20 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
-import coil.compose.rememberAsyncImagePainter
 import com.gentestrana.R
 import com.google.firebase.auth.FirebaseAuth
 import com.gentestrana.ui_controller.ProfileViewModel
 import com.gentestrana.users.User
 import com.gentestrana.components.DateOfBirthPicker
 import com.gentestrana.components.ProfileBioBox
+import com.gentestrana.components.ProfileImageSection
 import com.gentestrana.components.ProfileLanguagesField
+import com.gentestrana.components.ProfileLocationDisplay
 import com.gentestrana.components.ProfileTextField
 import com.gentestrana.components.ProfileTopicsList
 import com.gentestrana.utils.LocationUtils
@@ -65,7 +61,7 @@ fun PersonalProfileScreen(
     val profileViewModel: ProfileViewModel = viewModel()
     val context = LocalContext.current
     val auth = FirebaseAuth.getInstance()
-    val uid = auth.currentUser?.uid ?: return
+    // val uid = auth.currentUser?.uid ?: return
 
     // Stati osservati dal ViewModel
     val username by profileViewModel.username.collectAsState()
@@ -84,19 +80,17 @@ fun PersonalProfileScreen(
     var isUploading by remember { mutableStateOf(false) }
     var newImageUri by remember { mutableStateOf<Uri?>(null) }
     var isLocationLoading by remember { mutableStateOf(false) }
+    val currentLocation = profileViewModel.location.collectAsState().value
 
     // **INIZIO FUNZIONE getLocation **
     fun getLocation(context: Context) {
         isLocationLoading = true
         // **USA DIRETTAMENTE requestCurrentLocationName (CHE GESTISCE GIA' GPS E NETWORK)**
-        // **USA DIRETTAMENTE requestCurrentLocationName (CHE GESTISCE GIA' GPS E NETWORK)**
         LocationUtils.requestCurrentLocationName(context) { locationResult -> // Chiama DIRETTAMENTE requestCurrentLocationName
             isLocationLoading = false // <-- NASCONDI ProgressIndicator (FINE localizzazione - successo o errore)
             when (locationResult) {
                 is OperationResult.Success -> {
-                    // **CORREZIONE: Chiama setLocation DENTRO il case Success**
                     profileViewModel.setLocation(locationResult.data) // <-- Chiama setLocation QUI, DENTRO Success
-                    // location = locationResult.data // NON serve più (location locale non usata)
                 }
                 is OperationResult.Error -> {
                     Toast.makeText(context, "Errore localizzazione: ${locationResult.message}", Toast.LENGTH_LONG).show() // Mostra errore (se ENTRAMBI i provider falliscono)
@@ -105,7 +99,7 @@ fun PersonalProfileScreen(
             }
         }
     }
-    // **FINE FUNZIONE getLocation (LOCAL FUNCTION)**
+
 
     // Launcher per la richiesta dei permessi di localizzazione
     val locationPermissionLauncher = rememberLauncherForActivityResult(
@@ -157,68 +151,24 @@ fun PersonalProfileScreen(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(paddingValues)
-                .padding(16.dp)
+//                .padding(16.dp) fonte della discordia rispetto ProfileContent
                 .verticalScroll(rememberScrollState()),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            Spacer(modifier = Modifier.height(16.dp))
-            // Mostra l'immagine del profilo
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth(0.4f) // <--- Usa una frazione di fillMaxWidth, es. 0.5f (50% della larghezza)
-                    .aspectRatio(1f)
-                    .clip(RoundedCornerShape(8.dp))
-                    .background(MaterialTheme.colorScheme.surfaceVariant)
-                    .align(Alignment.CenterHorizontally) // Centra il Box orizzontalmente (opzionale)
-            ) {
-                Image(
-                    painter = rememberAsyncImagePainter(newImageUri ?: profilePicUrl),
-                    contentDescription = "Profile Picture",
-                    modifier = Modifier.fillMaxSize(), // Mantieni fillMaxSize per riempire il Box (ora più piccolo)
-                    contentScale = ContentScale.Crop
-                )
-            }
-            Spacer(modifier = Modifier.height(8.dp))
-            // Bottone per scegliere una nuova immagine dalla galleria
-            Button(
-                onClick = { imagePickerLauncher.launch("image/*") },
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                Text(text = stringResource(R.string.change_profile_picture))
-            }
-            if (newImageUri != null) {
-                Spacer(modifier = Modifier.height(8.dp))
-                Button(
-                    onClick = {
-                        isUploading = true
-                        newImageUri?.let { uri ->
-                            profileViewModel.uploadNewProfileImage(uri) { downloadUrl ->
-                                // Se downloadUrl è vuoto, il ViewModel imposterà il fallback
-                                isUploading = false
-                                newImageUri = null
-                                Toast.makeText(
-                                    context, // Assuming 'context' is available in your scope
-                                    context.getString(R.string.profile_picture_updated), // Use getString to get resource
-                                    Toast.LENGTH_SHORT
-                                ).show()
-                            }
-                        }
-                    },
-                    modifier = Modifier.fillMaxWidth(),
-                    enabled = !isUploading
-                ) {
-                    if (isUploading) {
-                        CircularProgressIndicator(
-                            modifier = Modifier.size(20.dp),
-                            color = MaterialTheme.colorScheme.onPrimary,
-                            strokeWidth = 2.dp
-                        )
-                    } else {
-                        Text(stringResource(id = R.string.upload_new_profile_picture))
-                    }
-                }
-            }
-            Spacer(modifier = Modifier.height(16.dp))
+            // Gli space si potrebbero reintrodurre per coerenza ed eliminarli in ProfileImageSection
+            // sezione immagine profilo
+            ProfileImageSection(
+                profilePicUrl = profilePicUrl,
+                newImageUri = newImageUri,
+                imagePickerLauncher = imagePickerLauncher,
+                isUploading = isUploading,
+                profileViewModel = profileViewModel,
+                context = context,
+                onNewImageUriChanged = { uri -> newImageUri = uri }, // Callback per newImageUri
+                onIsUploadingChanged = { uploading -> isUploading = uploading } // Callback per isUploading
+            )
+
+            // Gli space si potrebbero reintrodurre per coerenza ed eliminarli in ProfileImageSection
             // Campo per Username
             ProfileTextField(
                 value = username,
@@ -228,28 +178,33 @@ fun PersonalProfileScreen(
                 minLength=2,
                 maxLength = 13,
                 errorMessage = "Too short", //stringabile
-                removeSpaces = true
+                removeSpaces = true,
             )
             Spacer(modifier = Modifier.height(8.dp))
 
             // Campo per Topics (ex description)
             ProfileTopicsList(
                 title = stringResource(id = R.string.topics_title),
-                topics = topicsList, // Ora è una lista di stringhe, non più una singola stringa
+                topics = topicsList,
                 placeholder = stringResource(id = R.string.topics_placeholder),
                 newTopicMaxLength = 200,
                 onValueChange = { updatedTopics ->
-                    // Convertiamo la lista aggiornata in una stringa prima di inviarla al ViewModel
                     profileViewModel.setTopics(updatedTopics.joinToString(", "))
-                }
+                },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp) // Allinea al padding di ProfileContent
             )
 
-            // Campo per Bio
+            Spacer(modifier = Modifier.height(16.dp))
+
+            // Campo bio
             ProfileBioBox(
                 initialContent = bio,
                 onValueChange = { updatedBio -> profileViewModel.setBio(updatedBio) },
-                modifier = Modifier.padding(16.dp),
-                maxLength = 800,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp)
             )
 
             Spacer(modifier = Modifier.height(8.dp))
@@ -273,7 +228,9 @@ fun PersonalProfileScreen(
                         locationPermissionLauncher.launch(android.Manifest.permission.ACCESS_FINE_LOCATION)
                     }
                 },
-                modifier = Modifier.fillMaxWidth()
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp)
             ) {
                 Text(stringResource(R.string.get_location))
             }
@@ -297,23 +254,9 @@ fun PersonalProfileScreen(
                 }
             }
 
-            Spacer(modifier = Modifier.height(8.dp))
+            // Mostra posizione
+            ProfileLocationDisplay(locationName = currentLocation)
 
-            // **SEZIONE UI PER MOSTRARE LA LOCALITÀ
-            val currentLocation = profileViewModel.location.collectAsState().value // <-- OTTIENI location DAL ViewModel
-            currentLocation?.let { locationName -> // Usa currentLocation (dal ViewModel)
-                Column(modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp)) {
-                    Text(
-                        text = stringResource(R.string.your_location).uppercase(),
-                        style = MaterialTheme.typography.titleMedium,
-                        modifier = Modifier.padding(bottom = 8.dp)
-                    )
-                    Text(
-                        text = locationName, // Mostra currentLocation (dal ViewModel)
-                        style = MaterialTheme.typography.bodyMedium
-                    )
-                }
-            }
             Spacer(modifier = Modifier.height(16.dp))
 
             ProfileLanguagesField(
@@ -321,7 +264,9 @@ fun PersonalProfileScreen(
                 onLanguagesChanged = { newLanguages ->
                     profileViewModel.setSpokenLanguages(newLanguages)
                 },
-                modifier = Modifier.fillMaxWidth()
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp)
             )
 
             Spacer(modifier = Modifier.height(16.dp))
@@ -342,7 +287,9 @@ fun PersonalProfileScreen(
                         }
                     )
                 },
-                modifier = Modifier.fillMaxWidth()
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp)
             )
             {
                 Text(text = stringResource(R.string.save_profile))

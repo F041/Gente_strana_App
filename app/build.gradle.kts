@@ -48,32 +48,29 @@ android {
 }
 
 dependencies {
+    implementation(platform(libs.androidx.compose.bom))
+
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)
     implementation(libs.androidx.activity.compose)
-    implementation(platform(libs.androidx.compose.bom))
-    implementation(libs.androidx.ui)
-    implementation(libs.androidx.ui.graphics)
-    implementation(libs.androidx.ui.tooling.preview)
+    implementation("androidx.compose.material:material-icons-extended")
+
+
     testImplementation(libs.junit)
+    implementation(libs.androidx.ui.tooling.preview)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
     androidTestImplementation("androidx.compose.ui:ui-test-junit4:1.5.0")
-    debugImplementation("androidx.compose.ui:ui-tooling:1.5.0")
-    implementation(platform("com.google.firebase:firebase-bom:33.9.0"))
-    implementation("com.google.firebase:firebase-firestore-ktx")
-    implementation("com.google.firebase:firebase-analytics")
-    implementation("io.coil-kt:coil-compose:2.4.0")
-    implementation("androidx.navigation:navigation-compose:2.7.0")
-    implementation("androidx.compose.material:material-icons-extended:1.5.0")
+    debugImplementation("androidx.compose.ui:ui-test-manifest:1.5.0")
+
     implementation("com.google.firebase:firebase-auth-ktx")
     implementation("com.google.firebase:firebase-messaging-ktx")
     implementation("io.coil-kt:coil-compose:2.3.0")
     implementation("com.google.firebase:firebase-storage-ktx")
     implementation ("com.google.android.gms:play-services-auth:20.5.0")
     implementation ("org.jetbrains.kotlin:kotlin-stdlib:1.9.0")
-    implementation ("androidx.compose.foundation:foundation:1.6.0")
-    implementation ("androidx.compose.material3:material3:1.2.0")
+    implementation ("androidx.compose.foundation:foundation")
+    implementation ("androidx.compose.material3:material3")
     implementation ("com.google.dagger:hilt-android:2.48")
     implementation ("androidx.hilt:hilt-navigation-compose:1.1.0")
     implementation ("com.google.accompanist:accompanist-swiperefresh:0.32.0")
@@ -81,6 +78,12 @@ dependencies {
     implementation("com.google.accompanist:accompanist-navigation-animation:0.32.0")
     implementation ("com.google.accompanist:accompanist-pager:0.30.1")
     // before 28.0
+
+    implementation(platform("com.google.firebase:firebase-bom:33.9.0"))
+    implementation("com.google.firebase:firebase-firestore-ktx")
+    implementation("com.google.firebase:firebase-analytics")
+    implementation("io.coil-kt:coil-compose:2.4.0")
+    implementation("androidx.navigation:navigation-compose:2.7.0")
 
 
     testImplementation ("junit:junit:4.13.2")              // Framework per test

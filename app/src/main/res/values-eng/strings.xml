@@ -1,7 +1,21 @@
 <resources>
     <string name="app_name">Quirky people</string>
 
+    // Zone signup
+    <string name="registration_email_label">email</string>
+    <string name="registration_email_placeholder">use your best email</string>
+    <string name="registration_password_label">password</string>
+    <string name="registration_password_placeholder">strong but not trivial password</string>
+    <string name="registration_firstname_label">first name</string>
+    <string name="registration_firstname_placeholder">Mark, Susan, only FIRST name</string>
+    <string name="registration_select_profile_picture_button">select Profile Picture</string>
+    <string name="registration_register_button">register</string>
+    <string name="sex_male_description">sex: male</string>
+    <string name="sex_female_description">sex: Female</string>
+    <string name="sex_undefined_description">sex: undefined</string>
+
     // Zona login
+    <string name="sign_in_with_google_button">sign in with Google</string>
     <string name="login_fill_fields">please fill in all fields</string>
     <string name="login_successful">login successful!</string>
     <string name="login_failed">authentication failed: %1$s</string>
@@ -50,6 +64,9 @@
     <string name="get_location">get location</string>
     <string name="your_location">your location</string>
     <string name="save_profile">save profile</string>
+    <string name="profile_updated_success">profile updated</string>
+    <string name="profile_update_failed">updated failed: %s</string>
+    <string name="discard_changes">cancel edits</string>
 
 
 
@@ -63,6 +80,16 @@
     <string name="photos">photos</string>
     <string name="user_bio">about me</string>
     <string name="topics_box">topics</string>
+    <string name="report_user_dialog_title">report User</string>
+    <string name="report_user_dialog_select_reason">select reason:</string>
+    <string name="report_reason_inappropriate_content">inappropriate content</string>
+    <string name="report_reason_offensive_behavior">offensive behavior</string>
+    <string name="report_reason_other">other</string>
+    <string name="report_reason_other_comments_label">additional comments</string>
+    <string name="report_user_dialog_report_button">report</string>
+    <string name="block_user_dialog_title">block user</string>
+    <string name="block_user_dialog_text">are you sure you want to block this user?</string>
+    <string name="block_user_dialog_block_button">block</string>
 
     // Zona settings
     <string name="change_password">change Password</string>
@@ -87,7 +114,14 @@
     <string name="terms_of_service">terms of service</string>
     <string name="app_version">app version</string>
 
-    // Zona misc
+    // Zone notifications
+    <string name="notification_channel_id">quirkypeople_messages</string> <string name="notification_channel_name">Messaggi</string>
+    <string name="notification_channel_description">
+        notifications for new messages in the app Quirky People.
+    </string>
+
+
+    // Zone misc
     <string name="back">back</string>
     <string name="next">next</string>
     <string name="previous">previous</string>
@@ -96,5 +130,8 @@
     <string name="sex_male">male</string>
     <string name="sex_female">female</string>
     <string name="sex_undefined">undefined</string>
+    <string name="users_found">users found</string>
+    <string name="no_topics_defined">I still didn\'t write my first topic</string>
+
 
 </resources>

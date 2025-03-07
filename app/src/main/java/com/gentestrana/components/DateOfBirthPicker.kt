@@ -2,13 +2,17 @@ package com.gentestrana.components
 
 import android.app.DatePickerDialog
 import android.content.Context
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Button
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.unit.dp
 import com.gentestrana.R
 import java.text.SimpleDateFormat
 import java.util.*
@@ -28,24 +32,29 @@ fun DateOfBirthPicker(
     if (showDialog) {
         DatePickerDialog(
             context,
-            { _, selectedYear, selectedMonth, selectedDay ->
-                val newCalendar = Calendar.getInstance().apply {
-                    set(Calendar.YEAR, selectedYear)
-                    set(Calendar.MONTH, selectedMonth)
-                    set(Calendar.DAY_OF_MONTH, selectedDay)
-                }
-                onDateSelected(newCalendar.timeInMillis)
-                showDialog = false
-            },
-            calendar.get(Calendar.YEAR),
-            calendar.get(Calendar.MONTH),
-            calendar.get(Calendar.DAY_OF_MONTH)
+            android.R.style.Theme_Material_Light_Dialog_Alert, // Modificato il tema in Light**
+        { _, selectedYear, selectedMonth, selectedDay ->
+            val newCalendar = Calendar.getInstance().apply {
+                set(Calendar.YEAR, selectedYear)
+                set(Calendar.MONTH, selectedMonth)
+                set(Calendar.DAY_OF_MONTH, selectedDay)
+            }
+            onDateSelected(newCalendar.timeInMillis)
+            showDialog = false
+        },
+        calendar.get(Calendar.YEAR),
+        calendar.get(Calendar.MONTH),
+        calendar.get(Calendar.DAY_OF_MONTH)
         ).show()
     }
 
     Button(
         onClick = { showDialog = true },
-        modifier = Modifier.fillMaxWidth()
+                modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 16.dp)// il bottone occuperà tutta la larghezza disponibile
+        // altrimenti solo larghezza teesto
+
     ) {
         val displayText = if (birthTimestamp > 0L) {
             val sdf = SimpleDateFormat("dd/MM/yyyy", Locale.getDefault())
@@ -54,6 +63,6 @@ fun DateOfBirthPicker(
         } else {
             stringResource(R.string.set_birthdate)
         }
-        Text(text = displayText, color = MaterialTheme.colorScheme.onSurface)
+        Text(text = displayText, color = MaterialTheme.colorScheme.onPrimary)
     }
 }

@@ -32,20 +32,25 @@ fun UserProfileCard(
         modifier = modifier
             .fillMaxWidth()
             .clickable(onClick = onClick)
-            .heightIn(min = 120.dp), // Enforce minimum card height
+            .heightIn(min = 120.dp),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
     ) {
         Row(
             modifier = Modifier
-                .fillMaxSize() // Fill entire card space
+                .fillMaxSize()
                 .padding(16.dp),
             verticalAlignment = Alignment.Top
         ) {
             // Profile Image
+            val profilePicUrlList = user.profilePicUrl
+            // Get the list directly
+            val profileImageUrl: String? = profilePicUrlList.firstOrNull()
+            // Safely get the first URL or null
+
             Image(
                 painter = rememberAsyncImagePainter(
-                    model = user.profilePicUrl.firstOrNull()?.takeIf { it.isNotEmpty() }
-                        ?: "https://icons.veryicon.com/png/o/system/ali-mom-icon-library/random-user.png"
+                    model = profileImageUrl ?: "res/drawable/random_user.webp"
+                // Use default URL if profileImageUrl is null
                 ),
                 contentDescription = "Profile",
                 modifier = Modifier
@@ -71,10 +76,15 @@ fun UserProfileCard(
                     )
                     Spacer(Modifier.height(4.dp))
                     Text(
-                        text = if (user.topics[0].length > 80) {
-                            user.topics[0].take(80) + "..."
+                        text = if (user.topics.isNotEmpty()) {
+                            // **CONTROLLA SE LA LISTA NON È VUOTA**
+                            if (user.topics[0].length > 80) {
+                                user.topics[0].take(80) + "..."
+                            } else {
+                                user.topics[0]
+                            }
                         } else {
-                            user.topics[0]
+                            stringResource(R.string.no_topics_defined) // **TESTO DI DEFAULT SE LISTA VUOTA**
                         },
                         color = MaterialTheme.colorScheme.onSurface,
                         fontFamily = FontFamily.SansSerif,

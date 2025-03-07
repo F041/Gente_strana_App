@@ -36,6 +36,7 @@ import android.os.VibrationEffect
 import android.os.Vibrator
 import androidx.compose.ui.platform.LocalContext
 import com.gentestrana.utils.removeSpaces
+import com.gentestrana.components.EditButton
 
 
 // Composable per un campo di testo standard
@@ -114,7 +115,9 @@ fun ProfileTextField(
             placeholder = placeholder?.let { { Text(it) } },
             isError = showError,
             keyboardOptions = keyboardOptions,
-            modifier = Modifier.fillMaxWidth(),
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 16.dp),
             colors = TextFieldDefaults.outlinedTextFieldColors(
                 focusedBorderColor = MaterialTheme.colorScheme.primary,
                 unfocusedBorderColor = MaterialTheme.colorScheme.outline,
@@ -126,7 +129,8 @@ fun ProfileTextField(
                 text = "${value.length} / $maxLength",
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(top = 4.dp),
+                    .padding(top = 4.dp)
+                    .padding(horizontal = 16.dp),
                 fontSize = 12.sp,
                 textAlign = TextAlign.End,
                 color = if (value.length > maxLength) MaterialTheme.colorScheme.error else Color.Gray
@@ -168,7 +172,8 @@ fun ProfileBioBox(
     }
 
     Column(
-        modifier = modifier.then(commonProfileBoxModifier())
+        modifier = modifier
+                .then(commonProfileBoxModifier())
     ) {
         // Titolo (occupa tutta la larghezza)
         Text(
@@ -216,13 +221,9 @@ fun ProfileBioBox(
         EditButton(
             isEditing = isEditing,
             onClick = {
-                if (isEditing) {
-                    onValueChange(localText)
-                }
+                if (isEditing) onValueChange(localText)
                 isEditing = !isEditing
             },
-            editLabel = editLabel,
-            saveLabel = saveLabel,
             modifier = Modifier.fillMaxWidth()
         )
     }

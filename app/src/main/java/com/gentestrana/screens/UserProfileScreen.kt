@@ -5,7 +5,8 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.Block
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -16,24 +17,29 @@ import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
 import com.gentestrana.R
 import com.gentestrana.chat.ChatRepository
+import com.gentestrana.components.ProfileContent
 import com.gentestrana.users.User
 import com.gentestrana.users.UserPicsGallery
 import com.gentestrana.users.UserRepository
 import kotlinx.coroutines.launch
+import androidx.compose.material.icons.filled.WarningAmber
+import com.gentestrana.users.ReportReason
 
 
 @OptIn(ExperimentalFoundationApi::class, ExperimentalMaterial3Api::class)
 @Composable
 fun UserProfileScreen(
     docId: String,
-    navController: NavHostController,
-
-) {
+    navController: NavHostController,) {
     val userRepository = remember { UserRepository() }
     val chatRepository = remember { ChatRepository() } // <-- Aggiungi questa linea
     var showGallery by remember { mutableStateOf(false) }
-    var showAddImageDialog by remember { mutableStateOf(false) }
-    var newImageUrl by remember { mutableStateOf("") }
+    var showReportDialog by remember { mutableStateOf(false) }
+
+    // Stato per il motivo selezionato e per eventuali commenti aggiuntivi
+    var selectedReportReason by remember { mutableStateOf(ReportReason.CONTENUTI_INAPPROPRIATI) }
+    var additionalComments by remember { mutableStateOf("") }
+    var showBlockDialog by remember { mutableStateOf(false) }
 
     // Stato per gestire il caricamento delle immagini
     val userState = produceState<User?>(initialValue = null) {
@@ -49,7 +55,6 @@ fun UserProfileScreen(
     }
 
     val user = userState.value!!
-    val descriptionItems = user.topics
     val scrollState = rememberLazyListState()
     var currentDescriptionIndex by remember { mutableStateOf(0) }
     val coroutineScope = rememberCoroutineScope()
@@ -62,10 +67,18 @@ fun UserProfileScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Profilo") },
+                title = { Text(stringResource(R.string.user_profile)) },
                 navigationIcon = {
                     IconButton(onClick = { navController.popBackStack() }) {
-                        Icon(Icons.Default.ArrowBack, "Indietro")
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Indietro")
+                    }
+                },
+                actions = {
+                    IconButton(onClick = { showReportDialog = true }) {
+                        Icon(Icons.Filled.WarningAmber, contentDescription = "Segnala utente")
+                    }
+                    IconButton(onClick = { showBlockDialog = true }) {
+                        Icon(Icons.Filled.Block, contentDescription = "Blocca utente")
                     }
                 }
             )
@@ -80,10 +93,10 @@ fun UserProfileScreen(
                 user = user,
                 padding = padding,
                 //scrollState = scrollState,
-                //currentDescriptionIndex = currentDescriptionIndex,
                 onProfileImageClick = { showGallery = true },
-                navController = navController, // Passa navController
-                onStartChat = { // Lambda per avviare la chat
+                navController = navController,
+                onStartChat = {
+                    // Lambda per avviare la chat
                     coroutineScope.launch {
                         try {
                             val chatId = chatRepository.createNewChat(user)
@@ -97,38 +110,113 @@ fun UserProfileScreen(
         }
     }
 
-    if (showAddImageDialog) {
+    if (showReportDialog) {
         AlertDialog(
-            onDismissRequest = { showAddImageDialog = false },
-            title = { Text("Aggiungi nuova immagine") },
+            onDismissRequest = { showReportDialog = false },
+            title = { Text(stringResource(R.string.report_user_dialog_title)) },
             text = {
                 Column {
-                    TextField(
-                        value = newImageUrl,
-                        onValueChange = { newImageUrl = it },
-                        label = { Text("URL immagine") }
-                    )
+                    Text(stringResource(R.string.report_user_dialog_select_reason))
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        RadioButton(
+                            selected = selectedReportReason == ReportReason.CONTENUTI_INAPPROPRIATI,
+                            onClick = { selectedReportReason = ReportReason.CONTENUTI_INAPPROPRIATI }
+                        )
+                        Text(stringResource(R.string.report_reason_inappropriate_content))
+                    }
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        RadioButton(
+                            selected = selectedReportReason == ReportReason.COMPORTAMENTO_OFFENSIVO,
+                            onClick = { selectedReportReason = ReportReason.COMPORTAMENTO_OFFENSIVO }
+                        )
+                        Text(stringResource(R.string.report_reason_offensive_behavior))
+                    }
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        RadioButton(
+                            selected = selectedReportReason == ReportReason.ALTRO,
+                            onClick = { selectedReportReason = ReportReason.ALTRO }
+                        )
+                        Text(stringResource(R.string.report_reason_other))
+                    }
+                    if (selectedReportReason == ReportReason.ALTRO) {
+                        OutlinedTextField(
+                            value = additionalComments,
+                            onValueChange = { additionalComments = it },
+                            label = { Text(stringResource(R.string.report_reason_other_comments_label)) }
+                        )
+                    }
                 }
             },
             confirmButton = {
                 Button(
                     onClick = {
-                        userRepository.addProfileImage(
-                            docId = docId,
-                            newImageUrl = newImageUrl,
+                        // Chiama il report passando l'ID dell'utente corrente (user.docId) o quello visualizzato
+                        userRepository.reportUser(
+                            reportedUserId = user.docId,
+                            reason = selectedReportReason,
+                            additionalComments = additionalComments,
                             onSuccess = {
-                                showAddImageDialog = false
-                                newImageUrl = ""
+                                showReportDialog = false
+                                // Eventuale feedback all'utente (es. Snackbar)
                             },
-                            onFailure = { /* Gestisci errore */ }
+                            onFailure = {
+                                // Mostra un messaggio d'errore
+                            }
                         )
                     }
                 ) {
-                    Text("Salva")
+                    Text(stringResource(R.string.report_user_dialog_report_button))
                 }
             },
             dismissButton = {
-                TextButton(onClick = { showAddImageDialog = false }) {
+                TextButton(onClick = { showReportDialog = false }) {
+                    Text(stringResource(R.string.cancel))
+                }
+            }
+        )
+    }
+
+    if (showBlockDialog) {
+        AlertDialog(
+            onDismissRequest = { showBlockDialog = false },
+            title = { Text(stringResource(R.string.block_user_dialog_title)) },
+            text = { Text(stringResource(R.string.block_user_dialog_text)) },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        // Inserisci qui la logica per bloccare l'utente
+                        showBlockDialog = false
+                    }
+                ) {
+                    Text(stringResource(R.string.block_user_dialog_block_button))
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showBlockDialog = false }) {
+                    Text(stringResource(R.string.cancel))
+                }
+            }
+        )
+    }
+
+    if (showBlockDialog) {
+        AlertDialog(
+            onDismissRequest = { showBlockDialog = false },
+            title = { Text("Blocca Utente") },
+            text = { Text("Sei sicuro di voler bloccare questo utente?") },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        // Inserisci qui la logica per bloccare l'utente
+                        showBlockDialog = false
+                    }
+                ) {
+                    Text("Blocca")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showBlockDialog = false }) {
                     Text("Annulla")
                 }
             }

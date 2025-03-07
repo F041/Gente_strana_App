@@ -9,6 +9,7 @@ import com.google.firebase.firestore.ktx.firestore
 import com.google.firebase.ktx.Firebase
 import com.gentestrana.utils.uploadProfileImage
 
+
 class UserRepository {
 
     private val auth = FirebaseAuth.getInstance()
@@ -21,6 +22,7 @@ class UserRepository {
         email: String,
         password: String,
         username: String,
+        sex: String,
         bio: String,
         selectedImageUri: Uri?,
         context: Context,
@@ -37,9 +39,9 @@ class UserRepository {
                 val userData = mapOf(
                     "username" to username,
                     "bio" to bio,
-                    "profilePicUrl" to "",
+                    "profilePicUrl" to listOf<String>(),
                     "age" to 0,
-                    "sex" to ""
+                    "sex" to sex //
                 )
                 firestore.collection("users").document(uid)
                     .set(userData)
@@ -50,7 +52,7 @@ class UserRepository {
                                 if (imageUrl.isNotEmpty()) {
                                     // Update Firestore with the profile photo URL
                                     firestore.collection("users").document(uid)
-                                        .update("profilePicUrl", imageUrl)
+                                        .update("profilePicUrl", listOf(imageUrl))
                                         .addOnSuccessListener {
                                             // Also update the profile in FirebaseAuth
                                             val user = auth.currentUser
@@ -167,5 +169,33 @@ class UserRepository {
             .addOnFailureListener { e ->
                 onFailure(e)
             }
+    }
+    fun reportUser(
+        reportedUserId: String,
+        reason: ReportReason,
+        additionalComments: String = "",
+        onSuccess: () -> Unit,
+        onFailure: (String?) -> Unit
+    ) {
+        // Recupera l'ID dell'utente che segnala, da FirebaseAuth.
+        val reporterUserId = auth.currentUser?.uid
+        if (reporterUserId == null) {
+            onFailure("Utente non autenticato")
+            return
+        }
+
+        // Crea l'oggetto report
+        val report = ReportUser(
+            reportedUserId = reportedUserId,
+            reporterUserId = reporterUserId,
+            reason = reason,
+            additionalComments = additionalComments
+        )
+
+        // Aggiungi il report alla collezione "reports" su Firestore
+        firestore.collection("reports")
+            .add(report)
+            .addOnSuccessListener { onSuccess() }
+            .addOnFailureListener { e -> onFailure(e.message) }
     }
 }

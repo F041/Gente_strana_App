@@ -13,11 +13,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import coil.compose.rememberAsyncImagePainter
-import com.google.firebase.auth.FirebaseAuth
-import com.google.firebase.auth.ktx.userProfileChangeRequest
-import com.google.firebase.firestore.ktx.firestore
-import com.google.firebase.ktx.Firebase
-import com.gentestrana.utils.uploadProfileImage
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Female
 import androidx.compose.material.icons.filled.Male
@@ -27,7 +22,11 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import com.gentestrana.R
+import com.gentestrana.users.UserRepository
 import androidx.compose.foundation.shape.RoundedCornerShape
+
+private val CircularProgressIndicatorSize = 20.dp
+val userRepository = UserRepository()
 
 @Composable
 fun RegistrationScreen(onRegistrationSuccess: () -> Unit) {
@@ -68,18 +67,20 @@ fun RegistrationScreen(onRegistrationSuccess: () -> Unit) {
         ) {
             OutlinedTextField(
                 value = email,
+                // TODO: regex per accettare solo determinati domini e non
+                // ciao@ciao.it, per esempio?
                 onValueChange = { email = it },
-                label = { Text("Email") },
+                label = { Text(stringResource(R.string.registration_email_label)) },
                 modifier = Modifier.fillMaxWidth(),
-                placeholder = { Text("usa la tua migliore mail") }, // cambiare con string
+                placeholder = { Text(stringResource(R.string.registration_email_placeholder)) }, // cambiare con string
             )
             Spacer(modifier = Modifier.height(8.dp))
 
             OutlinedTextField(
                 value = password,
                 onValueChange = { password = it },
-                label = { Text("Password") },
-                placeholder = { Text("password forte ma non banale") }, // cambiare con string
+                label = { Text(stringResource(R.string.registration_password_label)) },
+                placeholder = { Text(stringResource(R.string.registration_password_placeholder)) }, // cambiare con string
                 modifier = Modifier.fillMaxWidth()
             )
             Spacer(modifier = Modifier.height(8.dp))
@@ -87,8 +88,8 @@ fun RegistrationScreen(onRegistrationSuccess: () -> Unit) {
             OutlinedTextField(
                 value = username,
                 onValueChange = { username = it },
-                label = { Text("First name") },// cambiare con string
-                placeholder = { Text("Marco, Giovanna, solo il PRIMO nome") }, // cambiare con string
+                label = { Text(stringResource(R.string.registration_firstname_label)) },// cambiare con string
+                placeholder = { Text(stringResource(R.string.registration_firstname_placeholder)) }, // cambiare con string
                 modifier = Modifier.fillMaxWidth()
             )
             Spacer(modifier = Modifier.height(8.dp))
@@ -112,7 +113,7 @@ fun RegistrationScreen(onRegistrationSuccess: () -> Unit) {
                     }) {
                         Icon(
                             imageVector = Icons.Filled.Male,
-                            contentDescription = stringResource(R.string.sex_male),
+                            contentDescription = stringResource(R.string.sex_male_description),
                             tint = if (sex == "M") MaterialTheme.colorScheme.primary else Color.Gray
                         )
                     }
@@ -133,7 +134,7 @@ fun RegistrationScreen(onRegistrationSuccess: () -> Unit) {
                     }) {
                         Icon(
                             imageVector = Icons.Filled.Female,
-                            contentDescription = stringResource(R.string.sex_female),
+                            contentDescription = stringResource(R.string.sex_female_description),
                             tint = if (sex == "F") MaterialTheme.colorScheme.primary else Color.Gray
                         )
                     }
@@ -154,7 +155,7 @@ fun RegistrationScreen(onRegistrationSuccess: () -> Unit) {
                     }) {
                         Icon(
                             imageVector = Icons.Filled.QuestionMark,
-                            contentDescription = stringResource(R.string.sex_undefined),
+                            contentDescription = stringResource(R.string.sex_undefined_description),
                             tint = if (sex == "Undefined") MaterialTheme.colorScheme.primary else Color.Gray
                         )
                     }
@@ -164,11 +165,12 @@ fun RegistrationScreen(onRegistrationSuccess: () -> Unit) {
             Spacer(modifier = Modifier.height(8.dp))
 
 
+
             Button(
                 onClick = { imagePickerLauncher.launch("image/*") },
                 modifier = Modifier.fillMaxWidth()
             ) {
-                Text("Select Profile Picture")
+                Text(stringResource(R.string.registration_select_profile_picture_button))
             }
 
             selectedImageUri?.let { uri ->
@@ -187,11 +189,12 @@ fun RegistrationScreen(onRegistrationSuccess: () -> Unit) {
             Button(
                 onClick = {
                     isLoading = true
-                    registerUserAndUploadImage(
+                    userRepository.registerUserAndUploadImage(
                         email = email,
                         password = password,
                         username = username,
-                        sex = sex, // Passa la variabile sex
+                        sex = sex,
+                        bio = "",
                         selectedImageUri = selectedImageUri,
                         context = context,
                         onSuccess = {
@@ -200,7 +203,7 @@ fun RegistrationScreen(onRegistrationSuccess: () -> Unit) {
                         },
                         onFailure = { error ->
                             isLoading = false
-                            errorMessage = error // Imposta il messaggio di errore
+                            errorMessage = error
                         }
                     )
                 },
@@ -208,111 +211,11 @@ fun RegistrationScreen(onRegistrationSuccess: () -> Unit) {
                 enabled = !isLoading
             ) {
                 if (isLoading) {
-                    CircularProgressIndicator(modifier = Modifier.size(20.dp))
+                    CircularProgressIndicator(modifier = Modifier.size(CircularProgressIndicatorSize))
                 } else {
-                    Text("Register")
+                    Text(stringResource(R.string.registration_register_button))
                 }
             }
         }
     }
-}
-
-fun registerUserAndUploadImage(
-    email: String,
-    password: String,
-    username: String,
-    sex: String, // Aggiunto parametro sex
-    selectedImageUri: Uri?,
-    context: android.content.Context,
-    onSuccess: () -> Unit,
-    onFailure: (String?) -> Unit
-) {
-    val auth = FirebaseAuth.getInstance()
-    val firestore = Firebase.firestore
-
-    auth.createUserWithEmailAndPassword(email, password)
-        .addOnSuccessListener { authResult ->
-            val uid = authResult.user?.uid ?: run {
-                onFailure("User ID is null")
-                return@addOnSuccessListener
-            }
-
-            val userData = mapOf(
-                "username" to username,
-                "profilePicUrl" to "",
-                "age" to 0,
-                "sex" to sex // Usa la variabile sex passata come parametro
-            )
-
-            firestore.collection("users").document(uid)
-                .set(userData)
-                .addOnSuccessListener {
-                    if (selectedImageUri != null) {
-                        uploadProfileImage(uid, selectedImageUri) { imageUrl ->
-                            if (imageUrl.isNotEmpty()) {
-                                updateProfileWithImage(uid, username, imageUrl, onSuccess, onFailure)
-                            } else {
-                                onFailure("Image upload failed")
-                            }
-                        }
-                    } else {
-                        updateProfileWithoutImage(username, onSuccess, onFailure)
-                    }
-                }
-                .addOnFailureListener { e ->
-                    onFailure(e.message)
-                }
-        }
-        .addOnFailureListener { e ->
-            onFailure(e.message)
-        }
-}
-
-fun updateProfileWithImage(
-    uid: String,
-    username: String,
-    imageUrl: String,
-    onSuccess: () -> Unit,
-    onFailure: (String?) -> Unit
-) {
-    val firestore = Firebase.firestore
-    firestore.collection("users").document(uid)
-        .update("profilePicUrl", imageUrl)
-        .addOnSuccessListener {
-            val user = FirebaseAuth.getInstance().currentUser
-            val profileUpdates = userProfileChangeRequest {
-                displayName = username
-                photoUri = Uri.parse(imageUrl)
-            }
-            user?.updateProfile(profileUpdates)
-                ?.addOnCompleteListener { task ->
-                    if (task.isSuccessful) {
-                        onSuccess()
-                    } else {
-                        onFailure(task.exception?.message)
-                    }
-                }
-        }
-        .addOnFailureListener { e ->
-            onFailure(e.message)
-        }
-}
-
-fun updateProfileWithoutImage(
-    username: String,
-    onSuccess: () -> Unit,
-    onFailure: (String?) -> Unit
-) {
-    val user = FirebaseAuth.getInstance().currentUser
-    val profileUpdates = userProfileChangeRequest {
-        displayName = username
-    }
-    user?.updateProfile(profileUpdates)
-        ?.addOnCompleteListener { task ->
-            if (task.isSuccessful) {
-                onSuccess()
-            } else {
-                onFailure(task.exception?.message)
-            }
-        }
 }

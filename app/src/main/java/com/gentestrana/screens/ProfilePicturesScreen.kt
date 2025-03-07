@@ -1,10 +1,10 @@
 package com.gentestrana.screens
 
+import android.util.Log
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
@@ -16,8 +16,7 @@ fun ProfilePicturesScreen(
     imageUrls: List<String>,
     modifier: Modifier = Modifier,
 ) {
-    println("DEBUG - Numero immagini: ${imageUrls.size}") // Controlla in Logcat
-    // Puoi aggiungere altri elementi (es. un titolo o un pulsante di back) se necessario
+    Log.d("ProfilePicturesScreen", "DEBUG - Numero immagini: ${imageUrls.size}")    // Puoi aggiungere altri elementi (es. un titolo o un pulsante di back) se necessario
     Column(
         modifier = modifier
             .fillMaxSize()
@@ -32,10 +31,7 @@ fun ProfilePicturesScreen(
         ProfilePhotoCarousel(
             imageUrls = imageUrls,
             modifier = Modifier
-                .fillMaxSize()
                 .weight(1f)
-
         )
-
     }
 }

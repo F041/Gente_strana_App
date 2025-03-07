@@ -10,15 +10,23 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 
-@Composable // 👈 Aggiungi l'annotazione @Composable
-fun commonProfileBoxModifier(): Modifier {
+@Composable
+fun commonProfileBoxModifier(
+    cornerRadius: Dp = 12.dp,
+    borderColor: Color = MaterialTheme.colorScheme.outline,
+    backgroundColor: Color = MaterialTheme.colorScheme.surfaceVariant,
+    minHeight: Dp = 120.dp, // Modificato da 150dp, perchè?
+    paddingValue: Dp = 16.dp
+): Modifier {
     return Modifier
         .fillMaxWidth()
-        .clip(RoundedCornerShape(12.dp))
-        .background(MaterialTheme.colorScheme.surfaceVariant) // ✅ Ora MaterialTheme.colorScheme è OK qui dentro
-        .border(1.dp, MaterialTheme.colorScheme.outline, RoundedCornerShape(12.dp))
-        .padding(16.dp)
-        .heightIn(min = 150.dp)
+        .clip(RoundedCornerShape(cornerRadius))
+        .background(backgroundColor)
+        .border(1.dp, borderColor, RoundedCornerShape(cornerRadius))
+        .padding(paddingValue)
+        .heightIn(min = minHeight)
 }

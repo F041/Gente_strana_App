@@ -28,21 +28,25 @@ quindi andrà gestita a livello di UI o logica di business.
 [location] rappresenta il paese (o una stringa simile) ottenuta, ad esempio, dal GPS al primo utilizzo.
  */
 data class User(
-    @PropertyName("username")
+     @PropertyName("username")
     val username: String = "",
     val bio: String = "",
     val topics: List<String> = emptyList(),
     @PropertyName("profilePicUrl")
     val profilePicUrl: List<String> = listOf("res/drawable/random_user.webp"), // Sempre una lista
-    val rawBirthTimestamp: Any? = null,
+     @PropertyName("rawBirthTimestamp")
+     val rawBirthTimestamp: Any? = null,
     val sex: String = "Undefined", // Campo per il sesso: "M", "F" o "Undefined"
-    val docId: String = "",
+    @PropertyName("docId")
+     val docId: String = "",
     val fcmToken: String = "",
     val spokenLanguages: List<String> = emptyList(),
-    val location: String = ""
+    val location: String = "",
+    val isAdmin: Boolean = false
 ) {
 
     // Normalizza il campo profilePicUrl: restituisce sempre una lista di stringhe
+    // a cosa serviva? Quando non avevo la variabile come lista e forzare firebase?
     val normalizedProfilePicUrl: List<String>
         get() = profilePicUrl.ifEmpty {
             listOf("res/drawable/random_user.webp")

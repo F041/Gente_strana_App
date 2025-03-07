@@ -1,21 +1,24 @@
 package com.gentestrana.screens
 
 import android.app.Activity
-import android.content.Intent
+import android.util.Log
+import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
-import androidx.activity.result.contract.ActivityResultContracts.StartActivityForResult
+import androidx.activity.result.IntentSenderRequest
+import androidx.activity.result.contract.ActivityResultContracts.StartIntentSenderForResult
 import androidx.compose.material3.Button
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import com.gentestrana.R
 import com.gentestrana.users.UserRepository
-import com.google.android.gms.auth.api.signin.GoogleSignIn
-import com.google.android.gms.auth.api.signin.GoogleSignInAccount
-import com.google.android.gms.auth.api.signin.GoogleSignInClient
-import com.google.android.gms.auth.api.signin.GoogleSignInOptions
+import com.google.android.gms.auth.api.identity.BeginSignInRequest
+import com.google.android.gms.auth.api.identity.Identity
+import com.google.android.gms.auth.api.identity.SignInClient
+import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.messaging.FirebaseMessaging
 
-// come portare nome su google account come Username-firstname?
 @Composable
 fun GoogleLoginScreen(
     onLoginSuccess: () -> Unit,
@@ -23,39 +26,77 @@ fun GoogleLoginScreen(
 ) {
     val context = LocalContext.current
     val userRepository = UserRepository()
-    // Configura Google Sign-In:
-    val gso = GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
-        .requestIdToken(context.getString(R.string.default_web_client_id))
-        .requestEmail()
-        .build()
-    val googleSignInClient: GoogleSignInClient = GoogleSignIn.getClient(context, gso)
+    val oneTapClient: SignInClient = Identity.getSignInClient(context)
 
-    // Launcher per gestire il risultato del flusso Google Sign-In.
-    val launcher = rememberLauncherForActivityResult(StartActivityForResult()) { result ->
+    // Nuova richiesta di autenticazione Google
+    val signInRequest = BeginSignInRequest.builder()
+        .setGoogleIdTokenRequestOptions(
+            BeginSignInRequest.GoogleIdTokenRequestOptions.builder()
+                .setSupported(true)
+                .setServerClientId(context.getString(R.string.default_web_client_id))
+                .setFilterByAuthorizedAccounts(false) // Mostra sempre il selettore Google
+                .build()
+        )
+        .build()
+
+    // Launcher per gestire il risultato del login
+    val launcher = rememberLauncherForActivityResult(StartIntentSenderForResult()) { result ->
         if (result.resultCode == Activity.RESULT_OK) {
-            val task = GoogleSignIn.getSignedInAccountFromIntent(result.data)
-            try {
-                // Recupera l'account Google e il relativo ID token.
-                val account: GoogleSignInAccount = task.getResult(Exception::class.java)!!
+            val credential = oneTapClient.getSignInCredentialFromIntent(result.data)
+            val idToken = credential.googleIdToken
+
+            if (idToken != null) {
                 userRepository.signInWithGoogle(
-                    idToken = account.idToken ?: "",
-                    onSuccess = onLoginSuccess,
-                    onFailure = { error -> onError(error ?: "Authentication failed") }
+                    idToken = idToken,
+                    onSuccess = {
+                        val firebaseUser = FirebaseAuth.getInstance().currentUser
+                        if (firebaseUser != null) {
+                            userRepository.getUser(
+                                docId = firebaseUser.uid,
+                                onSuccess = { user ->
+                                    if (user.isAdmin) {
+                                        FirebaseMessaging.getInstance().subscribeToTopic("adminReports")
+                                            .addOnCompleteListener { subscribeTask ->
+                                                if (subscribeTask.isSuccessful) {
+                                                    Log.d("FCM", "Iscritto a adminReports")
+                                                } else {
+                                                    Log.e("FCM", "Errore iscrizione topic")
+                                                }
+                                            }
+                                    }
+                                    onLoginSuccess()
+                                },
+                                onFailure = { error ->
+                                    Toast.makeText(context, "Errore nel recupero dati utente: $error", Toast.LENGTH_SHORT).show()
+                                    onLoginSuccess()
+                                }
+                            )
+                        } else {
+                            onError("Utente non trovato dopo il login.")
+                        }
+                    },
+                    onFailure = { error ->
+                        onError(error ?: "Authentication failed")
+                    }
                 )
-            } catch (e: Exception) {
-                onError("Google sign in failed: ${e.localizedMessage}")
+            } else {
+                onError("Google sign-in failed: No ID token")
             }
         } else {
-            onError("Google sign in canceled")
+            onError("Google sign-in canceled")
         }
     }
 
-    // UI: Pulsante per avviare il flusso di Google Sign-In.
+    // UI: Pulsante di login con Google
     Button(onClick = {
-        val signInIntent: Intent = googleSignInClient.signInIntent
-        launcher.launch(signInIntent)
+        oneTapClient.beginSignIn(signInRequest)
+            .addOnSuccessListener { result ->
+                launcher.launch(IntentSenderRequest.Builder(result.pendingIntent).build())
+            }
+            .addOnFailureListener { e ->
+                onError("Google sign-in failed: ${e.localizedMessage}")
+            }
     }) {
-        Text("Sign in with Google")
-        // stringabile
+        Text(stringResource(R.string.sign_in_with_google_button))
     }
 }

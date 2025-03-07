@@ -3,6 +3,7 @@ package com.gentestrana.chat
 import com.google.firebase.Timestamp
 import com.google.firebase.firestore.IgnoreExtraProperties
 
+
 @IgnoreExtraProperties
 data class ChatMessage(
     val id: String = "",
@@ -13,4 +14,5 @@ data class ChatMessage(
 ) {
     constructor() : this("", "", "", Timestamp.now(), "SENT") // Costruttore vuoto per Firestore
 }
+// TODO: agganciare notifiche MyFirebaseMessaginService qui?
 

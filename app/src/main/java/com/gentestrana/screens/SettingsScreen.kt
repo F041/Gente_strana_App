@@ -83,7 +83,7 @@ fun SettingsScreen(
             Spacer(modifier = Modifier.height(16.dp))
 
             Text(
-                text = stringResource(R.string.notifications_section), // Usa string resource per "Notifiche"
+                text = stringResource(R.string.notifications_section),
                 style = MaterialTheme.typography.titleMedium
             )
             HorizontalDivider()
@@ -105,7 +105,7 @@ fun SettingsScreen(
             Spacer(modifier = Modifier.height(16.dp))
 
             Text(
-                text = stringResource(R.string.theme_section), // Usa string resource per "Tema"
+                text = stringResource(R.string.theme_section),
                 style = MaterialTheme.typography.titleMedium
             )
             HorizontalDivider()
@@ -114,10 +114,10 @@ fun SettingsScreen(
                 RadioButton(
                     selected = selectedTheme.value == AppTheme.SYSTEM,
                     onClick = {
-                        val newTheme = AppTheme.SYSTEM // ✅ Ottieni il NUOVO tema selezionato
-                        selectedTheme.value = newTheme // ✅ Aggiorna lo stato LOCALE (per UI SettingsScreen)
+                        val newTheme = AppTheme.SYSTEM
+                        selectedTheme.value = newTheme
                         Log.d("SettingsScreen", "RadioButton SYSTEM cliccato, selectedTheme.value ora: ${selectedTheme.value}")
-                        selectedTheme.value = AppTheme.SYSTEM // ✅ MODIFICA STATO selectedTheme!
+                        selectedTheme.value = AppTheme.SYSTEM
                         sharedPreferences.edit()
                             .putString(appThemeKey, "SYSTEM")
                             .apply()
@@ -178,7 +178,7 @@ fun SettingsScreen(
             Spacer(modifier = Modifier.height(16.dp))
 
             Text(
-                text = stringResource(R.string.info_section), // Usa string resource per "Informazioni"
+                text = stringResource(R.string.info_section),
                 style = MaterialTheme.typography.titleMedium
             )
             HorizontalDivider()

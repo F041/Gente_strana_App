@@ -2,7 +2,22 @@
 <resources>
     <string name="app_name">GenteStrana</string>
 
+
+    // Zona registrazione
+    <string name="registration_email_label">Email</string>
+    <string name="registration_email_placeholder">usa la tua migliore mail</string>
+    <string name="registration_password_label">Password</string>
+    <string name="registration_password_placeholder">password forte ma non banale</string>
+    <string name="registration_firstname_label">First name</string>
+    <string name="registration_firstname_placeholder">Marco, Giovanna, solo il PRIMO nome</string>
+    <string name="registration_select_profile_picture_button">Select Profile Picture</string>
+    <string name="registration_register_button">Register</string>
+    <string name="sex_male_description">Sesso: Maschio</string>
+    <string name="sex_female_description">Sesso: Femmina</string>
+    <string name="sex_undefined_description">Sesso: Non definito</string>
+
     // Zona login
+    <string name="sign_in_with_google_button">accedi con Google</string>
     <string name="login_fill_fields">compila tutti i campi</string>
     <string name="login_successful">accesso avvenuto</string>
     <string name="login_failed">autenticazione fallita: %1$s</string>
@@ -29,6 +44,9 @@
     <string name="search_hint">cerca una lingua...</string>
     <string name="selected_languages">lingue selezionate</string>
     <string name="user_profile">profilo utente</string>
+    <string name="profile_updated_success">profilo aggiornato con successo</string>
+    <string name="profile_update_failed">aggiornamento fallito: %s</string>
+    <string name="discard_changes">annulla modifiche</string>
 
 
     <string name="edit">modifica</string>
@@ -64,6 +82,16 @@
     <string name="photos">foto</string>
     <string name="user_bio">su di me</string>
     <string name="topics_box">argomenti</string>
+    <string name="report_user_dialog_title">segnala Utente</string>
+    <string name="report_user_dialog_select_reason">seleziona il motivo:</string>
+    <string name="report_reason_inappropriate_content">contenuti inappropriati</string>
+    <string name="report_reason_offensive_behavior">comportamento offensivo</string>
+    <string name="report_reason_other">altro</string>
+    <string name="report_reason_other_comments_label">commenti aggiuntivi</string>
+    <string name="report_user_dialog_report_button">segnala</string>
+    <string name="block_user_dialog_title">blocca Utente</string>
+    <string name="block_user_dialog_text">sei sicuro di voler bloccare questo utente?</string>
+    <string name="block_user_dialog_block_button">blocca</string>
 
 
     // Zona settings
@@ -89,6 +117,10 @@
     <string name="terms_of_service">termini di servizio</string>
     <string name="app_version">versione app</string>
 
+    // Zona notifiche
+    <string name="notification_channel_id">gentestrana_messages</string> <string name="notification_channel_name">Messaggi</string>
+    <string name="notification_channel_description">notifiche per nuovi messaggi nella app Gente Strana.</string>
+
     // Zona misc
     <string name="back">indietro</string>
     <string name="next">successivo</string>
@@ -98,6 +130,8 @@
     <string name="sex_male">maschio</string>
     <string name="sex_female">femmina</string>
     <string name="sex_undefined">non definito</string>
+    <string name="users_found">utenti trovati</string>
+    <string name="no_topics_defined">non ho ancora scritto il mio primo argomento</string>
 
 
     <!-- Sostituisci "your_client_id_here" con il valore client ID ottenuto dalla console Firebase -->

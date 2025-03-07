@@ -3,6 +3,8 @@ package com.gentestrana.utils
 import android.net.Uri
 import com.google.firebase.ktx.Firebase
 import com.google.firebase.storage.ktx.storage
+import android.util.Log // <-- Importa la classe Log
+import com.google.firebase.auth.FirebaseAuth // <-- Importa FirebaseAuth
 import kotlinx.coroutines.tasks.await
 
 /**
@@ -11,19 +13,34 @@ import kotlinx.coroutines.tasks.await
  * @param imageUri The URI of the selected image.
  * @param onComplete Callback that returns the download URL if successful, or an empty string on failure.
  */
-
 fun uploadProfileImage(uid: String, imageUri: Uri, onComplete: (String) -> Unit) {
+    val currentUserId = FirebaseAuth.getInstance().currentUser?.uid // Get current user's UID
+    Log.d("ImageUpload", "Function Parameter UID (passed to uploadProfileImage): $uid") // Log the UID parameter
+    Log.d("ImageUpload", "Current User UID from FirebaseAuth: $currentUserId") // Log the UID from FirebaseAuth
+
+    if (currentUserId != uid) { // **Crucial Check: Compare UIDs**
+        Log.e("ImageUpload", "UID MISMATCH! Function UID: $uid, FirebaseAuth UID: $currentUserId")
+    }
+
     // Modifica il percorso per includere la cartella userId
-    val storageRef = Firebase.storage.reference.child("profile_images/${uid}/${uid}.jpg")
+    // Percorso di Storage: profile_images/{userId}/{userId}.jpg
+    val storagePath = "profile_images/$uid/${uid}.jpg"
+    Log.d("ImageUpload", "Storage Path being used: $storagePath") // Log del percorso di Storage
+
+    val storageRef = Firebase.storage.reference.child(storagePath)
     storageRef.putFile(imageUri)
-        .addOnSuccessListener {
+        .addOnSuccessListener { taskSnapshot ->
             storageRef.downloadUrl.addOnSuccessListener { downloadUri ->
-                onComplete(downloadUri.toString())
-            }.addOnFailureListener {
+                val imageUrl = downloadUri.toString()
+                Log.d("ImageUpload", "Image uploaded successfully. Download URL: $imageUrl") // Log successo e URL
+                onComplete(imageUrl)
+            }.addOnFailureListener { e ->
+                Log.e("ImageUpload", "Failed to get download URL: ${e.message}", e) // Log fallimento URL download
                 onComplete("")
             }
         }
-        .addOnFailureListener {
+        .addOnFailureListener { e ->
+            Log.e("ImageUpload", "Image upload failed: ${e.message}", e) // Log fallimento upload immagine
             onComplete("")
         }
 }

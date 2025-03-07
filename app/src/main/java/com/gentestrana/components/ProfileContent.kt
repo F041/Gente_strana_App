@@ -1,4 +1,4 @@
-package com.gentestrana.screens
+package com.gentestrana.components
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -25,8 +25,6 @@ import com.gentestrana.users.User
 import com.gentestrana.utils.computeAgeFromTimestamp
 import com.gentestrana.utils.getFlagEmoji
 import com.gentestrana.utils.getLanguageName
-import com.gentestrana.components.TopicsBox
-import com.gentestrana.components.BioBox
 
 @Composable
 fun ProfileContent(
@@ -51,18 +49,22 @@ fun ProfileContent(
                 .align(Alignment.CenterHorizontally)
         )
 
-        Spacer(modifier = Modifier.height(8.dp)) // 8 perché senno vedo uno spazio aggiuntivo
+        Spacer(modifier = Modifier.height(8.dp))
+        // 8 perché senno vedo uno spazio aggiuntivo
         // per niente elegante ma pazienza
 
         // Immagine profilo
         Box(
             modifier = Modifier
-                .fillMaxWidth(0.4f) // <--- Usa una frazione di fillMaxWidth, es. 0.5f
-                .aspectRatio(1f)     // <--- Forza aspect ratio 1:1 (quadrato)
-                .clip(RoundedCornerShape(8.dp)) // <--- Bordi arrotondati
-                .background(MaterialTheme.colorScheme.surfaceVariant) // <--- Sfondo (opzionale)
-                .align(Alignment.CenterHorizontally) // <--- Centra il Box orizzontalmente
-                .clickable { // <--- Mantieni il comportamento clickable
+                .fillMaxWidth(0.4f)
+                // <--- Usa una frazione di fillMaxWidth, es. 0.5f
+                .aspectRatio(1f)
+                // <--- Forza aspect ratio 1:1 (quadrato)
+                .clip(RoundedCornerShape(8.dp))
+                .background(MaterialTheme.colorScheme.surfaceVariant)
+                .align(Alignment.CenterHorizontally)
+                .clickable {
+                    // <--- Mantieni il comportamento clickable
                     navController.currentBackStackEntry?.savedStateHandle?.set("imageUrls", user.profilePicUrl)
                     navController.navigate("profile_pictures_screen")
                 },
@@ -71,13 +73,12 @@ fun ProfileContent(
             Image(
                 painter = rememberAsyncImagePainter(user.profilePicUrl.firstOrNull()), // Prendi la prima immagine per ora
                 contentDescription = "Profile Picture",
-                modifier = Modifier.fillMaxSize(), // <--- Image riempie il Box
-                contentScale = ContentScale.Crop // <--- contentScale Crop
+                modifier = Modifier.fillMaxSize(),
+                contentScale = ContentScale.Crop
             )
         }
 
         Spacer(modifier = Modifier.height(16.dp))
-
 
         // Contenitore esterno con larghezza fissa per TopicsBox e BioBox
         Box(
@@ -86,15 +87,13 @@ fun ProfileContent(
         ) {
             Column(
                 modifier = Modifier
-                    .widthIn(min = 320.dp, max = 400.dp) // Larghezza più adattabile
+                    .fillMaxWidth() // <== Usa fillMaxWidth() senza frazione (occupa tutta la larghezza)
                     .padding(horizontal = 16.dp)
             ) {
                 TopicsBox(
                     topics = user.topics
                 )
-
                 Spacer(modifier = Modifier.height(16.dp))
-
                 BioBox(
                     bioText = user.bio
                 )

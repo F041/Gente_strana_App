@@ -5,7 +5,6 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -17,13 +16,12 @@ import androidx.compose.material.icons.filled.Close
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.gentestrana.R
-import com.gentestrana.ui.theme.NeuroSecondary
+import com.gentestrana.components.EditButton
 import com.gentestrana.ui.theme.commonProfileBoxModifier
 
 @OptIn(ExperimentalLayoutApi::class)
@@ -33,24 +31,25 @@ fun ProfileTopicsList(
     topics: List<String>,
     placeholder: String,
     newTopicMaxLength: Int,
-    modifier: Modifier = Modifier,
     onValueChange: (List<String>) -> Unit,
-    editLabel: String = stringResource(R.string.edit),
-    saveLabel: String = stringResource(R.string.save)
+    modifier: Modifier = Modifier
 ) {
     var isEditing by remember { mutableStateOf(false) }
-    var localTopics by remember { mutableStateOf(topics) }
     var newTopicText by remember { mutableStateOf("") }
 
-    // Sincronizza la lista locale se quella esterna cambia (es. da Firebase)
+    // Corretto: usa mutableStateListOf e aggiorna la lista in-place
+    val localTopics = remember { mutableStateListOf<String>().apply { addAll(topics) } }
+
+    // Aggiorna la lista quando topics cambia
     LaunchedEffect(topics) {
-        localTopics = topics
+        localTopics.clear()
+        localTopics.addAll(topics)
     }
 
     Column(
-        modifier = modifier.then(commonProfileBoxModifier())
+        modifier = modifier
+            .then(commonProfileBoxModifier())
     ) {
-        // Titolo del box
         Text(
             text = title.uppercase(),
             fontWeight = FontWeight.Bold,
@@ -59,7 +58,6 @@ fun ProfileTopicsList(
         )
         Spacer(modifier = Modifier.height(8.dp))
 
-        // Incapsula il FlowRow in un Box che forza fillMaxWidth()
         Box(modifier = Modifier.fillMaxWidth()) {
             FlowRow(
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
@@ -71,7 +69,8 @@ fun ProfileTopicsList(
                         text = topic,
                         onDelete = if (isEditing) {
                             {
-                                localTopics = localTopics.toMutableList().also { it.removeAt(index) }
+                                // Modifica in-place invece di riassegnare
+                                localTopics.removeAt(index)
                             }
                         } else null
                     )
@@ -83,10 +82,8 @@ fun ProfileTopicsList(
             Spacer(modifier = Modifier.height(8.dp))
             OutlinedTextField(
                 value = newTopicText,
-                onValueChange = { newText ->
-                    if (newText.length <= newTopicMaxLength) {
-                        newTopicText = newText
-                    }
+                onValueChange = {
+                    if (it.length <= newTopicMaxLength) newTopicText = it
                 },
                 placeholder = { Text(placeholder) },
                 modifier = Modifier.fillMaxWidth()
@@ -95,7 +92,8 @@ fun ProfileTopicsList(
             Button(
                 onClick = {
                     if (newTopicText.isNotBlank()) {
-                        localTopics = localTopics + newTopicText.trim()
+                        // Aggiungi all'lista esistente invece di riassegnare
+                        localTopics.add(newTopicText.trim())
                         newTopicText = ""
                     }
                 },
@@ -105,17 +103,13 @@ fun ProfileTopicsList(
             }
         }
         Spacer(modifier = Modifier.height(8.dp))
-        // Bottone di modifica / salvataggio uniforme
         EditButton(
             isEditing = isEditing,
             onClick = {
-                if (isEditing) {
-                    onValueChange(localTopics)
-                }
+                if (isEditing) onValueChange(localTopics.toList())
                 isEditing = !isEditing
             },
-            editLabel = editLabel,
-            saveLabel = saveLabel
+            modifier = Modifier.fillMaxWidth()
         )
     }
 }

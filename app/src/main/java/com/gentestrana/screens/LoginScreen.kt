@@ -1,5 +1,6 @@
 package com.gentestrana.screens
 
+import android.util.Log
 import android.widget.Toast
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.*
@@ -9,8 +10,11 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import com.gentestrana.R
+import com.gentestrana.users.UserRepository
+import com.google.firebase.Firebase
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.FirebaseUser
+import com.google.firebase.messaging.messaging
 
 @Composable
 fun LoginScreen(
@@ -58,10 +62,34 @@ fun LoginScreen(
                 isLoading = true // Start loading
                 auth.signInWithEmailAndPassword(email, password)
                     .addOnCompleteListener { task ->
-                        isLoading = false // Stop loading
+                        isLoading = false
                         if (task.isSuccessful) {
                             Toast.makeText(context, context.getString(R.string.login_successful), Toast.LENGTH_SHORT).show()
-                            task.result?.user?.let { onLoginSuccess(it) }
+                            task.result?.user?.let { firebaseUser ->
+                                // Recupera i dettagli dell'utente da Firestore per verificare se è admin
+                                UserRepository().getUser(
+                                    docId = firebaseUser.uid,
+                                    onSuccess = { user ->
+                                        // Se l'utente è admin, iscrivilo al topic "adminReports"
+                                        if (user.isAdmin) {
+                                            Firebase.messaging.subscribeToTopic("adminReports")
+                                                .addOnCompleteListener { subscribeTask ->
+                                                    if (subscribeTask.isSuccessful) {
+                                                        Log.d("FCM", "Iscritto con successo alle notifiche adminReports")
+                                                    } else {
+                                                        Log.e("FCM", "Errore nell'iscrizione al topic")
+                                                    }
+                                                }
+                                        }
+                                        // Prosegui con il login
+                                        onLoginSuccess(firebaseUser)
+                                    },
+                                    onFailure = { error ->
+                                        Toast.makeText(context, "Errore nel recupero dei dati utente: $error", Toast.LENGTH_SHORT).show()
+                                        onLoginSuccess(firebaseUser)
+                                    }
+                                )
+                            }
                         } else {
                             Toast.makeText(context, context.getString(R.string.login_failed, task.exception?.message), Toast.LENGTH_SHORT).show()
                         }
