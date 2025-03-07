@@ -41,6 +41,7 @@ As you read from the name of this repository, Gente Strana becomes the Italian v
 ### Customizing the App (For Developers)
 
 if you fork this, you'd need to edit some strings in ```res/values/strings``` and ```res/values-en/strings```, like the appname. And of course you'd need your own Firebase instance on google. Tham means also spitting blood with Firestore Database rules.
+This repo doesn't come with Firebase Functions, that help, for example, to manage notifications.
 
 
 ### Disclaimer
