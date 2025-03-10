@@ -16,6 +16,7 @@ import androidx.compose.ui.platform.LocalContext
 import com.gentestrana.screens.AppTheme
 import androidx.compose.runtime.CompositionLocalProvider
 import com.gentestrana.ui.theme.LocalAppTheme
+import com.gentestrana.utils.forceTokenRefreshIfNeeded
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -40,7 +41,7 @@ class MainActivity : ComponentActivity() {
                     }
                 )
             }
-            Log.d("MainActivity", "Valore di appTheme prima di CompositionLocalProvider: $appTheme")
+
 
             // Crea la callback onThemeChange per SettingsScreen - con tipo ESPLICITO!**
             val onThemeChange: (AppTheme) -> Unit = remember { // ✅ Tipo funzione callback SPECIFICATO ESPLICITAMENTE: (AppTheme) -> Unit
@@ -55,6 +56,17 @@ class MainActivity : ComponentActivity() {
                 }
             }
 
+            // Ottieni NavController
+            val navController = rememberNavController()
+            // di nuovo?
+
+            val onVerifyEmailScreenNavigation: () -> Unit = remember {
+                {
+                    navController.navigate("verifyEmail")
+                    Log.d("MainActivity", "Navigating to VerifyEmailScreen") // Log di debug
+                }
+            }
+
             CompositionLocalProvider(
                 LocalAppTheme provides appTheme
             ) {
@@ -63,14 +75,17 @@ class MainActivity : ComponentActivity() {
                     dynamicColor = false
                 ) {
                     Surface {
-                        val navController = rememberNavController()
-                        AppNavHost(navController = navController,
+                        AppNavHost(
+                            navController = navController,
                             onThemeChange = onThemeChange,
-                            isOnboardingCompleted = ::isOnboardingCompleted)
+                            isOnboardingCompleted = ::isOnboardingCompleted,
+                            onVerifyEmailScreenNavigation = onVerifyEmailScreenNavigation
+                        )
                     }
                 }
             }
         }
+        forceTokenRefreshIfNeeded(this)
     }
     private fun isOnboardingCompleted(): Boolean {
         val sharedPreferences = getSharedPreferences("settings_prefs", Context.MODE_PRIVATE)

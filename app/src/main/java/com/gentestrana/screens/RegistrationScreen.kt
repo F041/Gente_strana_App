@@ -24,12 +24,16 @@ import androidx.compose.ui.res.stringResource
 import com.gentestrana.R
 import com.gentestrana.users.UserRepository
 import androidx.compose.foundation.shape.RoundedCornerShape
+import com.gentestrana.components.GenericLoadingScreen
 
-private val CircularProgressIndicatorSize = 20.dp
 val userRepository = UserRepository()
+const val emailRegex = "^[A-Za-z0-9._%+-]+@(?:gmail\\.com|outlook\\.com|yahoo\\.com|icloud\\.com|protonmail\\.com|live\\.com|hotmail\\.it)$"
 
 @Composable
-fun RegistrationScreen(onRegistrationSuccess: () -> Unit) {
+fun RegistrationScreen(
+    onRegistrationSuccess: () -> Unit,
+    onVerifyEmailScreenNavigation: () -> Unit)
+{
     val context = LocalContext.current
     val snackbarHostState = remember { SnackbarHostState() }
 
@@ -38,8 +42,9 @@ fun RegistrationScreen(onRegistrationSuccess: () -> Unit) {
     var username by remember { mutableStateOf("") }
     var isLoading by remember { mutableStateOf(false) }
     var errorMessage by remember { mutableStateOf<String?>(null) }
-    var sex by remember { mutableStateOf("Undefined") } // Stato per il sesso selezionato
-
+    var isEmailError by remember { mutableStateOf(false) }
+    var sex by remember { mutableStateOf("Undefined") }
+    // Stato per il sesso selezionato
 
     var selectedImageUri by remember { mutableStateOf<Uri?>(null) }
     val imagePickerLauncher = rememberLauncherForActivityResult(
@@ -67,13 +72,24 @@ fun RegistrationScreen(onRegistrationSuccess: () -> Unit) {
         ) {
             OutlinedTextField(
                 value = email,
-                // TODO: regex per accettare solo determinati domini e non
-                // ciao@ciao.it, per esempio?
-                onValueChange = { email = it },
+                onValueChange = {
+                    email = it
+                    isEmailError = !it.matches(emailRegex.toRegex())
+                },
                 label = { Text(stringResource(R.string.registration_email_label)) },
                 modifier = Modifier.fillMaxWidth(),
-                placeholder = { Text(stringResource(R.string.registration_email_placeholder)) }, // cambiare con string
-            )
+                placeholder = { Text(stringResource(R.string.registration_email_placeholder)) },
+
+                isError = isEmailError
+                )
+            if (isEmailError) { // MOSTRA UN MESSAGGIO DI ERRORE SOTTO IL CAMPO (OPZIONALE)
+                Text(
+                    text = stringResource(R.string.registration_email_error_message), // CREA QUESTA STRINGA IN strings.xml
+                    color = MaterialTheme.colorScheme.error,
+                    style = MaterialTheme.typography.bodySmall,
+                    modifier = Modifier.padding(start = 16.dp, top = 4.dp)
+                )
+            }
             Spacer(modifier = Modifier.height(8.dp))
 
             OutlinedTextField(
@@ -164,8 +180,6 @@ fun RegistrationScreen(onRegistrationSuccess: () -> Unit) {
             }
             Spacer(modifier = Modifier.height(8.dp))
 
-
-
             Button(
                 onClick = { imagePickerLauncher.launch("image/*") },
                 modifier = Modifier.fillMaxWidth()
@@ -199,7 +213,7 @@ fun RegistrationScreen(onRegistrationSuccess: () -> Unit) {
                         context = context,
                         onSuccess = {
                             isLoading = false
-                            onRegistrationSuccess()
+                            onVerifyEmailScreenNavigation()
                         },
                         onFailure = { error ->
                             isLoading = false
@@ -211,7 +225,10 @@ fun RegistrationScreen(onRegistrationSuccess: () -> Unit) {
                 enabled = !isLoading
             ) {
                 if (isLoading) {
-                    CircularProgressIndicator(modifier = Modifier.size(CircularProgressIndicatorSize))
+                    GenericLoadingScreen(
+                        modifier = Modifier.size(20.dp),
+                        color = MaterialTheme.colorScheme.onPrimary
+                    )
                 } else {
                     Text(stringResource(R.string.registration_register_button))
                 }

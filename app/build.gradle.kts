@@ -45,6 +45,7 @@ android {
     kotlinOptions {
         jvmTarget = "11"
     }
+
 }
 
 dependencies {
@@ -61,11 +62,12 @@ dependencies {
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
     androidTestImplementation("androidx.compose.ui:ui-test-junit4:1.5.0")
+    androidTestImplementation("androidx.navigation:navigation-testing:2.7.0")
+    androidTestImplementation("androidx.test.ext:junit:1.1.5")
     debugImplementation("androidx.compose.ui:ui-test-manifest:1.5.0")
 
     implementation("com.google.firebase:firebase-auth-ktx")
     implementation("com.google.firebase:firebase-messaging-ktx")
-    implementation("io.coil-kt:coil-compose:2.3.0")
     implementation("com.google.firebase:firebase-storage-ktx")
     implementation ("com.google.android.gms:play-services-auth:20.5.0")
     implementation ("org.jetbrains.kotlin:kotlin-stdlib:1.9.0")
@@ -86,10 +88,15 @@ dependencies {
     implementation("androidx.navigation:navigation-compose:2.7.0")
 
 
-    testImplementation ("junit:junit:4.13.2")              // Framework per test
     testImplementation ("org.mockito:mockito-core:5.3.1")  // Per creare oggetti "finti" (mock)
     testImplementation ("org.mockito.kotlin:mockito-kotlin:4.1.0") // Estensioni Kotlin per Mockito
     testImplementation ("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.7.3") // Test per coroutine
+    testImplementation("org.jetbrains.kotlin:kotlin-test:1.9.0")
+    testImplementation ("org.robolectric:robolectric:4.5")
+
+
+
+
 
 }
 

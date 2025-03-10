@@ -15,6 +15,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import com.gentestrana.R
+import com.gentestrana.components.GenericLoadingScreen
 import com.google.firebase.auth.FirebaseAuth
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -80,7 +81,8 @@ fun ChangePasswordScreen(navController: NavController) {
                 enabled = !isLoading // Disable button while loading
             ) {
                 if (isLoading) {
-                    CircularProgressIndicator(color = MaterialTheme.colorScheme.onPrimary)
+                    GenericLoadingScreen(color = MaterialTheme.colorScheme.onPrimary)
+                    // prima CircularProgressIndicator(color = MaterialTheme.colorScheme.onPrimary)
                 } else {
                     Text(stringResource(R.string.send_reset_email_button)) // String resource
                 }

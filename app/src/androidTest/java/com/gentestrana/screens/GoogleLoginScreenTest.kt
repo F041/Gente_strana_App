@@ -10,6 +10,7 @@ import org.junit.Test
 import com.gentestrana.R
 import com.gentestrana.TestActivity
 
+// TODO: non va, problema con TestActivity
 class GoogleLoginScreenTest {
 
     @get:Rule

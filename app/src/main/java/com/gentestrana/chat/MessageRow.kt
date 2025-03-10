@@ -14,16 +14,10 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
-import com.gentestrana.ui.theme.NeuroAccent
-
-import com.gentestrana.ui.theme.NeuroPrimary
-import com.gentestrana.ui.theme.NeuroSecondary
-
 import com.gentestrana.utils.formatTimestamp
 import com.google.firebase.Firebase
 import com.google.firebase.firestore.firestore
 import kotlinx.coroutines.tasks.await
-
 
 // Cache globale per gli URL delle immagini profilo
 private val profilePicCache = mutableMapOf<String, String>()
@@ -34,7 +28,7 @@ fun MessageRow(
     chatMessage: ChatMessage,
     currentUserId: String,
     showAvatar: Boolean,
-    onDelete: (() -> Unit)? // Ora accetta un parametro nullable
+    onDelete: (() -> Unit)?
 
 ) {
     val isCurrentUser = (chatMessage.sender == currentUserId)
@@ -59,7 +53,7 @@ fun MessageRow(
                 profilePicCache[chatMessage.sender] = url
                 profilePicUrlState.value = url
             } catch (e: Exception) {
-                profilePicUrlState.value = "https://icons.veryicon.com/png/o/system/ali-mom-icon-library/random-user.png"
+                profilePicUrlState.value = "android.resource://com.gentestrana/drawable/random_user"
             }
         }
         // }
@@ -90,9 +84,9 @@ fun MessageRow(
                     .widthIn(max = 280.dp)
                     .background(
                         color = if (isCurrentUser)
-                            NeuroAccent.copy(alpha = 0.2f)
+                            MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.8f) // Più opaco per il current user
                         else
-                            NeuroSecondary.copy(alpha = 0.2f),
+                            MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.8f), // surfaceVariant per gli altri
                         shape = RoundedCornerShape(12.dp)
                     )
                     .padding(8.dp)
@@ -109,13 +103,13 @@ fun MessageRow(
                 Column {
                     Text(
                         text = chatMessage.message,
-                        color = NeuroPrimary
+                        color = MaterialTheme.colorScheme.onSurface
                     )
                     Spacer(modifier = Modifier.height(4.dp))
                     Text(
                         text = formatTimestamp(chatMessage.timestamp),
                         style = MaterialTheme.typography.bodySmall,
-                        color = NeuroAccent
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 }
             }
@@ -138,7 +132,7 @@ fun DateSeparatorRow(dateText: String) {
         Text(
             text = dateText,
             style = MaterialTheme.typography.bodySmall,
-            color = NeuroAccent
+            color = MaterialTheme.colorScheme.onSurfaceVariant
         )
     }
 }

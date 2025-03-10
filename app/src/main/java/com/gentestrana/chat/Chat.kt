@@ -8,7 +8,7 @@ data class Chat(
     val lastMessage: String,
     val lastMessageStatus: MessageStatus,
     val photoUrl: String,
-    val timestamp: Timestamp, // da modifcare e mostrare ora o "IERI", DATA
+    val timestamp: Timestamp,
     val isOnline: Boolean = false // Campo per lo stato online
 )
 

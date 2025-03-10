@@ -17,6 +17,7 @@ import com.gentestrana.R
 import com.gentestrana.components.CompactSearchBar
 import com.gentestrana.users.User
 import com.gentestrana.components.FilterState
+import com.gentestrana.components.GenericLoadingScreen
 import com.gentestrana.users.UserProfileCard
 import com.google.firebase.firestore.DocumentSnapshot
 import com.google.firebase.firestore.ktx.firestore
@@ -124,7 +125,7 @@ fun UsersListScreen(navController: NavHostController) {
                                 .padding(32.dp),
                             contentAlignment = Alignment.Center
                         ) {
-                            CircularProgressIndicator()
+                            GenericLoadingScreen(modifier = Modifier.fillMaxWidth())
                         }
                     }
                 }

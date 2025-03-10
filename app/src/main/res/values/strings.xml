@@ -6,6 +6,7 @@
     // Zona registrazione
     <string name="registration_email_label">Email</string>
     <string name="registration_email_placeholder">usa la tua migliore mail</string>
+    <string name="registration_email_error_message">inserisci un\'email valida con dominio gmail.com, outlook.com o yahoo.com, etc.</string>
     <string name="registration_password_label">Password</string>
     <string name="registration_password_placeholder">password forte ma non banale</string>
     <string name="registration_firstname_label">First name</string>
@@ -15,6 +16,14 @@
     <string name="sex_male_description">Sesso: Maschio</string>
     <string name="sex_female_description">Sesso: Femmina</string>
     <string name="sex_undefined_description">Sesso: Non definito</string>
+
+
+    <string name="verify_email_title">verifica la tua email</string>
+    <string name="verify_email_instructions">ti abbiamo inviato un\'email di verifica all\'indirizzo con cui ti sei registrato. Per favore, controlla la tua casella di posta e clicca sul link di verifica per attivare il tuo account.</string>
+    <string name="resend_verification_email_button">rispedisci email di verifica</string>
+    <string name="verify_email_check_spam">se non vedi l\'email nella tua inbox, controlla anche la cartella spam o posta indesiderata.</string>
+    <string name="email_verification_icon_description">icona di verifica email</string>
+    <string name="verification_email_resent_success">email di verifica rispedita con successo!</string>
 
     // Zona login
     <string name="sign_in_with_google_button">accedi con Google</string>
@@ -74,8 +83,9 @@
     // Zona chat
 
     <string name="chat_with_user">chatta con %s</string>
-    <string name="users_search_bar"> cerca per argomento, membro</string>
-    <string name="write_message"> scrivi un messaggio</string>
+
+    <string name="write_message">scrivi un messaggio...</string>
+    <string name="send_message">invia messaggio</string>
 
 
     // Zona Utente
@@ -131,7 +141,10 @@
     <string name="sex_female">femmina</string>
     <string name="sex_undefined">non definito</string>
     <string name="users_found">utenti trovati</string>
-    <string name="no_topics_defined">non ho ancora scritto il mio primo argomento</string>
+    <string name="no_topics_defined">non ho ancora scritto il mio primo argomento
+    </string>
+    <string name="loading_default">caricamento in corso...</string>
+    <string name="users_search_bar">cerca per argomento, membro</string>
 
 
     <!-- Sostituisci "your_client_id_here" con il valore client ID ottenuto dalla console Firebase -->

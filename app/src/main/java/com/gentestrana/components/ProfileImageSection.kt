@@ -9,7 +9,6 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -84,10 +83,8 @@ fun ProfileImageSection(
             enabled = !isUploading
         ) {
             if (isUploading) {
-                CircularProgressIndicator(
+                GenericLoadingScreen(
                     modifier = Modifier.size(20.dp),
-                    color = MaterialTheme.colorScheme.onPrimary,
-                    strokeWidth = 2.dp
                 )
             } else {
                 Text(stringResource(id = R.string.upload_new_profile_picture))

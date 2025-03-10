@@ -10,9 +10,19 @@ import com.google.firebase.ktx.Firebase
 import com.gentestrana.utils.uploadProfileImage
 
 
-class UserRepository {
+/**
+ * TODO: IMPLEMENTARE VERIFICA EMAIL OBBLIGATORIA
+ *
+ * 1. Controllare lo stato di verifica email all'avvio dell'app e/o al login.
+ * 2. Se l'email NON è verificata, reindirizzare l'utente a VerifyEmailScreen.
+ * 3. Impedire l'accesso completo all'app (soprattutto a MainTabsScreen e funzionalità principali)
+ *    finché l'email non è verificata.
+ */
 
-    private val auth = FirebaseAuth.getInstance()
+class UserRepository(
+    private val auth: FirebaseAuth = FirebaseAuth.getInstance()
+// Parametro iniettato con valore di default
+) {
     private val firestore = Firebase.firestore
 
     /**
@@ -35,6 +45,10 @@ class UserRepository {
                     onFailure("User ID is null")
                     return@addOnSuccessListener
                 }
+
+                // Invia email di verifica subito dopo la registrazione
+                authResult.user?.sendEmailVerification()
+
                 // Initial user data
                 val userData = mapOf(
                     "username" to username,
@@ -99,6 +113,32 @@ class UserRepository {
             .addOnFailureListener { e ->
                 onFailure(e.message)
             }
+    }
+
+    /**
+     * Sends a verification email to the current user.
+     */
+    fun sendVerificationEmail(
+        onSuccess: () -> Unit,
+        onFailure: (String) -> Unit
+    ) {
+        val user = auth.currentUser
+        if (user != null && !user.isEmailVerified) { // Check if user is logged in and email is NOT already verified
+            user.sendEmailVerification()
+                .addOnSuccessListener {
+                    onSuccess() // Callback for success
+                }
+                .addOnFailureListener { e ->
+                    onFailure(e.message ?: "Failed to send verification email.") // Callback for failure with error message
+                }
+        } else if (user?.isEmailVerified == true) {
+            onFailure("Email già verificata.") // Email already verified
+        }
+        else {
+            onFailure("Utente non autenticato o email già verificata.")
+        // User not logged in or email already verified
+        // TODO: Stringabile
+        }
     }
 
     /**
@@ -196,6 +236,52 @@ class UserRepository {
         firestore.collection("reports")
             .add(report)
             .addOnSuccessListener { onSuccess() }
-            .addOnFailureListener { e -> onFailure(e.message) }
+            .addOnFailureListener { e -> onFailure(e.message)
+            }
+    }
+
+    // checkEmailVerificationStatus
+
+    fun checkEmailVerificationStatus(
+        onVerified: () -> Unit,
+        onNotVerified: () -> Unit
+    ) {
+        val user = auth.currentUser
+        if (user != null) {
+            // Ricarica i dati dell'utente per avere lo stato aggiornato
+            user.reload().addOnSuccessListener {
+                if (user.isEmailVerified) {
+                    onVerified()
+                } else {
+                    onNotVerified()
+                }
+            }.addOnFailureListener {
+                // In caso di errore, consideriamo l'email come non verificata
+                onNotVerified()
+            }
+        } else {
+            // Se l'utente non è autenticato, invoca onNotVerified()
+            onNotVerified()
+        }
+
+    }
+    fun loginAndCheckEmail(
+        email: String,
+        password: String,
+        onVerified: () -> Unit,
+        onNotVerified: () -> Unit,
+        onFailure: (String?) -> Unit
+    ) {
+        auth.signInWithEmailAndPassword(email, password)
+            .addOnSuccessListener {
+                // Dopo il login, controlla lo stato di verifica dell'email
+                checkEmailVerificationStatus(
+                    onVerified = onVerified,
+                    onNotVerified = onNotVerified
+                )
+            }
+            .addOnFailureListener { e ->
+                onFailure(e.message)
+            }
     }
 }

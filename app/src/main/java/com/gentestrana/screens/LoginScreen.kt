@@ -16,13 +16,13 @@ import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.FirebaseUser
 import com.google.firebase.messaging.messaging
 
+
 @Composable
 fun LoginScreen(
     onLoginSuccess: (FirebaseUser) -> Unit,
     onNavigateToRegistration: () -> Unit
 ) {
     val context = LocalContext.current
-    val auth = FirebaseAuth.getInstance()
 
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
@@ -56,52 +56,69 @@ fun LoginScreen(
         Button(
             onClick = {
                 if (email.isBlank() || password.isBlank()) {
-                    Toast.makeText(context, context.getString(R.string.login_fill_fields), Toast.LENGTH_SHORT).show();                   return@Button
+                    Toast.makeText(context, context.getString(R.string.login_fill_fields), Toast.LENGTH_SHORT).show()
+                    return@Button
                 }
 
-                isLoading = true // Start loading
-                auth.signInWithEmailAndPassword(email, password)
-                    .addOnCompleteListener { task ->
-                        isLoading = false
-                        if (task.isSuccessful) {
-                            Toast.makeText(context, context.getString(R.string.login_successful), Toast.LENGTH_SHORT).show()
-                            task.result?.user?.let { firebaseUser ->
-                                // Recupera i dettagli dell'utente da Firestore per verificare se è admin
-                                UserRepository().getUser(
-                                    docId = firebaseUser.uid,
-                                    onSuccess = { user ->
-                                        // Se l'utente è admin, iscrivilo al topic "adminReports"
-                                        if (user.isAdmin) {
-                                            Firebase.messaging.subscribeToTopic("adminReports")
-                                                .addOnCompleteListener { subscribeTask ->
-                                                    if (subscribeTask.isSuccessful) {
-                                                        Log.d("FCM", "Iscritto con successo alle notifiche adminReports")
-                                                    } else {
-                                                        Log.e("FCM", "Errore nell'iscrizione al topic")
-                                                    }
+                isLoading = true // Avvia il caricamento
+
+                // Utilizziamo il metodo loginAndCheckEmail di UserRepository
+                UserRepository().loginAndCheckEmail(
+                    email = email,
+                    password = password,
+                    onVerified = {
+                        // Se l'email è verificata, procediamo recuperando i dettagli utente
+                        val firebaseUser = FirebaseAuth.getInstance().currentUser
+                        if (firebaseUser != null) {
+                            UserRepository().getUser(
+                                docId = firebaseUser.uid,
+                                onSuccess = { user ->
+                                    // Se l'utente è admin, sottoscrivilo al topic "adminReports"
+                                    if (user.isAdmin) {
+                                        Firebase.messaging.subscribeToTopic("adminReports")
+                                            .addOnCompleteListener { subscribeTask ->
+                                                if (subscribeTask.isSuccessful) {
+                                                    Log.d("FCM", "Iscritto con successo alle notifiche adminReports")
+                                                } else {
+                                                    Log.e("FCM", "Errore nell'iscrizione al topic")
                                                 }
-                                        }
-                                        // Prosegui con il login
-                                        onLoginSuccess(firebaseUser)
-                                    },
-                                    onFailure = { error ->
-                                        Toast.makeText(context, "Errore nel recupero dei dati utente: $error", Toast.LENGTH_SHORT).show()
-                                        onLoginSuccess(firebaseUser)
+                                            }
                                     }
-                                )
-                            }
+                                    isLoading = false
+                                    // Procedi con il login completo
+                                    onLoginSuccess(firebaseUser)
+                                },
+                                onFailure = { error ->
+                                    isLoading = false
+                                    Toast.makeText(context, "Errore nel recupero dei dati utente: $error", Toast.LENGTH_SHORT).show()
+                                    // Anche in caso di errore, passiamo l'utente per continuare
+                                    onLoginSuccess(firebaseUser)
+                                }
+                            )
                         } else {
-                            Toast.makeText(context, context.getString(R.string.login_failed, task.exception?.message), Toast.LENGTH_SHORT).show()
+                            isLoading = false
+                            Toast.makeText(context, context.getString(R.string.login_failed, "Utente non trovato"), Toast.LENGTH_SHORT).show()
                         }
+                    },
+                    onNotVerified = {
+                        isLoading = false
+                        Toast.makeText(context, "Email non verificata. Controlla la tua casella email per verificare.", Toast.LENGTH_SHORT).show()
+                        // Qui potresti aggiungere un eventuale reindirizzamento alla VerifyEmailScreen
+                    },
+                    onFailure = { error ->
+                        isLoading = false
+                        Toast.makeText(context, context.getString(R.string.login_failed, error), Toast.LENGTH_SHORT).show()
                     }
+                )
             },
             modifier = Modifier.fillMaxWidth(),
-            enabled = !isLoading // Disable button while loading
+            enabled = !isLoading // Disabilita il pulsante durante il caricamento
         ) {
             if (isLoading) {
                 CircularProgressIndicator(color = MaterialTheme.colorScheme.onPrimary)
+                // TODO: cambiabile con GenericLoadingScreen?
             } else {
-                Text("Login")
+                Text("Login") // TODO: stringabile
             }
         }
         Spacer(modifier = Modifier.height(16.dp))

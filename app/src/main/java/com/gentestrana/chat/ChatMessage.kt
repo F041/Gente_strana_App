@@ -12,7 +12,8 @@ data class ChatMessage(
     val timestamp: Timestamp = Timestamp.now(),
     val status: String = "SENT"
 ) {
-    constructor() : this("", "", "", Timestamp.now(), "SENT") // Costruttore vuoto per Firestore
+    constructor() : this("", "", "", Timestamp.now(), "SENT")
+// Costruttore vuoto per Firestore. A che serviva?
 }
-// TODO: agganciare notifiche MyFirebaseMessaginService qui?
+
 

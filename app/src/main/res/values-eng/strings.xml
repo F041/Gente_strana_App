@@ -4,6 +4,9 @@
     // Zone signup
     <string name="registration_email_label">email</string>
     <string name="registration_email_placeholder">use your best email</string>
+    <string name="registration_email_error_message">
+        insert a valid email with a domain of gmail.com, outlook.com or yahoo.com, etc.
+        </string>
     <string name="registration_password_label">password</string>
     <string name="registration_password_placeholder">strong but not trivial password</string>
     <string name="registration_firstname_label">first name</string>
@@ -13,6 +16,13 @@
     <string name="sex_male_description">sex: male</string>
     <string name="sex_female_description">sex: Female</string>
     <string name="sex_undefined_description">sex: undefined</string>
+
+    <string name="verify_email_title">verify your email</string>
+    <string name="verify_email_instructions">we have sent a verification email to the address you registered with. Please check your inbox and click on the verification link to activate your account.</string>
+    <string name="resend_verification_email_button">resend verification email</string>
+    <string name="verify_email_check_spam">if you don\'t see the email in your inbox, please check your spam or junk mail folder.</string>
+    <string name="email_verification_icon_description">email verification icon</string>
+    <string name="verification_email_resent_success">verification email resent successfully!</string>
 
     // Zona login
     <string name="sign_in_with_google_button">sign in with Google</string>
@@ -71,10 +81,9 @@
 
 
     // Zona chat
-
     <string name="chat_with_user">chat with %s</string>
-    <string name="users_search_bar"> Search by topic, member</string>
-    <string name="write_message">write a message</string>
+    <string name="write_message">write a message...</string>
+    <string name="send_message">send message</string>
 
     // Zona Utente
     <string name="photos">photos</string>
@@ -122,6 +131,7 @@
 
 
     // Zone misc
+    <string name="users_search_bar">search by topic, member</string>
     <string name="back">back</string>
     <string name="next">next</string>
     <string name="previous">previous</string>
@@ -131,7 +141,9 @@
     <string name="sex_female">female</string>
     <string name="sex_undefined">undefined</string>
     <string name="users_found">users found</string>
-    <string name="no_topics_defined">I still didn\'t write my first topic</string>
+    <string name="no_topics_defined">I still didn\'t write my first topic
+    </string>
+    <string name="loading_default">loading...</string>
 
 
 </resources>

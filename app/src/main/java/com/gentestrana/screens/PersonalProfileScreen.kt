@@ -27,6 +27,7 @@ import com.google.firebase.auth.FirebaseAuth
 import com.gentestrana.ui_controller.ProfileViewModel
 import com.gentestrana.users.User
 import com.gentestrana.components.DateOfBirthPicker
+import com.gentestrana.components.GenericLoadingScreen
 import com.gentestrana.components.ProfileBioBox
 import com.gentestrana.components.ProfileImageSection
 import com.gentestrana.components.ProfileLanguagesField
@@ -238,13 +239,13 @@ fun PersonalProfileScreen(
             Spacer(modifier = Modifier.height(8.dp))
 
 
-            // **SEZIONE ProgressIndicator e TESTO STATO (AGGIUNTA)**
+            // SEZIONE ProgressIndicator
             if (isLocationLoading) { // Mostra ProgressIndicator SOLO se isLocationLoading è true
                 Column(
                     horizontalAlignment = Alignment.CenterHorizontally, // Centra orizzontalmente
                     modifier = Modifier.padding(vertical = 8.dp) // Padding verticale
                 ) {
-                    CircularProgressIndicator(modifier = Modifier.size(24.dp)) // ProgressIndicator
+                    GenericLoadingScreen(modifier = Modifier.size(24.dp)) // ProgressIndicator
                     Spacer(modifier = Modifier.height(4.dp))
                     Text(
                         text = "Ricerca della posizione...", // Testo di stato (stringabile) - OPZIONALE

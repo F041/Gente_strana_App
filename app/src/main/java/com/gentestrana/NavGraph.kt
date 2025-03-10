@@ -13,12 +13,11 @@ import androidx.navigation.navigation
 import com.google.firebase.auth.FirebaseAuth
 import com.gentestrana.screens.*
 
-
-
 @Composable
 fun AppNavHost(navController: NavHostController,
                onThemeChange: (AppTheme) -> Unit,
-               isOnboardingCompleted: () -> Boolean ) {
+               isOnboardingCompleted: () -> Boolean,
+               onVerifyEmailScreenNavigation: () -> Unit ) {
     val isLoggedIn = FirebaseAuth.getInstance().currentUser != null
     val startDestination = if (isOnboardingCompleted()) {
         // Se onboarding COMPLETO
@@ -51,17 +50,19 @@ fun AppNavHost(navController: NavHostController,
             composable("registration") {
                 RegistrationScreen(
                     onRegistrationSuccess = {
-                        navController.navigate("main") { popUpTo("auth") }
-                    }
-                )
+                    },
+                    onVerifyEmailScreenNavigation = onVerifyEmailScreenNavigation)
             }
+        }
+
+        composable("verifyEmail") {
+            VerifyEmailScreen()
         }
 
         // Main Flow with Bottom Navigation
         navigation(startDestination = "mainTabs", route = "main") {
             composable("mainTabs") {
-                // **MODIFICA: Passa onThemeChange a MainTabsScreen**
-                MainTabsScreen(navController, onThemeChange = onThemeChange) // 👈 PASSA onThemeChange!
+                MainTabsScreen(navController, onThemeChange = onThemeChange)
             }
             composable("userProfile/{docId}") { backStackEntry ->
                 val docId = backStackEntry.arguments?.getString("docId") ?: ""
@@ -85,7 +86,7 @@ fun AppNavHost(navController: NavHostController,
 
             ProfilePicturesScreen(
                 imageUrls = imageUrls,
-//                onAddImage = { /* Aggiungere logica di caricamento */ }
+//                onAddImage = { /* TODO: Aggiungere logica di caricamento */ }
             )
         }
 

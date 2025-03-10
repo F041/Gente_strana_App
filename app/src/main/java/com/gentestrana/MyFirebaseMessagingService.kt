@@ -15,6 +15,7 @@ import androidx.core.app.NotificationManagerCompat
 import android.Manifest
 import android.content.pm.PackageManager
 import androidx.core.content.ContextCompat
+import com.google.firebase.messaging.FirebaseMessaging
 
 // cambiare nome?
 class MyFirebaseMessagingService : FirebaseMessagingService() {
@@ -81,23 +82,47 @@ class MyFirebaseMessagingService : FirebaseMessagingService() {
 
     override fun onNewToken(token: String) {
         super.onNewToken(token)
-        Log.d("FCM", "Refreshed token: $token")
-
-        // Get the current user's ID (from Firebase Auth)
         val userId = Firebase.auth.currentUser?.uid
+        Log.d("FCM_TOKEN_DEBUG", "User ID recuperato da FirebaseAuth: $userId")
         if (userId == null) {
-            Log.e("FCM", "User not authenticated, token not updated in Firestore")
+            Log.e("FCM_TOKEN_DEBUG", "Utente non autenticato, token NON verrà aggiornato in Firestore")
             return
         }
-
-        // Update the user's Firestore document with the new token
+        Log.d("FCM_TOKEN_DEBUG", "Tentativo di aggiornare fcmToken per user ID: $userId")
         Firebase.firestore.collection("users").document(userId)
             .update("fcmToken", token)
             .addOnSuccessListener {
-                Log.d("FCM", "Token updated successfully in Firestore.")
+                Log.d("FCM_TOKEN_DEBUG", "Token aggiornato CON SUCCESSO in Firestore per user ID: $userId")
             }
             .addOnFailureListener { e ->
-                Log.e("FCM", "Error updating token in Firestore", e)
+                Log.e("FCM_TOKEN_DEBUG", "Errore durante l'aggiornamento del token in Firestore per user ID: $userId", e)
+                Log.e("FCM_TOKEN_DEBUG", "Failure Exception Class: ${e::class.java.name}")
+                Log.e("FCM_TOKEN_DEBUG", "Failure Exception Message: ${e.message}")
+                e.printStackTrace()
+
+                // NUOVI LOG EXTRA PER CERCARE ERRORI DI PERMESSO:
+                if (e is com.google.firebase.firestore.FirebaseFirestoreException) { // <-- CONTROLLO TIPO DI ERRORE
+                    if (e.code == com.google.firebase.firestore.FirebaseFirestoreException.Code.PERMISSION_DENIED) { // <-- CODICE ERRORE PER PERMESSO NEGATO
+                        Log.e("FCM_TOKEN_DEBUG", "POSSIBILE ERRORE DI PERMESSI DI FIRESTORE! (PERMISSION_DENIED)")
+                        Log.e("FCM_TOKEN_DEBUG", "Verifica le REGOLE DI SICUREZZA di FIRESTORE per la collezione 'users'!")
+                    } else {
+                        Log.e("FCM_TOKEN_DEBUG", "Errore FIRESTORE (codice: ${e.code}) - NON sembra essere PERMISSION_DENIED")
+                    }
+                } else {
+                    Log.e("FCM_TOKEN_DEBUG", "Errore di aggiornamento FIRESTORE - NON è FirebaseFirestoreException")
+                }
             }
+
+        fun forceTokenRefresh() {
+            FirebaseMessaging.getInstance().deleteToken().addOnCompleteListener { task ->
+                if (task.isSuccessful) {
+                    Log.d("FCM_TOKEN_DEBUG", "Token cancellato con successo. Verrà generato un nuovo token.")
+                    // Firebase genererà automaticamente un nuovo token, chiamando onNewToken.
+                } else {
+                    Log.e("FCM_TOKEN_DEBUG", "Errore nella cancellazione del token", task.exception)
+                }
+            }
+        }
+        Log.d("FCM_TOKEN_DEBUG", "** onNewToken EXIT **")
     }
 }
