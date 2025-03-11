@@ -10,15 +10,25 @@ an app designed to help people who belongs to the *neurodiverse group* to find a
 This app looks a bit like Tandem, the language exchange app, and connected2me. It has 2 languages, Italian and English, you can see it in res/values/strings and res/values-en/strings
 The user interace of the screenshots you see, might change in the future
 
-<img src="https://github.com/user-attachments/assets/f7acc2c4-1e26-43da-88e2-e8ca212334e7" width="260">
+<img src="https://github.com/user-attachments/assets/1d6792ab-3b11-4e17-ab40-85707478d0ad" width="260">
+
 
 <img src="https://github.com/user-attachments/assets/8a58715d-c615-46df-a42f-c92b86663d71" width="260">
 
-<img src="https://github.com/user-attachments/assets/c9e6e10d-30a6-499a-9c0d-be37e601412d" width="260">
+<img src="https://github.com/user-attachments/assets/4d6755a7-5cde-4950-a4b5-0666badaa0d9" width="260">
 
-<img src="https://github.com/user-attachments/assets/17f03c1b-22b4-44de-af3a-53289f0bc883" width="260">
 
-<img src="https://github.com/user-attachments/assets/04dab90a-1fed-4c21-be00-bea102f3f630" width="260">
+<img src="https://github.com/user-attachments/assets/c232a3a5-c359-4d8c-bc5f-7b753fe6d109" width="260">
+
+<img src="https://github.com/user-attachments/assets/6974a28e-401c-432f-ac65-67980fc063dc" width="260">
+
+<img src="https://github.com/user-attachments/assets/bf158444-4961-4dc9-bab1-cf456b03444e" width="260">
+
+<img src="https://github.com/user-attachments/assets/8bed4ee3-a8ec-43b8-b647-a795d0fe83cf" width="260">
+
+
+
+
 
 currently available in two languages: Italian and English. You can see the text used in the app in the ```res/values/strings``` and ```res/values-en/strings``` files if you feel interested in the technical details. 
 
