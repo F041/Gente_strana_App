@@ -46,7 +46,13 @@
     <string name="user_profile">User Profile</string>
     <string name="change_profile_picture">change profile picture</string>
     <string name="upload_new_profile_picture">upload new profilepicture</string>
+    <string name="add_profile_picture_max_3">add profile picture (max 3)</string>
+    <string name="image_limit_reached">images limit reached</string>
+    <string name="confirm_upload_profile_picture">confirm and upload image</string>
+
     <string name="profile_picture_updated">image updated</string>
+    <string name="duplicate_image">image already in your profile.</string>
+
 
     <string name="speaks">speaks</string>
     <string name="languages_spoken">languages spoken</string>

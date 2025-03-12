@@ -46,6 +46,13 @@
     <string name="personal_profile">profilo personale</string>
     <string name="change_profile_picture">cambia immagine profilo</string>
     <string name="upload_new_profile_picture">carica nuova immagine profilo</string>
+    <string name="add_profile_picture_max_3">aggiungi immagine profilo (max 3)</string>
+    <string name="image_limit_reached">limite immagini raggiunto</string>
+
+    <string name="confirm_upload_profile_picture">conferma e carica immagine</string>
+    <string name="duplicate_image">questa immagine è già presente nel tuo profilo.</string>
+
+
     <string name="profile_picture_updated">immagine aggiornata</string>
     <string name="speaks">parla</string>
     <string name="languages_spoken">lingue parlate</string>

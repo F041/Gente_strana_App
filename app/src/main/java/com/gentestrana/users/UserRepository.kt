@@ -7,7 +7,7 @@ import com.google.firebase.auth.GoogleAuthProvider
 import com.google.firebase.auth.ktx.userProfileChangeRequest
 import com.google.firebase.firestore.ktx.firestore
 import com.google.firebase.ktx.Firebase
-import com.gentestrana.utils.uploadProfileImage
+import com.gentestrana.utils.uploadMainProfileImage
 
 
 /**
@@ -62,7 +62,7 @@ class UserRepository(
                     .addOnSuccessListener {
                         if (selectedImageUri != null) {
                             // Use centralized function to upload the image
-                            uploadProfileImage(uid, selectedImageUri) { imageUrl ->
+                            uploadMainProfileImage(uid, selectedImageUri) { imageUrl ->
                                 if (imageUrl.isNotEmpty()) {
                                     // Update Firestore with the profile photo URL
                                     firestore.collection("users").document(uid)

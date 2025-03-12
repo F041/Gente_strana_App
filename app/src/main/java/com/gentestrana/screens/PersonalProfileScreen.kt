@@ -29,6 +29,7 @@ import com.gentestrana.users.User
 import com.gentestrana.components.DateOfBirthPicker
 import com.gentestrana.components.GenericLoadingScreen
 import com.gentestrana.components.ProfileBioBox
+import com.gentestrana.components.ProfileImageGallery
 import com.gentestrana.components.ProfileImageSection
 import com.gentestrana.components.ProfileLanguagesField
 import com.gentestrana.components.ProfileLocationDisplay
@@ -156,20 +157,34 @@ fun PersonalProfileScreen(
                 .verticalScroll(rememberScrollState()),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            // Gli space si potrebbero reintrodurre per coerenza ed eliminarli in ProfileImageSection
-            // sezione immagine profilo
-            ProfileImageSection(
-                profilePicUrl = profilePicUrl,
-                newImageUri = newImageUri,
-                imagePickerLauncher = imagePickerLauncher,
-                isUploading = isUploading,
-                profileViewModel = profileViewModel,
-                context = context,
-                onNewImageUriChanged = { uri -> newImageUri = uri }, // Callback per newImageUri
-                onIsUploadingChanged = { uploading -> isUploading = uploading } // Callback per isUploading
-            )
+
+            // Zona gallery immagini profilo
+            if (profilePicUrl.isNotEmpty()) {
+                ProfileImageGallery(
+                    images = profilePicUrl,
+                    onImageOrderChanged = { newOrder ->
+                        profileViewModel.setProfilePicOrder(newOrder)
+                    },
+                    onDeleteImage = { index ->
+                        profileViewModel.deleteProfileImage(index)
+                    }
+                )
+            } else {
+                // Puoi mostrare una UI alternativa o il vecchio ProfileImageSection se non ci sono immagini
+                ProfileImageSection(
+                    profilePicUrl = profilePicUrl,
+                    newImageUri = newImageUri,
+                    imagePickerLauncher = imagePickerLauncher,
+                    isUploading = isUploading,
+                    profileViewModel = profileViewModel,
+                    context = context,
+                    onNewImageUriChanged = { uri -> newImageUri = uri },
+                    onIsUploadingChanged = { uploading -> isUploading = uploading }
+                )
+            }
 
             // Gli space si potrebbero reintrodurre per coerenza ed eliminarli in ProfileImageSection
+
             // Campo per Username
             ProfileTextField(
                 value = username,

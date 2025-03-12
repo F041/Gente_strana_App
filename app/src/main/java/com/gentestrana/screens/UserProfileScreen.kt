@@ -230,6 +230,7 @@ private fun CircularProgressCentered() {
         CircularProgressIndicator()
     }
 }
+//TODO: rimovibile e usare Generic etc
 
 @Composable
 private fun BoxWithOverlay(

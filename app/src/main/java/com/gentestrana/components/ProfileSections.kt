@@ -1,12 +1,10 @@
 package com.gentestrana.components
 
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowBack
-import androidx.compose.material.icons.filled.ArrowForward
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -28,40 +26,42 @@ import androidx.compose.foundation.background
 import androidx.compose.runtime.Composable
 import coil.compose.rememberAsyncImagePainter
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.ArrowForward
 import androidx.compose.ui.layout.ContentScale
-import com.google.accompanist.pager.*
+import androidx.compose.foundation.pager.HorizontalPager // NEW IMPORT
+import androidx.compose.foundation.pager.rememberPagerState // NEW IMPORT
 
-@OptIn(ExperimentalPagerApi::class)
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun ProfilePhotoCarousel(
+    // ha senso metterlo qui? Secondo Gemini si
     imageUrls: List<String>,
     modifier: Modifier = Modifier
 ) {
-    val pagerState = rememberPagerState()
-
+    val pagerState = rememberPagerState(pageCount = { imageUrls.size })
     Column(modifier = modifier) {
         HorizontalPager(
-            count = imageUrls.size,
             state = pagerState,
-            modifier = Modifier
-                .fillMaxWidth()
+            modifier = Modifier.fillMaxWidth()
         ) { page ->
             Box(
                 modifier = Modifier
                     .fillMaxWidth(1f)
                     .aspectRatio(1f)
                     .fillMaxSize()
-                    .padding(8.dp)
+//                    .padding(8.dp)
+                // rimosso, più simile a Tandem
             ) {
                 Image(
-                    painter = rememberAsyncImagePainter( // <-- Aggiungi painter
-                        model = imageUrls[page] // Usa l'URL corretto
+                    painter = rememberAsyncImagePainter(
+                        model = imageUrls[page]
                     ),
                     contentDescription = "foto utente",
-                    contentScale = ContentScale.Fit,
-                    modifier = Modifier
+                    contentScale = ContentScale.Crop, modifier = Modifier
                         .fillMaxSize()
-                        .clip(RoundedCornerShape(8.dp))
+//                        .clip(RoundedCornerShape(8.dp))
+                    // rimosso, più simile a Tandem
                 )
             }
         }
@@ -97,7 +97,7 @@ fun SingleTopicNavigator(
     topics: List<String>,
     modifier: Modifier = Modifier
 ) {
-    var currentTopicIndex by remember { mutableStateOf(0) }
+    var currentTopicIndex by remember { mutableIntStateOf(0) }
     if (topics.isEmpty()) {
         Text("Nessun argomento", modifier = modifier)
         return
@@ -122,7 +122,7 @@ fun SingleTopicNavigator(
             modifier = Modifier.size(arrowSize)
         ) {
             Icon(
-                imageVector = Icons.Default.ArrowBack,
+                imageVector = Icons.AutoMirrored.Filled.ArrowBack,
                 contentDescription = "Argomento precedente",
                 tint = if (currentTopicIndex > 0)
                     MaterialTheme.colorScheme.onSurface
@@ -161,7 +161,7 @@ fun SingleTopicNavigator(
             modifier = Modifier.size(arrowSize)
         ) {
             Icon(
-                imageVector = Icons.Default.ArrowForward,
+                imageVector = Icons.AutoMirrored.Filled.ArrowForward,
                 contentDescription = "Argomento successivo",
                 tint = if (currentTopicIndex < topics.lastIndex)
                     MaterialTheme.colorScheme.onSurface

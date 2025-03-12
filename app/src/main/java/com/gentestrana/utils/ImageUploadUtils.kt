@@ -13,7 +13,7 @@ import kotlinx.coroutines.tasks.await
  * @param imageUri The URI of the selected image.
  * @param onComplete Callback that returns the download URL if successful, or an empty string on failure.
  */
-fun uploadProfileImage(uid: String, imageUri: Uri, onComplete: (String) -> Unit) {
+fun uploadMainProfileImage(uid: String, imageUri: Uri, onComplete: (String) -> Unit) {
     val currentUserId = FirebaseAuth.getInstance().currentUser?.uid // Get current user's UID
     Log.d("ImageUpload", "Function Parameter UID (passed to uploadProfileImage): $uid") // Log the UID parameter
     Log.d("ImageUpload", "Current User UID from FirebaseAuth: $currentUserId") // Log the UID from FirebaseAuth

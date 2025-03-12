@@ -7,3 +7,11 @@ package com.gentestrana.utils
 fun removeSpaces(text: String): String {
     return text.replace("\\s+".toRegex(), "")
 }
+
+/**
+ * Normalizza un URL rimuovendo la parte relativa al token e parametri di cache.
+ * Questa normalizzazione semplifica il confronto di URL per verificare duplicati.
+ */
+fun String.normalizeUrl(): String {
+    return this.substringBefore("?") // Rimuove tutto dopo il primo '?'
+}

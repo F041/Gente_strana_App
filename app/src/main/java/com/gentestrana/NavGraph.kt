@@ -86,7 +86,7 @@ fun AppNavHost(navController: NavHostController,
 
             ProfilePicturesScreen(
                 imageUrls = imageUrls,
-//                onAddImage = { /* TODO: Aggiungere logica di caricamento */ }
+                navController = navController
             )
         }
 
@@ -126,7 +126,7 @@ fun MainTabsScreen(navController: NavHostController,
 //                ServicesScreen()
 //            }
             composable("settings") {
-                SettingsScreen(navController = tabsNavController, onThemeChange = onThemeChange) // 👈 PASSA onThemeChange!
+                SettingsScreen(navController = tabsNavController, onThemeChange = onThemeChange)
             }
 
             composable("changePassword") {
