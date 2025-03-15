@@ -2,6 +2,7 @@ package com.gentestrana.screens
 
 import android.content.Context
 import android.util.Log
+import android.widget.Toast
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
@@ -12,10 +13,16 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import com.gentestrana.R
+import androidx.compose.foundation.border
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.ui.draw.clip
+import com.gentestrana.users.UserRepository
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 
 enum class AppTheme { SYSTEM, LIGHT, DARK, /*SPECIAL*/ }
 // SPECIAL servirà per dislessia probabilmente
@@ -28,6 +35,7 @@ fun SettingsScreen(
     onThemeChange: (AppTheme) -> Unit
 ) {
     val context = LocalContext.current
+    val userRepository = remember { UserRepository() }
 
     // SharedPreferences
     val sharedPreferences = remember {
@@ -53,6 +61,8 @@ fun SettingsScreen(
         )
     }
 
+    var showDeleteConfirmationDialog by remember { mutableStateOf(false) }
+
     Scaffold(
         topBar = {
             TopAppBar(
@@ -76,8 +86,12 @@ fun SettingsScreen(
                 modifier = Modifier.clickable { navController.navigate("changePassword") }
             )
             ListItem(
-                headlineContent = { Text(stringResource(R.string.delete_account)) }, // Usa string resource
-                colors = ListItemDefaults.colors(headlineColor = MaterialTheme.colorScheme.error)
+                headlineContent = { Text(stringResource(R.string.delete_account)) },
+                colors = ListItemDefaults.colors(headlineColor = MaterialTheme.colorScheme.error),
+                modifier = Modifier.clickable {
+                    showDeleteConfirmationDialog = true
+                // Mostra il dialog quando si clicca su "Elimina Account"
+                }
             )
 
             Spacer(modifier = Modifier.height(16.dp))
@@ -191,6 +205,60 @@ fun SettingsScreen(
             ListItem(
                 headlineContent = { Text(stringResource(R.string.app_version)) },
                 trailingContent = { Text("1.0") }
+            )
+        }
+        if (showDeleteConfirmationDialog) {
+            AlertDialog(
+                modifier = Modifier
+                    .clip(RoundedCornerShape(16.dp))
+                    .border(2.dp, MaterialTheme.colorScheme.error, RoundedCornerShape(22.dp)),
+                // i .dp differiscono, non proprio elegante
+                // Bordo rosso DIRETTO sull'AlertDialog
+                onDismissRequest = { showDeleteConfirmationDialog = false },
+                title = {
+                    Text(
+                        text = stringResource(R.string.delete_account_confirmation_title),
+                        color = MaterialTheme.colorScheme.error // Titolo in rosso
+                    )
+                },
+                text = { Text(stringResource(R.string.delete_account_confirmation_message)) },
+                confirmButton = {
+                    Button(
+                        onClick = {
+                            // Chiamata a deleteUserAccount
+                            CoroutineScope(Dispatchers.Main).launch {
+                                // Lancia la coroutine nel contesto UI
+                                userRepository.deleteUserAccount(
+                                    onSuccess = {
+                                        // Account eliminato con successo
+                                        Toast.makeText(context, "Account eliminato con successo.", Toast.LENGTH_SHORT).show()
+                                        navController.navigate("login") {
+                                            // Naviga alla schermata di login
+                                            popUpTo("main") { inclusive = true } // Rimuovi MainTabsScreen dal backstack
+                                        }
+                                    },
+                                    onFailure = { errorMessage ->
+                                        // Errore durante l'eliminazione
+                                        Toast.makeText(context, "Errore eliminazione account: ${errorMessage ?: "Sconosciuto"}", Toast.LENGTH_LONG).show()
+                                        showDeleteConfirmationDialog = false // Chiudi il dialog in caso di errore
+                                    }
+                                )
+                            }
+                        },
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = MaterialTheme.colorScheme.error
+                        )
+                    ) {
+                        Text(stringResource(R.string.delete_account_confirm_button))
+                    }
+                },
+                dismissButton = {
+                    Button(
+                        onClick = { showDeleteConfirmationDialog = false }
+                    ) {
+                        Text(stringResource(R.string.cancel))
+                    }
+                }
             )
         }
     }

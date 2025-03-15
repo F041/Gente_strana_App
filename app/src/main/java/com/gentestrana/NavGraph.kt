@@ -44,9 +44,11 @@ fun AppNavHost(navController: NavHostController,
                     },
                     onNavigateToRegistration = {
                         navController.navigate("registration")
-                    }
+                    },
+                    navController = navController
                 )
             }
+
             composable("registration") {
                 RegistrationScreen(
                     onRegistrationSuccess = {
@@ -56,7 +58,9 @@ fun AppNavHost(navController: NavHostController,
         }
 
         composable("verifyEmail") {
-            VerifyEmailScreen()
+            VerifyEmailScreen(
+                navController = navController 
+            )
         }
 
         // Main Flow with Bottom Navigation

@@ -23,6 +23,8 @@
     <string name="verify_email_check_spam">if you don\'t see the email in your inbox, please check your spam or junk mail folder.</string>
     <string name="email_verification_icon_description">email verification icon</string>
     <string name="verification_email_resent_success">verification email resent successfully!</string>
+    <string name="open_email_app_button">open email app</string>
+    <string name="email_verified_success_message">email verified</string>
 
     // Zona login
     <string name="sign_in_with_google_button">sign in with Google</string>
@@ -150,6 +152,13 @@
     <string name="no_topics_defined">I still didn\'t write my first topic
     </string>
     <string name="loading_default">loading...</string>
+
+    // Zone settings
+
+    <string name="delete_account_confirmation_title">confirm account deletion</string>
+    <string name="delete_account_confirmation_message">do you feel sure you want to delete your account? No way back for this action and all your data will get erased.</string>
+    <string name="delete_account_confirm_button">delete account</string>
+
 
 
 </resources>

@@ -2,17 +2,22 @@ package com.gentestrana.users
 
 import android.content.Context
 import android.net.Uri
+import com.gentestrana.R
+import com.gentestrana.utils.FirestoreDeletionUtils
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.GoogleAuthProvider
 import com.google.firebase.auth.ktx.userProfileChangeRequest
 import com.google.firebase.firestore.ktx.firestore
 import com.google.firebase.ktx.Firebase
 import com.gentestrana.utils.uploadMainProfileImage
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
+import kotlin.coroutines.resume
+import kotlin.coroutines.suspendCoroutine
+import kotlin.coroutines.resumeWithException
 
 
 /**
- * TODO: IMPLEMENTARE VERIFICA EMAIL OBBLIGATORIA
- *
  * 1. Controllare lo stato di verifica email all'avvio dell'app e/o al login.
  * 2. Se l'email NON è verificata, reindirizzare l'utente a VerifyEmailScreen.
  * 3. Impedire l'accesso completo all'app (soprattutto a MainTabsScreen e funzionalità principali)
@@ -62,8 +67,7 @@ class UserRepository(
                     .addOnSuccessListener {
                         if (selectedImageUri != null) {
                             // Use centralized function to upload the image
-                            uploadMainProfileImage(uid, selectedImageUri) { imageUrl ->
-                                if (imageUrl.isNotEmpty()) {
+                              uploadMainProfileImage(context, uid, selectedImageUri,  { imageUrl ->                                 if (imageUrl.isNotEmpty()) {
                                     // Update Firestore with the profile photo URL
                                     firestore.collection("users").document(uid)
                                         .update("profilePicUrl", listOf(imageUrl))
@@ -90,28 +94,39 @@ class UserRepository(
                                     onFailure("Image upload failed")
                                 }
                             }
+                              )
                         } else {
-                            // If no image was selected, update only the displayName
-                            val user = auth.currentUser
-                            val profileUpdates = userProfileChangeRequest {
-                                displayName = username
-                            }
-                            user?.updateProfile(profileUpdates)
-                                ?.addOnCompleteListener { task ->
-                                    if (task.isSuccessful) {
-                                        onSuccess()
-                                    } else {
-                                        onFailure(task.exception?.message)
+                            // Nessuna immagine selezionata: utilizziamo l'immagine di default
+                            // Costruiamo l'URI della risorsa default
+                            val defaultImageUri = Uri.parse("android.resource://${context.packageName}/${R.drawable.random_user}")
+
+                            // Aggiorna Firestore con il default URI
+                            firestore.collection("users").document(uid)
+                                .update("profilePicUrl", listOf(defaultImageUri.toString()))
+                                .addOnSuccessListener {
+                                    // Aggiorna il profilo in FirebaseAuth con il default URI
+                                    val user = auth.currentUser
+                                    val profileUpdates = userProfileChangeRequest {
+                                        photoUri = defaultImageUri
+                                        displayName = username
                                     }
+                                    user?.updateProfile(profileUpdates)
+                                        ?.addOnCompleteListener { task ->
+                                            if (task.isSuccessful) {
+                                                onSuccess()
+                                            } else {
+                                                onFailure(task.exception?.message)
+                                            }
+                                        }
+                                }
+                                .addOnFailureListener { e ->
+                                    onFailure(e.message)
                                 }
                         }
                     }
                     .addOnFailureListener { e ->
                         onFailure(e.message)
                     }
-            }
-            .addOnFailureListener { e ->
-                onFailure(e.message)
             }
     }
 
@@ -140,6 +155,8 @@ class UserRepository(
         // TODO: Stringabile
         }
     }
+
+
 
     /**
      * Adds a new profile image URL to the user's profilePicUrl list.
@@ -273,15 +290,74 @@ class UserRepository(
         onFailure: (String?) -> Unit
     ) {
         auth.signInWithEmailAndPassword(email, password)
-            .addOnSuccessListener {
-                // Dopo il login, controlla lo stato di verifica dell'email
-                checkEmailVerificationStatus(
-                    onVerified = onVerified,
-                    onNotVerified = onNotVerified
-                )
+            .addOnSuccessListener { authResult ->
+                val user = auth.currentUser
+                if (user != null) {
+                    // Ricarica i dati dell'utente per avere lo stato aggiornato della verifica
+                    user.reload().addOnSuccessListener {
+                        if (user.isEmailVerified) {
+                            onVerified()
+                        } else {
+                            onNotVerified()
+                        }
+                    }.addOnFailureListener { e ->
+                        onFailure(e.message)
+                    }
+                } else {
+                    onFailure("Utente non trovato")
+                }
             }
             .addOnFailureListener { e ->
                 onFailure(e.message)
             }
+    }
+
+    /**
+     * Elimina l'account utente corrente da Firebase Authentication.
+     * Questa funzione elimina SOLO l'account di autenticazione, non i dati utente in Firestore.
+     */
+    suspend fun deleteUserAccount(
+        onSuccess: () -> Unit,
+        onFailure: (String?) -> Unit
+    ) {
+        val user = auth.currentUser
+        if (user != null) {
+            withContext(Dispatchers.IO) { // Coroutine Scope #1 (IO Dispatcher)
+                try {
+                    // Elimina account da Firebase Authentication usando suspendCoroutine
+                    suspendCoroutine<Unit> { continuation ->
+                        user.delete()
+                            .addOnSuccessListener {
+                                continuation.resume(Unit) // Resume la coroutine in caso di successo
+                            }
+                            .addOnFailureListener { e ->
+                                continuation.resumeWithException(e) // Resume con eccezione in caso di errore
+                            }
+                    }
+
+                    // Account Authentication eliminato con successo, ora elimina dati Firestore
+                    FirestoreDeletionUtils.deleteUserDataFromFirestore(
+                        userId = user.uid,
+                        onSuccess = { /* No callback expected here now in simplified version */ }, // Modified to empty lambda
+                        onFailure = { /* No callback expected here now in simplified version */ }  // Modified to empty lambda
+                    )
+                    withContext(Dispatchers.Main) { // Directly call onSuccess after Firestore deletion attempt (or simplified test)
+                        onSuccess()
+                    }
+                    withContext(Dispatchers.Main) { // Directly call onSuccess after Auth deletion (for now)
+                        onSuccess()
+                    }
+
+
+                } catch (e: Exception) {
+                    // Gestisci eccezione durante eliminazione Authentication
+                    withContext(Dispatchers.Main) { // Coroutine Scope #4 (Main Dispatcher)
+                        onFailure("Errore eliminando account Authentication: ${e.message}")
+                    }
+                }
+            }
+        } else {
+            onFailure("Utente non autenticato.")
+        }
     }
 }

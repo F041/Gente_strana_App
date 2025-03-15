@@ -8,6 +8,7 @@ import android.util.Log
 import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
@@ -30,13 +31,15 @@ import com.gentestrana.components.DateOfBirthPicker
 import com.gentestrana.components.GenericLoadingScreen
 import com.gentestrana.components.ProfileBioBox
 import com.gentestrana.components.ProfileImageGallery
-import com.gentestrana.components.ProfileImageSection
+//import com.gentestrana.components.ProfileImageSection
 import com.gentestrana.components.ProfileLanguagesField
 import com.gentestrana.components.ProfileLocationDisplay
 import com.gentestrana.components.ProfileTextField
 import com.gentestrana.components.ProfileTopicsList
+import com.gentestrana.components.ReorderableProfileImageGridWithAdd
 import com.gentestrana.utils.LocationUtils
 import com.gentestrana.utils.OperationResult
+import kotlinx.coroutines.launch
 
 
 /**
@@ -70,6 +73,7 @@ fun PersonalProfileScreen(
     val bio by profileViewModel.bio.collectAsState()
     val topicsText by profileViewModel.topicsText.collectAsState()
     val profilePicUrl by profileViewModel.profilePicUrl.collectAsState()
+
     var birthTimestamp by remember { mutableStateOf(0L) }
     val topicsList = profileViewModel.topicsText.collectAsState().value
         .split(",") // Divide la stringa in base alla virgola
@@ -83,6 +87,7 @@ fun PersonalProfileScreen(
     var newImageUri by remember { mutableStateOf<Uri?>(null) }
     var isLocationLoading by remember { mutableStateOf(false) }
     val currentLocation = profileViewModel.location.collectAsState().value
+    val coroutineScope = rememberCoroutineScope()
 
     // **INIZIO FUNZIONE getLocation **
     fun getLocation(context: Context) {
@@ -120,7 +125,26 @@ fun PersonalProfileScreen(
     val imagePickerLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.GetContent()
     ) { uri: Uri? ->
-        newImageUri = uri
+        if (uri != null) {
+            isUploading = true  // Attiva l'indicatore di caricamento
+            profileViewModel.uploadNewProfileImage(uri, context) { result ->
+                isUploading = false  // Disattiva l'indicatore in ogni caso
+                when {
+                    result == "DUPLICATE" -> {
+                        Toast.makeText(context, "Immagine duplicata: caricamento annullato", Toast.LENGTH_SHORT).show()
+                    }
+                    result.isEmpty() -> {
+                        Toast.makeText(context, "Errore nel caricamento dell'immagine", Toast.LENGTH_SHORT).show()
+                    }
+                    else -> {
+                        Toast.makeText(context, "Immagine caricata con successo!", Toast.LENGTH_SHORT).show()
+                    }
+                }
+            }
+        } else {
+            // Se l'utente annulla la selezione, disattiva l'indicatore
+            isUploading = false
+        }
     }
 
     LaunchedEffect(Unit) {
@@ -159,29 +183,29 @@ fun PersonalProfileScreen(
         ) {
 
             // Zona gallery immagini profilo
-            if (profilePicUrl.isNotEmpty()) {
-                ProfileImageGallery(
-                    images = profilePicUrl,
-                    onImageOrderChanged = { newOrder ->
-                        profileViewModel.setProfilePicOrder(newOrder)
-                    },
-                    onDeleteImage = { index ->
-                        profileViewModel.deleteProfileImage(index)
-                    }
-                )
-            } else {
-                // Puoi mostrare una UI alternativa o il vecchio ProfileImageSection se non ci sono immagini
-                ProfileImageSection(
-                    profilePicUrl = profilePicUrl,
-                    newImageUri = newImageUri,
-                    imagePickerLauncher = imagePickerLauncher,
-                    isUploading = isUploading,
-                    profileViewModel = profileViewModel,
-                    context = context,
-                    onNewImageUriChanged = { uri -> newImageUri = uri },
-                    onIsUploadingChanged = { uploading -> isUploading = uploading }
-                )
+            Box(modifier = Modifier.padding(horizontal = 36.dp)) {
+                // 🚩 AVVOLGI ReorderableProfileImageGridWithAdd in key(profilePicUrl)
+                key(profilePicUrl) { // 🚩 USA key(profilePicUrl)
+                    ReorderableProfileImageGridWithAdd(
+                        images = profilePicUrl, // Passa profilePicUrl come prop
+                        maxImages = 3,
+                        isUploading = isUploading,
+                        onImageOrderChanged = { newOrder ->
+                            profileViewModel.setProfilePicOrder(newOrder)
+                        },
+                        onDeleteImage = { imageUrl ->
+                            coroutineScope.launch {
+                                profileViewModel.deleteProfileImage(imageUrl)
+                            }
+                        },
+                        onAddImage = {
+                            imagePickerLauncher.launch("image/*")
+                        }
+                    )
+                }
             }
+
+            Spacer(modifier = Modifier.height(8.dp))
 
             // Gli space si potrebbero reintrodurre per coerenza ed eliminarli in ProfileImageSection
 

@@ -1,5 +1,6 @@
 package com.gentestrana.ui_controller
 
+import android.content.Context
 import android.util.Log
 import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.ViewModel
@@ -9,9 +10,10 @@ import com.google.firebase.ktx.Firebase
 import com.gentestrana.users.User
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
-import com.gentestrana.utils.uploadMainProfileImage
 import androidx.compose.runtime.State
 import androidx.lifecycle.viewModelScope
+import com.gentestrana.utils.deleteProfileImageFromStorage
+import com.gentestrana.utils.generateMD5HashFromUri
 import kotlinx.coroutines.launch
 import com.google.firebase.firestore.FirebaseFirestore
 import kotlinx.coroutines.tasks.await
@@ -98,60 +100,117 @@ class ProfileViewModel : ViewModel() {
         _profilePicUrl.value = newOrder
     }
 
-    fun deleteProfileImage(index: Int) {
-        val currentList = _profilePicUrl.value.toMutableList()
-        if (index in currentList.indices) {
-            // ✅ Controlla se l'indice è valido prima di rimuovere
-            // altrimenti l'app crasha
-            // ma esattamente come risolve il problema?
-            currentList.removeAt(index)
-            _profilePicUrl.value = currentList
+
+    suspend fun deleteProfileImage(imageUrlToDelete: String) {
+        Log.d("ProfileViewModel", "deleteProfileImage STARTED - imageUrlToDelete: $imageUrlToDelete")
+
+        // 1. Recupera la lista attuale da Firestore (RE-FETCH per sicurezza)
+        val userDoc = firestore.collection("users").document(uid).get().await()
+        val currentProfilePicUrls = userDoc.get("profilePicUrl") as? List<String> ?: emptyList()
+
+        // 🚩 LOG AGGIUNTO: Log della lista *RAW* recuperata da Firestore, PRIMA della normalizzazione
+        Log.d("ProfileViewModel", "currentProfilePicUrls (RAW from Firestore):") // 🚩 INIZIO LOG LISTA RAW
+        currentProfilePicUrls.forEachIndexed { index, rawUrl ->
+            Log.d("ProfileViewModel", "  [$index]: $rawUrl") // 🚩 LOG DI OGNI URL RAW
         }
-    }
+        Log.d("ProfileViewModel", "currentProfilePicUrls (RAW from Firestore) END") // 🚩 FINE LOG LISTA RAW
 
 
-    // Funzione per gestire l'upload dell'immagine (semplificata, la funzione uploadProfileImage esistente può essere integrata qui)
-    fun uploadNewProfileImage(newImageUri: android.net.Uri, onComplete: (String) -> Unit) {
-        viewModelScope.launch { // <--- **INIZIA *DIRETTAMENTE* CON viewModelScope.launch**
-            // Usa uploadMultipleImages e passa una lista con UN SOLO URI - **CORRETTO!**
-            val imageUrls = uploadMultipleImages(uid, listOf(newImageUri)) // uploadMultipleImages restituisce una LISTA di URL
-            val imageUrl = imageUrls.firstOrNull() ?: "" // Prendi il PRIMO URL dalla lista (o stringa vuota se lista vuota)
+        // Normalizza imageUrlToDelete
+        val normalizedImageUrlToDelete = imageUrlToDelete.normalizeUrl()
+        Log.d("ProfileViewModel", "normalizedImageUrlToDelete: $normalizedImageUrlToDelete")
 
-            if (imageUrl.isNotEmpty()) { // Usa imageUrl (SINGOLO URL) per i controlli successivi - **CORRETTO!**
-                viewModelScope.launch {
-                    // 1. Recupera la lista attuale da Firestore - **CORRETTO!**
-                    val userDoc = firestore.collection("users").document(uid).get().await()
-                    val currentProfilePicUrls = userDoc.get("profilePicUrl") as? List<String> ?: emptyList()
+        // Normalizza TUTTI gli URL nella currentProfilePicUrls per il confronto
+        val normalizedCurrentList = currentProfilePicUrls.map { it.normalizeUrl() }
 
-                    val normalizedImageUrl = imageUrl.normalizeUrl() // Normalizza imageUrl - **CORRETTO!**
-                    val normalizedCurrentUrls = currentProfilePicUrls.map { it.normalizeUrl() } // Normalizza TUTTI gli URL nella lista - **CORRETTO!**
+        // LOG della LISTA NORMALIZZATA COMPLETA (GIA' PRESENTE)
+        Log.d("ProfileViewModel", "normalizedCurrentList:")
+        normalizedCurrentList.forEachIndexed { index, normalizedUrl ->
+            Log.d("ProfileViewModel", "  [$index]: $normalizedUrl")
+        }
+        Log.d("ProfileViewModel", "normalizedCurrentList END")
 
-                    // Verifica se l'URL NORMALIZZATO è DUPLICATO - **CORRETTO!**
-                    if (normalizedCurrentUrls.contains(normalizedImageUrl)) { // Usa la lista NORMALIZZATA e URL NORMALIZZATO - **CORRETTO!**
-                        onComplete("") // Segnala "upload fallito" (stringa vuota) - **CORRETTO!**
-                        return@launch // ESCE dalla coroutine SENZA fare l'upload - **CORRETTO!**
+
+        // Trova l'indice dell'imageUrl NORMALIZZATO nella lista NORMALIZZATA
+        val index = normalizedCurrentList.indexOf(normalizedImageUrlToDelete)
+
+        if (index != -1) {
+            // ✅ Usa currentProfilePicUrls (lista da Firestore) e crea una COPIA MUTABILE
+            val mutableCurrentList = currentProfilePicUrls.toMutableList()
+
+            // Usa l'indice TROVATO (che si riferisce alla lista NORMALIZZATA)
+            // per rimuovere l'elemento dalla lista MUTABILE (mutableCurrentList)
+            if (index in mutableCurrentList.indices) { // Condizione ancora ridondante, ma la lasciamo per ora
+                mutableCurrentList.removeAt(index)
+                _profilePicUrl.value = mutableCurrentList // Aggiorna StateFlow con la lista MUTABILE MODIFICATA
+            }
+            deleteProfileImageFromStorage(imageUrlToDelete) { isDeletionSuccessful -> // Usa imageUrlToDelete ORIGINALE per l'eliminazione da Storage
+                if (isDeletionSuccessful) {
+                    Log.d("ProfileViewModel", "Immagine eliminata con successo da Storage: $imageUrlToDelete")
+                    viewModelScope.launch {
+                        try {
+                            firestore.collection("users").document(uid)
+                                .update("profilePicUrl", mutableCurrentList) // Aggiorna Firestore con la lista MUTABILE MODIFICATA
+                                .await()
+                            Log.d("ProfileViewModel", "Firestore aggiornato con la lista immagini modificata.")
+                        } catch (e: Exception) {
+                            Log.e("ProfileViewModel", "Errore nell'aggiornamento di Firestore dopo eliminazione immagine: ${e.message}")
+                        }
                     }
-
-                    // Verifica se il limite è già raggiunto PRIMA di aggiungere - **CORRETTO!**
-                    if (currentProfilePicUrls.size >= 3) { // - **CORRETTO!**
-                        onComplete("") // Segnala "upload fallito" (stringa vuota) - **CORRETTO!**
-                        return@launch // ESCE dalla coroutine SENZA fare l'upload - **CORRETTO!**
-                    }
-                    // 2. Crea una nuova lista AGGIUNGENDO il nuovo imageUrl - **CORRETTO!**
-
-                    // 3. Aggiorna Firestore con la NUOVA lista - **CORRETTO!**
-                    firestore.collection("users").document(uid)
-                        .update("profilePicUrl", FieldValue.arrayUnion(imageUrl))
-                        .await()
-
-                    // 4. Aggiorna _profilePicUrl (StateFlow) con la lista AGGIORNATA
-                    val updatedUserDoc = firestore.collection("users").document(uid).get().await()
-                    _profilePicUrl.value = updatedUserDoc.get("profilePicUrl") as? List<String> ?:emptyList()
+                } else {
+                    Log.e("ProfileViewModel", "Errore nell'eliminazione dell'immagine da Storage: $imageUrlToDelete")
                 }
             }
-            onComplete(imageUrl) // Restituisce il SINGOLO imageUrl (o stringa vuota) - **CORRETTO!**
+        } else {
+            Log.w("ProfileViewModel", "imageUrlToDelete NON TROVATO (dopo normalizzazione) nella lista _profilePicUrl: $normalizedImageUrlToDelete")
+        }
+        Log.d("ProfileViewModel", "deleteProfileImage ENDED - imageUrlToDelete: $imageUrlToDelete")
+    }
+
+    // Funzione per gestire l'upload dell'immagine
+// File: ProfileViewModel.kt
+
+    fun uploadNewProfileImage(newImageUri: android.net.Uri, context: Context, onComplete: (String) -> Unit) {
+        Log.d("ProfileViewModel", "uploadNewProfileImage STARTED - newImageUri: $newImageUri")
+        viewModelScope.launch {
+            try {
+                // Calcola l'hash MD5 per il file da caricare
+                val newHash = generateMD5HashFromUri(context, newImageUri)
+                if (newHash != null) {
+                    // Controlla se nella lista esistente c'è già un'immagine con lo stesso hash nel nome file
+                    val duplicateFound = _profilePicUrl.value.any { it.contains("$newHash.jpg") }
+                    if (duplicateFound) {
+                        Log.d("ProfileViewModel", "Duplicate image detected with hash: $newHash")
+                        // Notifica la UI: ad esempio restituisci una stringa speciale "DUPLICATE"
+                        onComplete("DUPLICATE")
+                        return@launch
+                    }
+                }
+
+                // Procedi con l'upload se non è duplicato
+                val imageUrlsAndHashes = uploadMultipleImages(uid, listOf(newImageUri), context)
+                val imageUrl = imageUrlsAndHashes.firstOrNull()?.first ?: ""
+
+                if (imageUrl.isNotEmpty()) {
+                    // Aggiorna la lista locale senza sovrascrivere quelle già presenti
+                    val updatedList = _profilePicUrl.value.toMutableList().apply { add(imageUrl) }
+                    _profilePicUrl.value = updatedList
+
+                    // Aggiorna anche Firestore con la lista aggiornata
+                    firestore.collection("users").document(uid)
+                        .update("profilePicUrl", updatedList)
+                        .await()
+                }
+
+                onComplete(imageUrl)
+            } catch (e: Exception) {
+                Log.e("ProfileViewModel", "Upload error: ${e.message}")
+                onComplete("")
+            }
         }
     }
+
+
 
     fun setUsername(newUsername: String) {
         _username.value = newUsername

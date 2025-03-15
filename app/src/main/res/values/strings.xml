@@ -24,6 +24,8 @@
     <string name="verify_email_check_spam">se non vedi l\'email nella tua inbox, controlla anche la cartella spam o posta indesiderata.</string>
     <string name="email_verification_icon_description">icona di verifica email</string>
     <string name="verification_email_resent_success">email di verifica rispedita con successo!</string>
+    <string name="open_email_app_button">apri app Email</string>
+    <string name="email_verified_success_message">email verificata</string>
 
     // Zona login
     <string name="sign_in_with_google_button">accedi con Google</string>
@@ -41,6 +43,7 @@
     <string name="onboarding_screen3_description">inizia conversazioni, scambia messaggi e crea nuove amicizie in un ambiente sicuro e rispettoso.</string>
 
     <string name="onboarding_button_start">inizia</string>
+
 
     // Zona profilo
     <string name="personal_profile">profilo personale</string>
@@ -152,6 +155,11 @@
     </string>
     <string name="loading_default">caricamento in corso...</string>
     <string name="users_search_bar">cerca per argomento, membro</string>
+
+    // Zona impostazioni
+    <string name="delete_account_confirmation_title">conferma eliminazione account</string>
+    <string name="delete_account_confirmation_message">sicuro di voler eliminare il tuo account? Non si torna indietro e tutti i tuoi dati verranno cancellati.</string>
+    <string name="delete_account_confirm_button">elimina account</string>
 
 
     <!-- Sostituisci "your_client_id_here" con il valore client ID ottenuto dalla console Firebase -->

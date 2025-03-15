@@ -9,6 +9,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
+import androidx.navigation.NavHostController
 import com.gentestrana.R
 import com.gentestrana.users.UserRepository
 import com.google.firebase.Firebase
@@ -20,7 +21,8 @@ import com.google.firebase.messaging.messaging
 @Composable
 fun LoginScreen(
     onLoginSuccess: (FirebaseUser) -> Unit,
-    onNavigateToRegistration: () -> Unit
+    onNavigateToRegistration: () -> Unit,
+    navController: NavHostController
 ) {
     val context = LocalContext.current
 
@@ -102,12 +104,22 @@ fun LoginScreen(
                     },
                     onNotVerified = {
                         isLoading = false
-                        Toast.makeText(context, "Email non verificata. Controlla la tua casella email per verificare.", Toast.LENGTH_SHORT).show()
-                        // Qui potresti aggiungere un eventuale reindirizzamento alla VerifyEmailScreen
+                        Toast.makeText(context, "Email non verificata. Controlla la tua casella email.", Toast.LENGTH_SHORT).show()
+
+                        val user = FirebaseAuth.getInstance().currentUser
+                        user?.sendEmailVerification()
+                            ?.addOnSuccessListener {
+                                Toast.makeText(context, "Email di verifica inviata nuovamente.", Toast.LENGTH_SHORT).show()
+                            }
+                            ?.addOnFailureListener { e ->
+                                Toast.makeText(context, "Errore nel rinvio dell'email: ${e.message}", Toast.LENGTH_SHORT).show()
+                            }
+
+                        navController.navigate("verifyEmail")
                     },
-                    onFailure = { error ->
+                    onFailure = { error ->  // ✅ Aggiunto parametro onFailure
                         isLoading = false
-                        Toast.makeText(context, context.getString(R.string.login_failed, error), Toast.LENGTH_SHORT).show()
+                        Toast.makeText(context, "Errore di login: $error", Toast.LENGTH_SHORT).show()
                     }
                 )
             },

@@ -6,6 +6,7 @@ import androidx.activity.compose.setContent
 import androidx.compose.material3.Surface
 import androidx.navigation.compose.rememberNavController
 import com.gentestrana.ui.theme.GenteStranaTheme
+import android.content.Intent
 import android.content.Context
 import android.util.Log
 import androidx.compose.runtime.getValue
@@ -21,6 +22,23 @@ import com.gentestrana.utils.forceTokenRefreshIfNeeded
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
+        // Gestione Deep Link all'avvio
+        val intent = intent // Intent che ha avviato MainActivity
+        val action = intent?.action
+        val data = intent?.data
+
+        if (action == Intent.ACTION_VIEW && data != null) {
+            // Se l'app è stata avviata tramite un Intent ACTION_VIEW (Deep Link)
+            Log.d("DeepLink", "Deep Link ricevuto: ${data.toString()}") // Log di debug
+            if (data.scheme == "gentestrana" && data.host == "verifyemail") {
+                // È un deep link per la verifica email!
+                val token = data.getQueryParameter("token") // Estrai il token (se presente)
+                Log.d("DeepLink", "Token di verifica: $token") // Log di debug
+                // TODO: Inviare il token al backend per la verifica email
+                // e NAVIGARE alla schermata di successo/login
+            }
+        }
 
         setContent {
             // Ottieni il contesto
