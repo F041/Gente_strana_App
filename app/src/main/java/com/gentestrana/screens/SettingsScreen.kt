@@ -20,6 +20,7 @@ import androidx.compose.foundation.border
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.ui.draw.clip
 import com.gentestrana.users.UserRepository
+import com.google.firebase.auth.FirebaseAuth
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -32,7 +33,8 @@ enum class AppTheme { SYSTEM, LIGHT, DARK, /*SPECIAL*/ }
 
 fun SettingsScreen(
     navController: NavController,
-    onThemeChange: (AppTheme) -> Unit
+    onThemeChange: (AppTheme) -> Unit,
+    auth: FirebaseAuth = FirebaseAuth.getInstance()
 ) {
     val context = LocalContext.current
     val userRepository = remember { UserRepository() }
@@ -52,11 +54,14 @@ fun SettingsScreen(
     // Stato Tema App, caricato da SharedPreferences o valore di default (SYSTEM)
     val selectedTheme = remember {
         mutableStateOf(
-            when (sharedPreferences.getString(appThemeKey, "SYSTEM")) { // "SYSTEM" è il default come stringa
+            when (sharedPreferences.getString(
+                appThemeKey,
+                "SYSTEM"
+            )) { // "SYSTEM" è il default come stringa
                 "LIGHT" -> AppTheme.LIGHT
                 "DARK" -> AppTheme.DARK
                 else -> AppTheme.SYSTEM
-            // SYSTEM come default se non trovato o valore non valido
+                // SYSTEM come default se non trovato o valore non valido
             }
         )
     }
@@ -90,7 +95,7 @@ fun SettingsScreen(
                 colors = ListItemDefaults.colors(headlineColor = MaterialTheme.colorScheme.error),
                 modifier = Modifier.clickable {
                     showDeleteConfirmationDialog = true
-                // Mostra il dialog quando si clicca su "Elimina Account"
+                    // Mostra il dialog quando si clicca su "Elimina Account"
                 }
             )
 
@@ -130,7 +135,10 @@ fun SettingsScreen(
                     onClick = {
                         val newTheme = AppTheme.SYSTEM
                         selectedTheme.value = newTheme
-                        Log.d("SettingsScreen", "RadioButton SYSTEM cliccato, selectedTheme.value ora: ${selectedTheme.value}")
+                        Log.d(
+                            "SettingsScreen",
+                            "RadioButton SYSTEM cliccato, selectedTheme.value ora: ${selectedTheme.value}"
+                        )
                         selectedTheme.value = AppTheme.SYSTEM
                         sharedPreferences.edit()
                             .putString(appThemeKey, "SYSTEM")
@@ -146,7 +154,10 @@ fun SettingsScreen(
                     onClick = {
                         val newTheme = AppTheme.LIGHT
                         selectedTheme.value = newTheme
-                        Log.d("SettingsScreen", "RadioButton SYSTEM cliccato, selectedTheme.value ora: ${selectedTheme.value}")
+                        Log.d(
+                            "SettingsScreen",
+                            "RadioButton SYSTEM cliccato, selectedTheme.value ora: ${selectedTheme.value}"
+                        )
                         selectedTheme.value = AppTheme.LIGHT
                         sharedPreferences.edit()
                             .putString(appThemeKey, "LIGHT")
@@ -162,7 +173,10 @@ fun SettingsScreen(
                     onClick = {
                         val newTheme = AppTheme.DARK
                         selectedTheme.value = newTheme
-                        Log.d("SettingsScreen", "RadioButton SYSTEM cliccato, selectedTheme.value ora: ${selectedTheme.value}")
+                        Log.d(
+                            "SettingsScreen",
+                            "RadioButton SYSTEM cliccato, selectedTheme.value ora: ${selectedTheme.value}"
+                        )
                         selectedTheme.value = AppTheme.DARK
                         sharedPreferences.edit()
                             .putString(appThemeKey, "DARK")
@@ -231,16 +245,32 @@ fun SettingsScreen(
                                 userRepository.deleteUserAccount(
                                     onSuccess = {
                                         // Account eliminato con successo
-                                        Toast.makeText(context, "Account eliminato con successo.", Toast.LENGTH_SHORT).show()
-                                        navController.navigate("login") {
-                                            // Naviga alla schermata di login
-                                            popUpTo("main") { inclusive = true } // Rimuovi MainTabsScreen dal backstack
+                                        Toast.makeText(
+                                            context,
+                                            "Account eliminato con successo.",
+                                            Toast.LENGTH_SHORT
+                                        ).show()
+                                        Log.d("SettingsScreen", "Account eliminato, eseguendo signOut...")
+                                        auth.signOut()
+                                        Log.d("SettingsScreen", "Navigando a auth/login...")
+                                        // TODO: inserisco quei log perché nell'ultimo test che ho fatto
+                                        // non mi riportava al login
+                                        navController.navigate("auth/login") {  // Usa il percorso completo
+                                            popUpTo(navController.graph.id) {   // Cancella TUTTO lo stack
+                                                inclusive = true
+                                            }
+                                            launchSingleTop = true
                                         }
                                     },
                                     onFailure = { errorMessage ->
                                         // Errore durante l'eliminazione
-                                        Toast.makeText(context, "Errore eliminazione account: ${errorMessage ?: "Sconosciuto"}", Toast.LENGTH_LONG).show()
-                                        showDeleteConfirmationDialog = false // Chiudi il dialog in caso di errore
+                                        Toast.makeText(
+                                            context,
+                                            "Errore eliminazione account: ${errorMessage ?: "Sconosciuto"}",
+                                            Toast.LENGTH_LONG
+                                        ).show()
+                                        showDeleteConfirmationDialog =
+                                            false // Chiudi il dialog in caso di errore
                                     }
                                 )
                             }

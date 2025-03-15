@@ -8,7 +8,6 @@ import android.util.Log
 import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
@@ -30,8 +29,6 @@ import com.gentestrana.users.User
 import com.gentestrana.components.DateOfBirthPicker
 import com.gentestrana.components.GenericLoadingScreen
 import com.gentestrana.components.ProfileBioBox
-import com.gentestrana.components.ProfileImageGallery
-//import com.gentestrana.components.ProfileImageSection
 import com.gentestrana.components.ProfileLanguagesField
 import com.gentestrana.components.ProfileLocationDisplay
 import com.gentestrana.components.ProfileTextField
@@ -40,7 +37,6 @@ import com.gentestrana.components.ReorderableProfileImageGridWithAdd
 import com.gentestrana.utils.LocationUtils
 import com.gentestrana.utils.OperationResult
 import kotlinx.coroutines.launch
-
 
 /**
  * Schermata del profilo personale.
@@ -58,6 +54,7 @@ import kotlinx.coroutines.launch
  * - **location**: paese, ottenuto ad esempio dal GPS al primo utilizzo.
  */
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun PersonalProfileScreen(
     navController: NavHostController
@@ -107,7 +104,6 @@ fun PersonalProfileScreen(
         }
     }
 
-
     // Launcher per la richiesta dei permessi di localizzazione
     val locationPermissionLauncher = rememberLauncherForActivityResult(
         ActivityResultContracts.RequestPermission()
@@ -131,13 +127,16 @@ fun PersonalProfileScreen(
                 isUploading = false  // Disattiva l'indicatore in ogni caso
                 when {
                     result == "DUPLICATE" -> {
-                        Toast.makeText(context, "Immagine duplicata: caricamento annullato", Toast.LENGTH_SHORT).show()
+                        Toast.makeText(context, context.getString(R.string.duplicate_image), Toast.LENGTH_SHORT).show()
                     }
                     result.isEmpty() -> {
-                        Toast.makeText(context, "Errore nel caricamento dell'immagine", Toast.LENGTH_SHORT).show()
+                        Toast.makeText(context
+                            , "❌",
+                            Toast.LENGTH_SHORT).show()
+                        // TODO: STRINGABILE
                     }
                     else -> {
-                        Toast.makeText(context, "Immagine caricata con successo!", Toast.LENGTH_SHORT).show()
+                        Toast.makeText(context, "👌", Toast.LENGTH_SHORT).show()
                     }
                 }
             }
@@ -184,10 +183,9 @@ fun PersonalProfileScreen(
 
             // Zona gallery immagini profilo
             Box(modifier = Modifier.padding(horizontal = 36.dp)) {
-                // 🚩 AVVOLGI ReorderableProfileImageGridWithAdd in key(profilePicUrl)
-                key(profilePicUrl) { // 🚩 USA key(profilePicUrl)
+                key(profilePicUrl) {
                     ReorderableProfileImageGridWithAdd(
-                        images = profilePicUrl, // Passa profilePicUrl come prop
+                        images = profilePicUrl,
                         maxImages = 3,
                         isUploading = isUploading,
                         onImageOrderChanged = { newOrder ->
@@ -217,7 +215,7 @@ fun PersonalProfileScreen(
                 placeholder = stringResource(id = R.string.name_placeholder),
                 minLength=2,
                 maxLength = 13,
-                errorMessage = "Too short", //stringabile
+                errorMessage = "❌",
                 removeSpaces = true,
             )
             Spacer(modifier = Modifier.height(8.dp))
@@ -279,7 +277,8 @@ fun PersonalProfileScreen(
 
 
             // SEZIONE ProgressIndicator
-            if (isLocationLoading) { // Mostra ProgressIndicator SOLO se isLocationLoading è true
+            if (isLocationLoading) {
+                // Mostra ProgressIndicator SOLO se isLocationLoading è true
                 Column(
                     horizontalAlignment = Alignment.CenterHorizontally, // Centra orizzontalmente
                     modifier = Modifier.padding(vertical = 8.dp) // Padding verticale
@@ -287,7 +286,7 @@ fun PersonalProfileScreen(
                     GenericLoadingScreen(modifier = Modifier.size(24.dp)) // ProgressIndicator
                     Spacer(modifier = Modifier.height(4.dp))
                     Text(
-                        text = "Ricerca della posizione...", // Testo di stato (stringabile) - OPZIONALE
+                        text = "\uD83D\uDD0D \uD83D\uDCCD...", // stringabile
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f) // Stile testo di stato
                     )
@@ -320,10 +319,10 @@ fun PersonalProfileScreen(
                         updatedTopics = topicsText,
                         updatedProfilePicUrl = profilePicUrl,
                         onSuccess = {
-                            Toast.makeText(context, "Profile updated successfully", Toast.LENGTH_SHORT).show()
+                            Toast.makeText(context, "✅", Toast.LENGTH_SHORT).show()
                         },
                         onFailure = { error ->
-                            Toast.makeText(context, "Update failed: $error", Toast.LENGTH_SHORT).show()
+                            Toast.makeText(context, "⛔: $error", Toast.LENGTH_SHORT).show()
                         }
                     )
                 },

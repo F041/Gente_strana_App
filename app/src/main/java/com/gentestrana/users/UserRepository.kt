@@ -11,6 +11,7 @@ import com.google.firebase.firestore.ktx.firestore
 import com.google.firebase.ktx.Firebase
 import com.gentestrana.utils.uploadMainProfileImage
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.tasks.await
 import kotlinx.coroutines.withContext
 import kotlin.coroutines.resume
 import kotlin.coroutines.suspendCoroutine
@@ -322,39 +323,21 @@ class UserRepository(
     ) {
         val user = auth.currentUser
         if (user != null) {
-            withContext(Dispatchers.IO) { // Coroutine Scope #1 (IO Dispatcher)
-                try {
-                    // Elimina account da Firebase Authentication usando suspendCoroutine
-                    suspendCoroutine<Unit> { continuation ->
-                        user.delete()
-                            .addOnSuccessListener {
-                                continuation.resume(Unit) // Resume la coroutine in caso di successo
-                            }
-                            .addOnFailureListener { e ->
-                                continuation.resumeWithException(e) // Resume con eccezione in caso di errore
-                            }
-                    }
+            try {
+                // 1. Elimina prima i dati da Firestore
+                FirestoreDeletionUtils.deleteUserDataFromFirestore(
+                    userId = user.uid,
+                    onSuccess = {}, // Ora gestito
+                    onFailure = { throw Exception("Firestore deletion failed: $it") }
+                )
 
-                    // Account Authentication eliminato con successo, ora elimina dati Firestore
-                    FirestoreDeletionUtils.deleteUserDataFromFirestore(
-                        userId = user.uid,
-                        onSuccess = { /* No callback expected here now in simplified version */ }, // Modified to empty lambda
-                        onFailure = { /* No callback expected here now in simplified version */ }  // Modified to empty lambda
-                    )
-                    withContext(Dispatchers.Main) { // Directly call onSuccess after Firestore deletion attempt (or simplified test)
-                        onSuccess()
-                    }
-                    withContext(Dispatchers.Main) { // Directly call onSuccess after Auth deletion (for now)
-                        onSuccess()
-                    }
+                // 2. Elimina l'account Auth SOLO dopo il successo di Firestore
+                // sta roba qui causava PERMISSION_DENIED col codice di Gemini..
+                user.delete().await()
 
-
-                } catch (e: Exception) {
-                    // Gestisci eccezione durante eliminazione Authentication
-                    withContext(Dispatchers.Main) { // Coroutine Scope #4 (Main Dispatcher)
-                        onFailure("Errore eliminando account Authentication: ${e.message}")
-                    }
-                }
+                onSuccess()
+            } catch (e: Exception) {
+                onFailure("Errore eliminazione: ${e.message}")
             }
         } else {
             onFailure("Utente non autenticato.")
