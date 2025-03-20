@@ -1,6 +1,7 @@
 package com.gentestrana.screens
 
 import android.util.Log
+import android.widget.Toast
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -34,11 +35,13 @@ import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.style.TextDecoration
 import com.gentestrana.components.GenericLoadingScreen
 import com.google.firebase.firestore.Query
 import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.withContext
 
 //TODO: gestire casi dove non si può mandare messaggio per mancanza linea internet
 // o altri motivi. Creare dialog per reinvio?
@@ -54,6 +57,7 @@ fun ChatScreen(docId: String, navController: NavController) {
     var recipientName by remember { mutableStateOf<String?>(null) }
     var recipientDocId by remember { mutableStateOf("") }
     var messagesLimit by remember { mutableStateOf(20) }
+    val context = LocalContext.current
 
     // Blocco unico per recuperare il documento della chat, aggiornare lo stato e ottenere il nome destinatario
     LaunchedEffect(docId, currentUserId) {
@@ -267,9 +271,9 @@ fun ChatScreen(docId: String, navController: NavController) {
                         value = messageText,
                         onValueChange = { messageText = it },
                         modifier = Modifier.weight(1f),
-                        placeholder = { Text(stringResource(R.string.write_message)) }, // String resource
-                        keyboardOptions = KeyboardOptions.Default.copy(imeAction = ImeAction.Send), // Aggiungiamo keyboardOptions
-                        keyboardActions = KeyboardActions(onSend = { // Aggiungiamo keyboardActions
+                        placeholder = { Text(stringResource(R.string.write_message)) },
+                        keyboardOptions = KeyboardOptions.Default.copy(imeAction = ImeAction.Send),
+                        keyboardActions = KeyboardActions(onSend = {
                             if (messageText.isNotBlank() && currentUserId != null) {
                                 Log.d("ChatScreen", "Testo del messaggio prima dell'invio con Enter: '$messageText'")
                                 val messageToSend = messageText
@@ -278,7 +282,7 @@ fun ChatScreen(docId: String, navController: NavController) {
                                 CoroutineScope(Dispatchers.IO).launch {
                                     try {
                                         val repository = ChatRepository()
-                                        repository.sendMessage(docId, currentUserId, messageToSend)
+                                        repository.sendMessage(docId, currentUserId, messageToSend, context)
                                     } catch (e: Exception) {
                                         Log.e("ChatScreen", "Errore nell'invio del messaggio con Enter", e)
                                     }
@@ -286,14 +290,10 @@ fun ChatScreen(docId: String, navController: NavController) {
                             }
                         })
                     )
-                    val uiScope = rememberCoroutineScope()
-                    // da dove viene? A cosa serviva? Posso rimuoverlo?
 
                     Button(
                         onClick = {
-                            // lasciamo vuoto onClick per ora
                             if (messageText.isNotBlank() && currentUserId != null) {
-                                Log.d("ChatScreen", "Testo del messaggio prima dell'invio con Bottone: '$messageText'")
                                 val messageToSend = messageText
                                 messageText = ""
                                 forceScrollToBottom = true
@@ -301,9 +301,30 @@ fun ChatScreen(docId: String, navController: NavController) {
                                 CoroutineScope(Dispatchers.IO).launch {
                                     try {
                                         val repository = ChatRepository()
-                                        repository.sendMessage(docId, currentUserId, messageToSend)
+                                        repository.sendMessage(docId, currentUserId, messageToSend, context)
                                     } catch (e: Exception) {
                                         Log.e("ChatScreen", "Errore nell'invio del messaggio con Bottone", e)
+                                        withContext(Dispatchers.Main) {
+                                            if (e.message?.contains("Daily message limit exceeded") == true) {
+                                                Toast.makeText(
+                                                    context,
+                                                    "❌📨➡⏳💤",
+                                                    Toast.LENGTH_SHORT
+                                                ).show()
+                                            } else if (e.message?.contains("Rate limit exceeded") == true) {
+                                                Toast.makeText(
+                                                    context,
+                                                    "🚫📨➡⏳💤 ",
+                                                    Toast.LENGTH_SHORT
+                                                ).show()
+                                            } else {
+                                                Toast.makeText(
+                                                    context,
+                                                    "Errore nell'invio del messaggio.",
+                                                    Toast.LENGTH_SHORT
+                                                ).show()
+                                            }
+                                        }
                                     }
                                 }
                             }

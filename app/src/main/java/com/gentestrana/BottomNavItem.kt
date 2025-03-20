@@ -1,5 +1,6 @@
 package com.gentestrana
 
+import androidx.annotation.StringRes
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.Icon
@@ -9,26 +10,47 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.unit.sp
 import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.currentBackStackEntryAsState
 
 sealed class BottomNavItem(
     val route: String,
-    val title: String,
+    @StringRes val titleResId: Int,  // da String a Int (ID risorsa)
     val icon: ImageVector
 ) {
     object Community : BottomNavItem(
-        "community", // Must match NavGraph route
-        "Community",
-        Icons.Default.Groups
+        "community",
+        R.string.community,
+        Icons.Filled.Groups
     )
-    object Chat : BottomNavItem("chat", "Chat", Icons.Default.Chat)
-    object Profile : BottomNavItem("profile", "Profile", Icons.Default.Person)
-    //  services will become a part of Gente Strana, but for your own social you can delete it
 
-//    object Services : BottomNavItem("services", "Services", Icons.Default.BusinessCenter)
-    object Settings : BottomNavItem("settings", "Settings", Icons.Default.Settings)
+    object Chat : BottomNavItem(
+        "chat",
+        R.string.chat,
+        Icons.Filled.ChatBubble
+    )
+
+    object Profile : BottomNavItem(
+        "profile",
+        R.string.profile,
+        Icons.Default.Person
+    )
+
+    // Services will become a part of Gente Strana, but for your own social you can delete it
+//    object Services : BottomNavItem(
+//        "services",
+//        R.string.services,
+//        Icons.Default.BusinessCenter
+//    )
+
+    object Settings : BottomNavItem(
+        "settings",
+        R.string.settings,
+        Icons.Filled.Settings
+    )
 }
 
 @Composable
@@ -38,7 +60,8 @@ fun BottomNavigationBar(navController: NavHostController) {
         BottomNavItem.Chat,
         BottomNavItem.Profile,
  //  services will become a part of Gente Strana, but for your own social you can delete it
-//        BottomNavItem.Services
+
+//        BottomNavItem.Services,
         BottomNavItem.Settings
     )
 
@@ -48,8 +71,13 @@ fun BottomNavigationBar(navController: NavHostController) {
 
         items.forEach { item ->
             NavigationBarItem(
-                icon = { Icon(item.icon, contentDescription = item.title) },
-                label = { Text(item.title) },
+                icon = { Icon(item.icon, contentDescription = null) },
+                label = {
+                    Text(
+                        text = stringResource(id = item.titleResId),
+                        fontSize = 15.sp
+                    )
+                },
                 selected = currentRoute == item.route,
                 onClick = {
                     navController.navigate(item.route) {

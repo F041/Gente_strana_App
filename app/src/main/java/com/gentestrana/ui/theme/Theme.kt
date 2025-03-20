@@ -27,7 +27,7 @@ private val NeuroDarkColorScheme = darkColorScheme(
     onSurface = Color.White,
     surfaceVariant = Color(0xFF333333),
     secondaryContainer = NeuroSecondary.copy(alpha = 0.6f),
-    outlineVariant = Color(0x679C9C9C),
+    outlineVariant = Color(0x999C9C9C),
     error = Color(0xFFCF6679)
 )
 
@@ -41,7 +41,8 @@ private val NeuroLightColorScheme = lightColorScheme(
     onSecondary = Color.White,
     onTertiary = Color.Black,
     onBackground = NeuroPrimary,
-    onSurface = NeuroPrimary,
+    onSurface = Color.Black.copy(alpha = 0.87f),
+    onSurfaceVariant = Color.Black.copy(alpha = 0.80f),
     secondaryContainer = NeuroBeige,
     surfaceVariant = Color(0xFFF0F0F0),
     outlineVariant = Color(0x33555555)

@@ -50,8 +50,7 @@ class MyFirebaseMessagingService : FirebaseMessagingService() {
 
         // 4. Costruisci la notifica
         val builder = NotificationCompat.Builder(this, channelId)
-            .setSmallIcon(R.mipmap.ic_launcher)
-            // Sostituisci con la tua icona di notifica (creala in drawable)
+            .setSmallIcon(R.drawable.ic_notification)
             .setContentTitle(notificationTitle)
             .setContentText(notificationBody)
             .setPriority(NotificationCompat.PRIORITY_DEFAULT)
@@ -114,6 +113,7 @@ class MyFirebaseMessagingService : FirebaseMessagingService() {
             }
 
         fun forceTokenRefresh() {
+            // TODO: da rimettere nel main?
             FirebaseMessaging.getInstance().deleteToken().addOnCompleteListener { task ->
                 if (task.isSuccessful) {
                     Log.d("FCM_TOKEN_DEBUG", "Token cancellato con successo. Verrà generato un nuovo token.")

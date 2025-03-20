@@ -1,6 +1,7 @@
 package com.gentestrana.ui_controller
 
 import android.content.Context
+import android.net.Uri
 import android.util.Log
 import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.ViewModel
@@ -12,14 +13,21 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import androidx.compose.runtime.State
 import androidx.lifecycle.viewModelScope
+import com.gentestrana.utils.convertImageUriToWebP
 import com.gentestrana.utils.deleteProfileImageFromStorage
 import com.gentestrana.utils.generateMD5HashFromUri
+import com.gentestrana.utils.isValidImageUri
 import kotlinx.coroutines.launch
 import com.google.firebase.firestore.FirebaseFirestore
 import kotlinx.coroutines.tasks.await
 import com.gentestrana.utils.normalizeUrl
+import com.gentestrana.utils.saveByteArrayToTempFile
 import com.gentestrana.utils.uploadMultipleImages
-import com.google.firebase.firestore.FieldValue
+import kotlinx.coroutines.withContext
+import kotlinx.coroutines.Dispatchers
+import java.util.UUID
+
+
 
 
 class ProfileViewModel : ViewModel() {
@@ -168,44 +176,79 @@ class ProfileViewModel : ViewModel() {
     }
 
     // Funzione per gestire l'upload dell'immagine
-// File: ProfileViewModel.kt
 
-    fun uploadNewProfileImage(newImageUri: android.net.Uri, context: Context, onComplete: (String) -> Unit) {
-        Log.d("ProfileViewModel", "uploadNewProfileImage STARTED - newImageUri: $newImageUri")
-        viewModelScope.launch {
+    fun uploadNewProfileImage(newImageUri: Uri, context: Context, onComplete: (String) -> Unit) {
+        viewModelScope.launch(Dispatchers.IO) {
             try {
-                // Calcola l'hash MD5 per il file da caricare
-                val newHash = generateMD5HashFromUri(context, newImageUri)
-                if (newHash != null) {
-                    // Controlla se nella lista esistente c'è già un'immagine con lo stesso hash nel nome file
-                    val duplicateFound = _profilePicUrl.value.any { it.contains("$newHash.jpg") }
-                    if (duplicateFound) {
-                        Log.d("ProfileViewModel", "Duplicate image detected with hash: $newHash")
-                        // Notifica la UI: ad esempio restituisci una stringa speciale "DUPLICATE"
-                        onComplete("DUPLICATE")
+                // Validazione formato immagine
+                if (!isValidImageUri(context, newImageUri)) {
+                    withContext(Dispatchers.Main) {
+                        onComplete("INVALID_FORMAT")
+                    }
+                    return@launch
+                }
+
+                // Conversione a WebP
+                val webpData = convertImageUriToWebP(context, newImageUri) ?: run {
+                    withContext(Dispatchers.Main) { onComplete("") }
+                    return@launch
+                }
+
+                // Salvataggio file temporaneo
+                val tempFileName = "temp_${UUID.randomUUID()}.webp"
+                val tempFileUri = saveByteArrayToTempFile(context, webpData, tempFileName)
+                    ?: run {
+                        withContext(Dispatchers.Main) { onComplete("") }
                         return@launch
                     }
+
+                // Generazione hash MD5
+                val newHash = generateMD5HashFromUri(context, tempFileUri)
+                    ?: run {
+                        withContext(Dispatchers.Main) { onComplete("") }
+                        return@launch
+                    }
+
+                // Controllo duplicati
+                val duplicateFound = withContext(Dispatchers.Default) {
+                    _profilePicUrl.value.any { it.contains(newHash, true) }
                 }
 
-                // Procedi con l'upload se non è duplicato
-                val imageUrlsAndHashes = uploadMultipleImages(uid, listOf(newImageUri), context)
-                val imageUrl = imageUrlsAndHashes.firstOrNull()?.first ?: ""
-
-                if (imageUrl.isNotEmpty()) {
-                    // Aggiorna la lista locale senza sovrascrivere quelle già presenti
-                    val updatedList = _profilePicUrl.value.toMutableList().apply { add(imageUrl) }
-                    _profilePicUrl.value = updatedList
-
-                    // Aggiorna anche Firestore con la lista aggiornata
-                    firestore.collection("users").document(uid)
-                        .update("profilePicUrl", updatedList)
-                        .await()
+                if (duplicateFound) {
+                    withContext(Dispatchers.Main) {
+                        onComplete("DUPLICATE")
+                    }
+                    return@launch
                 }
 
-                onComplete(imageUrl)
+                // Upload immagine (funzione suspend chiamata in coroutine)
+                val imageUrls = uploadMultipleImages(uid, listOf(tempFileUri), context)
+                val newUrl = imageUrls.firstOrNull()?.first ?: ""
+
+                // Aggiornamento Firestore
+
+                if (newUrl.isNotEmpty()) {
+                    // Aggiornamento Firestore con transazione
+                    firestore.runTransaction { transaction ->
+                        val userDoc = transaction.get(firestore.collection("users").document(uid))
+                        val currentUrls = userDoc.get("profilePicUrl") as? List<String> ?: emptyList()
+                        val updatedUrls = currentUrls + newUrl
+                        transaction.update(userDoc.reference, "profilePicUrl", updatedUrls)
+                    }.await()
+
+                    // Aggiorna lo stato locale
+                    _profilePicUrl.value = _profilePicUrl.value + newUrl
+                }
+
+                // Notifica il completamento
+                withContext(Dispatchers.Main) {
+                    onComplete(newUrl)
+                }
+
             } catch (e: Exception) {
-                Log.e("ProfileViewModel", "Upload error: ${e.message}")
-                onComplete("")
+                withContext(Dispatchers.Main) {
+                    onComplete("")
+                }
             }
         }
     }

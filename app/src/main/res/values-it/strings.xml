@@ -1,0 +1,203 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">GenteStrana</string>
+
+
+    // Zona registrazione
+    <string name="registration_email_label">Email</string>
+    <string name="registration_email_placeholder">usa la tua migliore mail</string>
+    <string name="registration_email_error_message">inserisci un\'email valida con dominio gmail.com, outlook.com o yahoo.com, etc.</string>
+    <string name="registration_password_label">Password</string>
+    <string name="registration_password_placeholder">password forte ma non banale</string>
+    <string name="registration_firstname_label">First name</string>
+    <string name="registration_firstname_placeholder">Marco, Giovanna, solo il PRIMO nome</string>
+    <string name="registration_select_profile_picture_button">Select Profile Picture</string>
+    <string name="registration_register_button">Register</string>
+    <string name="sex_male_description">Sesso: Maschio</string>
+    <string name="sex_female_description">Sesso: Femmina</string>
+    <string name="sex_undefined_description">Sesso: Non definito</string>
+
+
+    <string name="verify_email_title">verifica la tua email</string>
+    <string name="verify_email_instructions">ti abbiamo inviato un\'email di verifica all\'indirizzo con cui ti sei registrato. Per favore, controlla la tua casella di posta e clicca sul link di verifica per attivare il tuo account.</string>
+    <string name="resend_verification_email_button">rispedisci email di verifica</string>
+    <string name="verify_email_check_spam">se non vedi l\'email nella tua inbox, controlla anche la cartella spam o posta indesiderata.</string>
+    <string name="email_verification_icon_description">icona di verifica email</string>
+    <string name="verification_email_resent_success">email di verifica rispedita con successo!</string>
+    <string name="open_email_app_button">apri app Email</string>
+    <string name="email_verified_success_message">email verificata</string>
+
+    // Zona login
+    <string name="sign_in_with_google_button">accedi con Google</string>
+    <string name="login_fill_fields">compila tutti i campi</string>
+    <string name="login_successful">accesso avvenuto</string>
+    <string name="login_failed">autenticazione fallita: %1$s</string>
+    <string name="register_prompt">non hai un account? Registrati</string>
+
+    // Zona imbarco
+    <string name="onboarding_screen1_title">Benvenuto in Gente Strana!</string>
+    <string name="onboarding_screen1_description">Unisciti a una community accogliente e inclusiva per persone neurodivergenti come te.</string>
+    <string name="onboarding_screen2_title">connettiti con persone affini</string>
+    <string name="onboarding_screen2_description">scopri profili di altri utenti neurodivergenti, con interessi e passioni simili.</string>
+
+
+        // pagina 2
+
+    <string name="onboarding_screen3_title">test di auto-valutazione</string>
+    <string name="onboarding_screen3_description">per aiutarti a capire se Gente Strana fa per te, ti offriamo dei test di auto-valutazione, validati dalla letteratura scientifica.
+    </string>
+    <string name="onboarding_screen3_gdpr_notice"><b>Privacy garantita:</b> non raccogliamo né salviamo i tuoi risultati. </string>
+    <string name="onboarding_screen3_checkbox_consent">ho letto e compreso.</string>
+    <string name="onboarding_screen3_autism">test per lo spettro autistico </string>
+    <string name="onboarding_screen3_adhd">test per ADHD </string>
+    <string name="onboarding_screen3_score">Punteggio ottenuto </string>
+    <string name="onboarding_screen3_score_threshold">non soddisfi il criterio per unirti a quest\'app</string>
+    <string name="onboarding_screen3_diagnosis_checkbox">ho già una diagnosi di neurodivergenza (non serve fare il test)
+    </string>
+
+    <string name="onboarding_screen3_autism_test_link">https://aspergeronline.org/raads-r/#test</string>
+    <string name="onboarding_screen3_adhd_test_link">https://www.hcp.med.harvard.edu/ncs/ftpdir/adhd/6Q_Italian_final.pdf</string>
+
+    <string name="onboarding_screen3_video_call_title">verifica tramite videochiamata</string>
+    <string name="onboarding_screen3_video_call_description">prenota una videochiamata di 5 minuti per verificare la tua diagnosi. Nessuna registrazione verrà effettuata.</string>
+    <string name="onboarding_screen3_video_call_consent">acconsento alla videochiamata informale</string>
+    <string name="onboarding_screen3_video_call_button">prenota videochiamata</string>
+
+        // pagina 3
+    <string name="onboarding_screen4_title">chatta e condividi</string>
+    <string name="onboarding_screen4_description">inizia conversazioni, scambia messaggi e crea nuove amicizie in un ambiente sicuro e rispettoso.</string>
+
+
+    <string name="onboarding_button_start">inizia</string>
+
+
+    // Zona profilo
+    <string name="personal_profile">profilo personale</string>
+    <string name="change_profile_picture">cambia immagine profilo</string>
+    <string name="upload_new_profile_picture">carica nuova immagine profilo</string>
+    <string name="add_profile_picture_max_3">aggiungi immagine profilo (max 3)</string>
+    <string name="image_limit_reached">limite immagini raggiunto</string>
+
+    <string name="profile_image_hint">premi e sposta le tue foto per modificarne l\'ordine.</string>
+
+    <string name="confirm_upload_profile_picture">conferma e carica immagine</string>
+    <string name="duplicate_image">questa immagine è già presente nel tuo profilo.</string>
+
+
+    <string name="profile_picture_updated">immagine aggiornata</string>
+    <string name="speaks">parla</string>
+    <string name="languages_spoken">lingue parlate</string>
+    <string name="select_languages">seleziona lingue</string>
+    <string name="search_hint">cerca una lingua...</string>
+    <string name="selected_languages">lingue selezionate</string>
+    <string name="user_profile">profilo utente</string>
+    <string name="profile_updated_success">profilo aggiornato con successo</string>
+    <string name="profile_update_failed">aggiornamento fallito: %s</string>
+    <string name="discard_changes">annulla modifiche</string>
+
+
+    <string name="edit">modifica</string>
+    <string name="save">salva</string>
+    <string name="confirm">conferma</string>
+    <string name="cancel">annulla</string>
+    <string name="first_name">nome</string>
+    <string name="name_placeholder">metti SOLO il tuo primo nome, es. Marco</string>
+    <string name="error_empty_field">questo campo non può essere vuoto</string>
+    <string name="error_min_length">inserisci almeno %1$d caratteri</string>
+
+
+    <string name="bio_placeholder">es .mi piace x,y,z, a scuola andavo bene e leggo fiction</string>
+    <string name="bio_title">parla di te</string>
+    <string name="topics_title">i miei argomenti</string>
+    <string name="topics_placeholder">es. parliamo di tennis amatoriale</string>
+    <string name="add">aggiungi</string>
+    <string name="set_birthdate">seleziona data di nascita</string>
+
+    <string name="get_location">ottieni località</string>
+    <string name="your_location">la tua località</string>
+    <string name="save_profile">salva profilo</string>
+
+
+    // Zona chat
+
+    <string name="chat_with_user">chatta con %s</string>
+
+    <string name="write_message">scrivi un messaggio...</string>
+    <string name="send_message">invia messaggio</string>
+
+
+    // Zona Utente
+    <string name="photos">foto</string>
+    <string name="user_bio">su di me</string>
+    <string name="topics_box">argomenti</string>
+    <string name="report_user_dialog_title">segnala Utente</string>
+    <string name="report_user_dialog_select_reason">seleziona il motivo:</string>
+    <string name="report_reason_inappropriate_content">contenuti inappropriati</string>
+    <string name="report_reason_offensive_behavior">comportamento offensivo</string>
+    <string name="report_reason_other">altro</string>
+    <string name="report_reason_other_comments_label">commenti aggiuntivi</string>
+    <string name="report_user_dialog_report_button">segnala</string>
+    <string name="block_user_dialog_title">blocca Utente</string>
+    <string name="block_user_dialog_text">sei sicuro di voler bloccare questo utente?</string>
+    <string name="block_user_dialog_block_button">blocca</string>
+
+
+    // Zona settings
+    <string name="change_password">cambia password</string>
+    <string name="change_password_instructions">inserisci la tua email e ti invieremo un link per reimpostare la password.</string>
+    <string name="email_address">indirizzo email</string>
+    <string name="send_reset_email_button">invia email di reimpostazione</string>
+    <string name="password_reset_email_sent">email di reimpostazione password inviata. Controlla la tua casella di posta (e la cartella spam).</string>
+    <string name="password_reset_failed">impossibile inviare l\'email di reimpostazione password: %1$s</string>
+
+
+    <string name="account_section">account</string>
+    <string name="delete_account">elimina account</string>
+    <string name="notifications_section">notifiche</string>
+    <string name="push_notifications">notifiche push</string>
+    <string name="theme_section">tema</string>
+    <string name="system_theme">sistema</string>
+    <string name="light_theme">chiaro</string>
+    <string name="dark_theme">scuro</string>
+    <string name="special_theme">speciale</string>
+    <string name="info_section">informazioni</string>
+    <string name="privacy_policy">privacy policy</string>
+    <string name="terms_of_service">termini di servizio</string>
+    <string name="app_version">versione app</string>
+
+    // Zona notifiche
+    <string name="notification_channel_id">gentestrana_messages</string> <string name="notification_channel_name">Messaggi</string>
+    <string name="notification_channel_description">notifiche per nuovi messaggi nella app Gente Strana.</string>
+
+    // Zona misc
+    <string name="back">indietro</string>
+    <string name="next">successivo</string>
+    <string name="previous">precedente</string>
+    <string name="close">chiudi</string>
+    <string name="profile_picture">immagine profilo</string>
+    <string name="sex_male">maschio</string>
+    <string name="sex_female">femmina</string>
+    <string name="sex_undefined">non definito</string>
+    <string name="users_found">utenti trovati</string>
+    <string name="no_topics_defined">non ho ancora scritto il mio primo argomento
+    </string>
+    <string name="loading_default">caricamento in corso...</string>
+    <string name="users_search_bar">cerca per argomento, membro</string>
+    <string name="community">Community</string>
+    <string name="chat">Chat</string>
+    <string name="profile">Profilo</string>
+    <string name="services">Servizi</string>
+    <string name="settings">Impostazioni</string>
+
+    // Zona impostazioni
+    <string name="delete_account_confirmation_title">conferma eliminazione account</string>
+    <string name="delete_account_confirmation_message">sicuro di voler eliminare il tuo account? Non si torna indietro e tutti i tuoi dati verranno cancellati.</string>
+    <string name="delete_account_confirm_button">elimina account</string>
+
+
+    <!-- Sostituisci "your_client_id_here" con il valore client ID ottenuto dalla console Firebase -->
+    <string name="default_web_client_id">
+        534267923003-2kr90ol3qteu8369e60se6nb4n8sdqet.apps.googleusercontent.com
+    </string>
+
+</resources>

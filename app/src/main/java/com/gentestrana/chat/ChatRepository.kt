@@ -1,8 +1,13 @@
 
 package com.gentestrana.chat
 
+import android.content.Context
 import android.util.Log
 import com.gentestrana.users.User
+import com.gentestrana.utils.MessageDailyLimitManager
+import com.gentestrana.utils.removeSpaces
+import com.gentestrana.utils.sanitizeInput
+import com.gentestrana.utils.MessageRateLimiter
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.DocumentSnapshot
 import com.google.firebase.firestore.FieldValue
@@ -16,8 +21,9 @@ import kotlinx.coroutines.launch
 import com.google.firebase.Timestamp
 
 class ChatRepository(
-    private val db: FirebaseFirestore = FirebaseFirestore.getInstance(), // ✅ Dipendenza iniettata
-    private val auth: FirebaseAuth = FirebaseAuth.getInstance() // ✅ Dipendenza iniettata
+    //  iniezione dipendenze
+    private val db: FirebaseFirestore = FirebaseFirestore.getInstance(),
+    private val auth: FirebaseAuth = FirebaseAuth.getInstance()
 ) {
     suspend fun createNewChat(user: User): String {
         val currentUserId = auth.currentUser?.uid
@@ -81,12 +87,12 @@ class ChatRepository(
 
             Chat(
                 id = doc.id,
-                participantId = otherUserId, // Aggiunto il participantId
+                participantId = otherUserId,
                 participantName = userObj?.username ?: "Unknown",
                 lastMessage = lastMessageText,
                 photoUrl = firstPhotoUrl,
                 lastMessageStatus = lastMessageStatus,
-                timestamp = timestamp // Ora usiamo Timestamp direttamente
+                timestamp = timestamp
             )
         } catch (e: Exception) {
             Log.e("ChatRepository", "Error processing document", e)
@@ -227,12 +233,22 @@ class ChatRepository(
         Log.d("Repo", "${query.documents.size} messaggi marcati come DELIVERED")
     }
 
-    suspend fun sendMessage(chatId: String, sender: String, message: String) {
+    suspend fun sendMessage(chatId: String,
+                            sender: String, message: String
+                            ,context: Context
+    ) {
+        if (!MessageRateLimiter.canSendMessage(sender)) {
+            throw Exception("Rate limit exceeded. Attendi qualche secondo prima di inviare altri messaggi.")
+        }
+        if (!MessageDailyLimitManager.canSendMessage(context, sender)) {
+            throw Exception("Daily message limit exceeded. Please try again tomorrow.")
+        }
         try {
-            Log.d("ChatRepository", "Invio messaggio: '$message'")
+            val sanitizedMessage = sanitizeInput(removeSpaces(message))
+            Log.d("ChatRepository", "Invio messaggio: '$sanitizedMessage'")
             val messageData = hashMapOf(
                 "sender" to sender,
-                "message" to message,
+                "message" to sanitizedMessage,
                 "timestamp" to Timestamp.now(),
                 "status" to "SENT"
             )
@@ -241,7 +257,9 @@ class ChatRepository(
                 .collection("messages")
                 .add(messageData)
                 .await()
-            Log.d("ChatRepository", "Messaggio inviato con successo")
+
+            // Incrementa il contatore giornaliero se l'invio è andato a buon fine
+            MessageDailyLimitManager.incrementCount(context, sender)
         } catch (e: Exception) {
             Log.e("ChatRepository", "Errore durante l'invio del messaggio", e)
             throw e
@@ -263,7 +281,6 @@ class ChatRepository(
             throw e
         }
     }
-
 }
 
 

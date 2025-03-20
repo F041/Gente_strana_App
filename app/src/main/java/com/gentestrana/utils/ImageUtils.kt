@@ -6,10 +6,14 @@ import android.net.Uri
 import com.google.firebase.ktx.Firebase
 import com.google.firebase.storage.ktx.storage
 import android.util.Log
-import com.google.firebase.auth.FirebaseAuth
 import kotlinx.coroutines.tasks.await
 import java.io.InputStream
 import java.security.MessageDigest
+import android.graphics.Bitmap
+import android.provider.MediaStore
+import java.io.ByteArrayOutputStream
+import java.io.File
+import androidx.core.content.FileProvider
 
 
 /**
@@ -29,11 +33,11 @@ fun uploadMainProfileImage(
     // 1. Genera l'hash MD5 dall'URI dell'immagine
     val md5Hash = generateMD5HashFromUri(context, imageUri)
     val filename = if (md5Hash != null) {
-        "$md5Hash.jpg"  // Usa l'hash MD5 come nome del file
+        "$md5Hash.webp"  // Usa l'hash MD5 come nome del file
     } else {
         // Fallback: usa un timestamp se l'hash non è disponibile
         Log.w("ImageUpload", "MD5 hash non disponibile, uso timestamp come fallback")
-        "${System.currentTimeMillis()}.jpg"
+        "${System.currentTimeMillis()}.webp"
     }
 
     Log.d("ImageUpload", "Nome file generato: $filename")
@@ -62,6 +66,7 @@ fun uploadMainProfileImage(
         }
 }
 
+// TODO: TITOLO AMBIGUO!
 suspend fun uploadMultipleImages(
     uid: String,
     uris: List<Uri>,
@@ -73,7 +78,7 @@ suspend fun uploadMultipleImages(
     uris.forEach { uri ->
         // Calcola l'hash MD5 per l'immagine
         val md5Hash = generateMD5HashFromUri(context, uri)
-        val filename = if (md5Hash != null) "$md5Hash.jpg" else "${System.currentTimeMillis()}.jpg"
+        val filename = if (md5Hash != null) "$md5Hash.webp" else "${System.currentTimeMillis()}.webp"
 
         // Usa il filename generato
         val imageRef = storage.reference.child("users/$uid/gallery/$filename")
@@ -148,14 +153,15 @@ fun generateMD5HashFromUri(context: Context, uri: Uri): String? {
             }
             val digestBytes: ByteArray = messageDigest.digest()
             val hexStringHash = digestBytes.toHexString() // Converti byte array in stringa esadecimale
-            Log.d("ImageUploadUtils", "generateMD5HashFromUri SUCCESS - Hash: $hexStringHash") // 🚩 LOG SUCCESSO
+            Log.d("ImageUploadUtils", "generateMD5HashFromUri SUCCESS - Hash: $hexStringHash")
+
             hexStringHash // Converti byte array in stringa esadecimale
         }
     } catch (e: Exception) {
-        Log.e("ImageUploadUtils", "generateMD5HashFromUri ERROR - Uri: $uri, Error: ${e.message}") // 🚩 LOG ERRORE
+        Log.e("ImageUploadUtils", "generateMD5HashFromUri ERROR - Uri: $uri, Error: ${e.message}")
         null // Restituisci null in caso di errore
     } finally {
-        Log.d("ImageUploadUtils", "generateMD5HashFromUri ENDED - Uri: $uri") // 🚩 LOG FINE FUNZIONE
+        Log.d("ImageUploadUtils", "generateMD5HashFromUri ENDED - Uri: $uri")
     }
 }
 
@@ -163,3 +169,72 @@ fun generateMD5HashFromUri(context: Context, uri: Uri): String? {
  * Funzione di estensione per convertire un ByteArray in una stringa esadecimale.
  */
 fun ByteArray.toHexString(): String = joinToString("") { "%02x".format(it) }
+
+/**
+ * Verifica che l'URI rappresenti un'immagine con formato consentito.
+ * I formati consentiti sono: jpg, jpeg, png, webp.
+ */
+
+fun isValidImageUri(context: Context, uri: Uri): Boolean {
+    val allowedExtensions = listOf("jpg", "jpeg", "png", "webp")
+    var fileName: String? = null
+
+    // Se l'URI usa "content://", estrai il vero nome del file
+    if (uri.scheme == "content") {
+        val cursor = context.contentResolver.query(uri, null, null, null, null)
+        cursor?.use {
+            val nameIndex = it.getColumnIndexOrThrow(android.provider.OpenableColumns.DISPLAY_NAME)
+            if (it.moveToFirst()) {
+                fileName = it.getString(nameIndex)
+            }
+        }
+    } else {
+        // Se è un file normale, ottieni il nome dal percorso
+        fileName = uri.path?.substringAfterLast("/")
+    }
+
+    Log.d("ImageValidation", "File name: $fileName")
+
+    // Estrai l'estensione dal nome file
+    val extension = fileName?.substringAfterLast('.', "")?.lowercase()
+    Log.d("ImageValidation", "Extracted extension: $extension")
+
+    val isValid = extension in allowedExtensions
+    Log.d("ImageValidation", "Is valid: $isValid")
+
+    return isValid
+}
+
+/**
+ * Converte un'immagine da URI a formato WebP.
+ * La funzione restituisce un array di byte rappresentante l'immagine compressa.
+ * La qualità (default 80) può essere modificata se necessario.
+ */
+fun convertImageUriToWebP(context: Context, imageUri: Uri, quality: Int = 80): ByteArray? {
+    return try {
+        val bitmap: Bitmap = MediaStore.Images.Media.getBitmap(context.contentResolver, imageUri)
+        val outputStream = ByteArrayOutputStream()
+        // // Uso WEBP per compatibilità con API 24+
+        bitmap.compress(Bitmap.CompressFormat.WEBP, quality, outputStream)
+        outputStream.toByteArray()
+    } catch (e: Exception) {
+        e.printStackTrace()
+        null
+    }
+}
+
+/**
+ * Salva un array di byte in un file temporaneo e restituisce l'URI.
+ * Ricorda di configurare un FileProvider nel manifest se non è già fatto.
+ */
+fun saveByteArrayToTempFile(context: Context, data: ByteArray, filename: String): Uri? {
+    return try {
+        val tempFile = File(context.cacheDir, filename)
+        tempFile.writeBytes(data)
+        // Assicurati di avere configurato il FileProvider nel manifest
+        FileProvider.getUriForFile(context, "${context.packageName}.provider", tempFile)
+    } catch (e: Exception) {
+        e.printStackTrace()
+        null
+    }
+}

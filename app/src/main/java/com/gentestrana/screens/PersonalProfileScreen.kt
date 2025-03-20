@@ -1,4 +1,5 @@
 @file:OptIn(ExperimentalMaterial3Api::class)
+
 package com.gentestrana.screens
 
 import android.content.Context
@@ -91,14 +92,23 @@ fun PersonalProfileScreen(
         isLocationLoading = true
         // **USA DIRETTAMENTE requestCurrentLocationName (CHE GESTISCE GIA' GPS E NETWORK)**
         LocationUtils.requestCurrentLocationName(context) { locationResult -> // Chiama DIRETTAMENTE requestCurrentLocationName
-            isLocationLoading = false // <-- NASCONDI ProgressIndicator (FINE localizzazione - successo o errore)
+            isLocationLoading =
+                false // <-- NASCONDI ProgressIndicator (FINE localizzazione - successo o errore)
             when (locationResult) {
                 is OperationResult.Success -> {
                     profileViewModel.setLocation(locationResult.data) // <-- Chiama setLocation QUI, DENTRO Success
                 }
+
                 is OperationResult.Error -> {
-                    Toast.makeText(context, "Errore localizzazione: ${locationResult.message}", Toast.LENGTH_LONG).show() // Mostra errore (se ENTRAMBI i provider falliscono)
-                    Log.w("PersonalProfileScreen", "Timeout localizzazione (Network e GPS): ${locationResult.message}") // Log WARNING invece di ERRORE
+                    Toast.makeText(
+                        context,
+                        "Errore localizzazione: ${locationResult.message}",
+                        Toast.LENGTH_LONG
+                    ).show() // Mostra errore (se ENTRAMBI i provider falliscono)
+                    Log.w(
+                        "PersonalProfileScreen",
+                        "Timeout localizzazione (Network e GPS): ${locationResult.message}"
+                    ) // Log WARNING invece di ERRORE
                 }
             }
         }
@@ -127,14 +137,21 @@ fun PersonalProfileScreen(
                 isUploading = false  // Disattiva l'indicatore in ogni caso
                 when {
                     result == "DUPLICATE" -> {
-                        Toast.makeText(context, context.getString(R.string.duplicate_image), Toast.LENGTH_SHORT).show()
+                        Toast.makeText(
+                            context,
+                            context.getString(R.string.duplicate_image),
+                            Toast.LENGTH_SHORT
+                        ).show()
                     }
+
                     result.isEmpty() -> {
-                        Toast.makeText(context
-                            , "❌",
-                            Toast.LENGTH_SHORT).show()
+                        Toast.makeText(
+                            context, "❌",
+                            Toast.LENGTH_SHORT
+                        ).show()
                         // TODO: STRINGABILE
                     }
+
                     else -> {
                         Toast.makeText(context, "👌", Toast.LENGTH_SHORT).show()
                     }
@@ -153,7 +170,7 @@ fun PersonalProfileScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text(stringResource(id = R.string.personal_profile))},
+                title = { Text(stringResource(id = R.string.personal_profile)) },
                 actions = {
                     // Pulsante di logout
                     IconButton(onClick = {
@@ -182,7 +199,7 @@ fun PersonalProfileScreen(
         ) {
 
             // Zona gallery immagini profilo
-            Box(modifier = Modifier.padding(horizontal = 36.dp)) {
+            Box() {
                 key(profilePicUrl) {
                     ReorderableProfileImageGridWithAdd(
                         images = profilePicUrl,
@@ -213,7 +230,7 @@ fun PersonalProfileScreen(
                 onValueChange = { profileViewModel.setUsername(it) },
                 label = stringResource(id = R.string.first_name),
                 placeholder = stringResource(id = R.string.name_placeholder),
-                minLength=2,
+                minLength = 2,
                 maxLength = 13,
                 errorMessage = "❌",
                 removeSpaces = true,
@@ -260,7 +277,11 @@ fun PersonalProfileScreen(
             // Bottone "Ottieni Località" - getLocation CHIAMATA DOPO LA DICHIARAZIONE
             Button(
                 onClick = {
-                    if (androidx.core.content.ContextCompat.checkSelfPermission(context, android.Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
+                    if (androidx.core.content.ContextCompat.checkSelfPermission(
+                            context,
+                            android.Manifest.permission.ACCESS_FINE_LOCATION
+                        ) == PackageManager.PERMISSION_GRANTED
+                    ) {
                         getLocation(context)
                     } else {
                         locationPermissionLauncher.launch(android.Manifest.permission.ACCESS_FINE_LOCATION)

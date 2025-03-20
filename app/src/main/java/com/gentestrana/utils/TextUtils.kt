@@ -4,8 +4,18 @@ package com.gentestrana.utils
  * Rimuove tutti gli spazi bianchi (inclusi tab, nuove righe, ecc.) dalla stringa.
  */
 
-fun removeSpaces(text: String): String {
-    return text.replace("\\s+".toRegex(), "")
+fun removeSpaces(input: String): String {
+    return input.trim().replace(Regex("\\s+"), " ")
+    // Sostituisce spazi multipli con uno solo
+}
+
+/**
+ * Sanitizza l'input rimuovendo tag HTML e altri caratteri potenzialmente pericolosi.
+ * Questa è una versione semplificata; in un'app reale potresti utilizzare una libreria dedicata.
+ */
+fun sanitizeInput(input: String): String {
+    // Rimuove eventuali tag HTML (semplificato)
+    return input.replace(Regex("<[^>]*>"), "")
 }
 
 /**

@@ -34,7 +34,8 @@ fun GoogleLoginScreen(
             BeginSignInRequest.GoogleIdTokenRequestOptions.builder()
                 .setSupported(true)
                 .setServerClientId(context.getString(R.string.default_web_client_id))
-                .setFilterByAuthorizedAccounts(false) // Mostra sempre il selettore Google
+                .setFilterByAuthorizedAccounts(false)
+                // Mostra sempre il selettore Google
                 .build()
         )
         .build()

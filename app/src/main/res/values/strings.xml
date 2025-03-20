@@ -1,168 +1,197 @@
-<?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_name">GenteStrana</string>
+    <string name="app_name">Quirky people</string>
 
+    // Zone signup
+    <string name="registration_email_label">email</string>
+    <string name="registration_email_placeholder">use your best email</string>
+    <string name="registration_email_error_message">
+        insert a valid email with a domain of gmail.com, outlook.com or yahoo.com, etc.
+        </string>
+    <string name="registration_password_label">password</string>
+    <string name="registration_password_placeholder">strong but not trivial password</string>
+    <string name="registration_firstname_label">first name</string>
+    <string name="registration_firstname_placeholder">Mark, Susan, only FIRST name</string>
+    <string name="registration_select_profile_picture_button">select Profile Picture</string>
+    <string name="registration_register_button">register</string>
+    <string name="sex_male_description">sex: male</string>
+    <string name="sex_female_description">sex: Female</string>
+    <string name="sex_undefined_description">sex: undefined</string>
 
-    // Zona registrazione
-    <string name="registration_email_label">Email</string>
-    <string name="registration_email_placeholder">usa la tua migliore mail</string>
-    <string name="registration_email_error_message">inserisci un\'email valida con dominio gmail.com, outlook.com o yahoo.com, etc.</string>
-    <string name="registration_password_label">Password</string>
-    <string name="registration_password_placeholder">password forte ma non banale</string>
-    <string name="registration_firstname_label">First name</string>
-    <string name="registration_firstname_placeholder">Marco, Giovanna, solo il PRIMO nome</string>
-    <string name="registration_select_profile_picture_button">Select Profile Picture</string>
-    <string name="registration_register_button">Register</string>
-    <string name="sex_male_description">Sesso: Maschio</string>
-    <string name="sex_female_description">Sesso: Femmina</string>
-    <string name="sex_undefined_description">Sesso: Non definito</string>
-
-
-    <string name="verify_email_title">verifica la tua email</string>
-    <string name="verify_email_instructions">ti abbiamo inviato un\'email di verifica all\'indirizzo con cui ti sei registrato. Per favore, controlla la tua casella di posta e clicca sul link di verifica per attivare il tuo account.</string>
-    <string name="resend_verification_email_button">rispedisci email di verifica</string>
-    <string name="verify_email_check_spam">se non vedi l\'email nella tua inbox, controlla anche la cartella spam o posta indesiderata.</string>
-    <string name="email_verification_icon_description">icona di verifica email</string>
-    <string name="verification_email_resent_success">email di verifica rispedita con successo!</string>
-    <string name="open_email_app_button">apri app Email</string>
-    <string name="email_verified_success_message">email verificata</string>
+    <string name="verify_email_title">verify your email</string>
+    <string name="verify_email_instructions">we have sent a verification email to the address you registered with. Please check your inbox and click on the verification link to activate your account.</string>
+    <string name="resend_verification_email_button">resend verification email</string>
+    <string name="verify_email_check_spam">if you don\'t see the email in your inbox, please check your spam or junk mail folder.</string>
+    <string name="email_verification_icon_description">email verification icon</string>
+    <string name="verification_email_resent_success">verification email resent successfully!</string>
+    <string name="open_email_app_button">open email app</string>
+    <string name="email_verified_success_message">email verified</string>
 
     // Zona login
-    <string name="sign_in_with_google_button">accedi con Google</string>
-    <string name="login_fill_fields">compila tutti i campi</string>
-    <string name="login_successful">accesso avvenuto</string>
-    <string name="login_failed">autenticazione fallita: %1$s</string>
-    <string name="register_prompt">non hai un account? Registrati</string>
+    <string name="sign_in_with_google_button">sign in with Google</string>
+    <string name="login_fill_fields">please fill in all fields</string>
+    <string name="login_successful">login successful!</string>
+    <string name="login_failed">authentication failed: %1$s</string>
+    <string name="register_prompt">no account? Register</string>
 
-    // Zona imbarco
-    <string name="onboarding_screen1_title">Benvenuto in Gente Strana!</string>
-    <string name="onboarding_screen1_description">Unisciti a una community accogliente e inclusiva per persone neurodivergenti come te.</string>
-    <string name="onboarding_screen2_title">connettiti con persone affini</string>
-    <string name="onboarding_screen2_description">scopri profili di altri utenti neurodivergenti, con interessi e passioni simili.</string>
-    <string name="onboarding_screen3_title">chatta e condividi</string>
-    <string name="onboarding_screen3_description">inizia conversazioni, scambia messaggi e crea nuove amicizie in un ambiente sicuro e rispettoso.</string>
-
-    <string name="onboarding_button_start">inizia</string>
+    // Zona onboarding
+    <string name="onboarding_screen1_title">welcome to Quirky People!</string>
+    <string name="onboarding_screen1_description">Join a welcoming and inclusive community for neurodivergent people like you.</string>
+    <string name="onboarding_screen2_title">Connect with like-minded people</string>
+    <string name="onboarding_screen2_description">Discover profiles of other neurodivergent users with similar interests and passions.</string>
 
 
-    // Zona profilo
-    <string name="personal_profile">profilo personale</string>
-    <string name="change_profile_picture">cambia immagine profilo</string>
-    <string name="upload_new_profile_picture">carica nuova immagine profilo</string>
-    <string name="add_profile_picture_max_3">aggiungi immagine profilo (max 3)</string>
-    <string name="image_limit_reached">limite immagini raggiunto</string>
+        // page 2
+    <string name="onboarding_screen3_title">self-assessment test</string>
+    <string name="onboarding_screen3_description">to help you understand if Gente Strana is for you, we offer self-assessment tests, validated by scientific literature.
+    </string>
+    <string name="onboarding_screen3_gdpr_notice"><b>privacy guaranteed:</b> We do not collect or save your results.</string>
+    <string name="onboarding_screen3_checkbox_consent">I have read and understood.</string>
+    <string name="onboarding_screen3_autism">autism spectrum test</string>
+    <string name="onboarding_screen3_adhd">ADHD test</string>
+    <string name="onboarding_screen3_score">score obtained</string>
+    <string name="onboarding_screen3_score_threshold">you don\'t meet the criteria to join this app</string>
+    <string name="onboarding_screen3_diagnosis_checkbox">I already have a neurodiversity diagnosis (I don\'t need to take the test)</string>
 
-    <string name="confirm_upload_profile_picture">conferma e carica immagine</string>
-    <string name="duplicate_image">questa immagine è già presente nel tuo profilo.</string>
+    <string name="onboarding_screen3_autism_test_link">https://embrace-autism.com/asrs-v1-1/#test</string>
+    <string name="onboarding_screen3_adhd_test_link">https://psychology-tools.com/test/adult-adhd-self-report-scale</string>
+
+    <string name="onboarding_screen3_video_call_title">verify with video call </string>
+    <string name="onboarding_screen3_video_call_description">
+    book a 5-minute video call to check your diagnosis. No recording will be made.
+    </string>
+    <string name="onboarding_screen3_video_call_consent">I agree to the informal video call</string>
+    <string name="onboarding_screen3_video_call_button">book videocall</string>
+
+        // page 3
+    <string name="onboarding_screen4_title">Chat and share</string>
+    <string name="onboarding_screen4_description">Start conversations, exchange messages, and make new friends in a safe and respectful environment.</string>
+
+    <string name="onboarding_button_start">get started</string>
+
+    // Zone profile
+    <string name="personal_profile">personal profile</string>
+    <string name="user_profile">user profile</string>
+    <string name="change_profile_picture">change profile picture</string>
+    <string name="upload_new_profile_picture">upload new profilepicture</string>
+    <string name="add_profile_picture_max_3">add profile picture (max 3)</string>
+    <string name="image_limit_reached">images limit reached</string>
+
+    <string name="profile_image_hint">tap and drag your photos to change their order.</string>
+
+    <string name="confirm_upload_profile_picture">confirm and upload image</string>
+
+    <string name="profile_picture_updated">image updated</string>
+    <string name="duplicate_image">image already in your profile.</string>
 
 
-    <string name="profile_picture_updated">immagine aggiornata</string>
-    <string name="speaks">parla</string>
-    <string name="languages_spoken">lingue parlate</string>
-    <string name="select_languages">seleziona lingue</string>
-    <string name="search_hint">cerca una lingua...</string>
-    <string name="selected_languages">lingue selezionate</string>
-    <string name="user_profile">profilo utente</string>
-    <string name="profile_updated_success">profilo aggiornato con successo</string>
-    <string name="profile_update_failed">aggiornamento fallito: %s</string>
-    <string name="discard_changes">annulla modifiche</string>
+    <string name="speaks">speaks</string>
+    <string name="languages_spoken">languages spoken</string>
+    <string name="select_languages">select languages</string>
+    <string name="search_hint">search a language…</string>
+    <string name="selected_languages">selected languages</string>
+    <string name="edit">edit</string>
+    <string name="save">save</string>
+    <string name="confirm">confirm</string>
+    <string name="cancel">cancel</string>
 
 
-    <string name="edit">modifica</string>
-    <string name="save">salva</string>
-    <string name="confirm">conferma</string>
-    <string name="cancel">annulla</string>
-    <string name="first_name">nome</string>
-    <string name="name_placeholder">metti SOLO il tuo primo nome, es. Marco</string>
-    <string name="error_empty_field">questo campo non può essere vuoto</string>
-    <string name="error_min_length">inserisci almeno %1$d caratteri</string>
+    <string name="first_name">first name</string>
+    <string name="name_placeholder">put JUST you first name, eg. Mark</string>
+    <string name="error_empty_field">fill this field</string>
+    <string name="error_min_length">insert at least %1$d characters</string>
 
+    <string name="bio_placeholder">eg. I like x,y,z in school I performed well and I read fiction</string>
+    <string name="bio_title">Describe yourself</string>
+    <string name="topics_title">My topics</string>
+    <string name="topics_placeholder">eg. I want to talk about tennis </string>
+    <string name="add">Add</string>
+    <string name="set_birthdate">Pick birthdate</string>
 
-    <string name="bio_placeholder">es .mi piace x,y,z, a scuola andavo bene e leggo fiction</string>
-    <string name="bio_title">parla di te</string>
-    <string name="topics_title">i miei argomenti</string>
-    <string name="topics_placeholder">es. parliamo di tennis amatoriale</string>
-    <string name="add">aggiungi</string>
-    <string name="set_birthdate">seleziona data di nascita</string>
+    <string name="get_location">get location</string>
+    <string name="your_location">your location</string>
+    <string name="save_profile">save profile</string>
+    <string name="profile_updated_success">profile updated</string>
+    <string name="profile_update_failed">updated failed: %s</string>
+    <string name="discard_changes">cancel edits</string>
 
-    <string name="get_location">ottieni località</string>
-    <string name="your_location">la tua località</string>
-    <string name="save_profile">salva profilo</string>
 
 
     // Zona chat
-
-    <string name="chat_with_user">chatta con %s</string>
-
-    <string name="write_message">scrivi un messaggio...</string>
-    <string name="send_message">invia messaggio</string>
-
+    <string name="chat_with_user">chat with %s</string>
+    <string name="write_message">write a message...</string>
+    <string name="send_message">send message</string>
 
     // Zona Utente
-    <string name="photos">foto</string>
-    <string name="user_bio">su di me</string>
-    <string name="topics_box">argomenti</string>
-    <string name="report_user_dialog_title">segnala Utente</string>
-    <string name="report_user_dialog_select_reason">seleziona il motivo:</string>
-    <string name="report_reason_inappropriate_content">contenuti inappropriati</string>
-    <string name="report_reason_offensive_behavior">comportamento offensivo</string>
-    <string name="report_reason_other">altro</string>
-    <string name="report_reason_other_comments_label">commenti aggiuntivi</string>
-    <string name="report_user_dialog_report_button">segnala</string>
-    <string name="block_user_dialog_title">blocca Utente</string>
-    <string name="block_user_dialog_text">sei sicuro di voler bloccare questo utente?</string>
-    <string name="block_user_dialog_block_button">blocca</string>
-
+    <string name="photos">photos</string>
+    <string name="user_bio">about me</string>
+    <string name="topics_box">topics</string>
+    <string name="report_user_dialog_title">report User</string>
+    <string name="report_user_dialog_select_reason">select reason:</string>
+    <string name="report_reason_inappropriate_content">inappropriate content</string>
+    <string name="report_reason_offensive_behavior">offensive behavior</string>
+    <string name="report_reason_other">other</string>
+    <string name="report_reason_other_comments_label">additional comments</string>
+    <string name="report_user_dialog_report_button">report</string>
+    <string name="block_user_dialog_title">block user</string>
+    <string name="block_user_dialog_text">are you sure you want to block this user?</string>
+    <string name="block_user_dialog_block_button">block</string>
 
     // Zona settings
-    <string name="change_password">cambia password</string>
-    <string name="change_password_instructions">inserisci la tua email e ti invieremo un link per reimpostare la password.</string>
-    <string name="email_address">indirizzo email</string>
-    <string name="send_reset_email_button">invia email di reimpostazione</string>
-    <string name="password_reset_email_sent">email di reimpostazione password inviata. Controlla la tua casella di posta (e la cartella spam).</string>
-    <string name="password_reset_failed">impossibile inviare l\'email di reimpostazione password: %1$s</string>
+    <string name="change_password">change Password</string>
+    <string name="change_password_instructions">enter your email and we will send you a link to reset your password.</string>
+    <string name="email_address">email Address</string>
+    <string name="send_reset_email_button">send Reset Email</string>
+    <string name="password_reset_email_sent">password reset email sent. Check your inbox (and spam folder).</string>
+    <string name="password_reset_failed">failed to send password reset email: %1$s</string>
 
-    <string name="settings">impostazioni</string>
+
     <string name="account_section">account</string>
-    <string name="delete_account">elimina account</string>
-    <string name="notifications_section">notifiche</string>
-    <string name="push_notifications">notifiche push</string>
-    <string name="theme_section">tema</string>
-    <string name="system_theme">sistema</string>
-    <string name="light_theme">chiaro</string>
-    <string name="dark_theme">scuro</string>
-    <string name="special_theme">speciale</string>
-    <string name="info_section">informazioni</string>
+    <string name="delete_account">delete account</string>
+    <string name="notifications_section">motifications</string>
+    <string name="push_notifications">push notifications</string>
+    <string name="theme_section">theme</string>
+    <string name="system_theme">system default</string>
+    <string name="light_theme">light</string>
+    <string name="dark_theme">dark</string>
+    <string name="special_theme">special</string>
+    <string name="info_section">information</string>
     <string name="privacy_policy">privacy policy</string>
-    <string name="terms_of_service">termini di servizio</string>
-    <string name="app_version">versione app</string>
+    <string name="terms_of_service">terms of service</string>
+    <string name="app_version">app version</string>
 
-    // Zona notifiche
-    <string name="notification_channel_id">gentestrana_messages</string> <string name="notification_channel_name">Messaggi</string>
-    <string name="notification_channel_description">notifiche per nuovi messaggi nella app Gente Strana.</string>
-
-    // Zona misc
-    <string name="back">indietro</string>
-    <string name="next">successivo</string>
-    <string name="previous">precedente</string>
-    <string name="close">chiudi</string>
-    <string name="profile_picture">immagine profilo</string>
-    <string name="sex_male">maschio</string>
-    <string name="sex_female">femmina</string>
-    <string name="sex_undefined">non definito</string>
-    <string name="users_found">utenti trovati</string>
-    <string name="no_topics_defined">non ho ancora scritto il mio primo argomento
+    // Zone notifications
+    <string name="notification_channel_id">quirkypeople_messages</string> <string name="notification_channel_name">Messaggi</string>
+    <string name="notification_channel_description">
+        notifications for new messages in the app Quirky People.
     </string>
-    <string name="loading_default">caricamento in corso...</string>
-    <string name="users_search_bar">cerca per argomento, membro</string>
-
-    // Zona impostazioni
-    <string name="delete_account_confirmation_title">conferma eliminazione account</string>
-    <string name="delete_account_confirmation_message">sicuro di voler eliminare il tuo account? Non si torna indietro e tutti i tuoi dati verranno cancellati.</string>
-    <string name="delete_account_confirm_button">elimina account</string>
 
 
-    <!-- Sostituisci "your_client_id_here" con il valore client ID ottenuto dalla console Firebase -->
-    <string name="default_web_client_id">1:534267923003:android:177d8fe01f43783a756a1e</string>
+    // Zone misc
+    <string name="users_search_bar">search by topic, member</string>
+    <string name="back">back</string>
+    <string name="next">next</string>
+    <string name="previous">previous</string>
+    <string name="close">chiudi</string>
+    <string name="profile_picture">profile picture</string>
+    <string name="sex_male">male</string>
+    <string name="sex_female">female</string>
+    <string name="sex_undefined">undefined</string>
+    <string name="users_found">users found</string>
+    <string name="no_topics_defined">I still didn\'t write my first topic
+    </string>
+    <string name="loading_default">loading...</string>
+    <string name="community">Community</string>
+    <string name="chat">Chat</string>
+    <string name="profile">Profile</string>
+    <string name="services">Services</string>
+    <string name="settings">Settings</string>
+
+    // Zone settings
+
+    <string name="delete_account_confirmation_title">confirm account deletion</string>
+    <string name="delete_account_confirmation_message">do you feel sure you want to delete your account? No way back for this action and all your data will get erased.</string>
+    <string name="delete_account_confirm_button">delete account</string>
+
+
 
 </resources>

@@ -19,7 +19,7 @@ fun commonProfileBoxModifier(
     cornerRadius: Dp = 12.dp,
     borderColor: Color = MaterialTheme.colorScheme.outline,
     backgroundColor: Color = MaterialTheme.colorScheme.surfaceVariant,
-    minHeight: Dp = 120.dp, // Modificato da 150dp, perchè?
+    minHeight: Dp = 150.dp,
     paddingValue: Dp = 16.dp
 ): Modifier {
     return Modifier

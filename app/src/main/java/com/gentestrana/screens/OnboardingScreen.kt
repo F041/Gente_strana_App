@@ -18,20 +18,27 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
 import com.gentestrana.R
 import com.gentestrana.components.VideoPlayer
 import androidx.compose.ui.platform.LocalConfiguration
-
+import com.google.firebase.auth.FirebaseAuth
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.setValue
+import androidx.compose.foundation.pager.PagerState
 
 
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun OnboardingScreen(navController: NavHostController,
-                     context: Context = LocalContext.current) {
-    val pagerState = rememberPagerState(pageCount = {3})
+                     context: Context = LocalContext.current,) {
+    val pagerState = rememberPagerState(pageCount = {4})
+    var isNextPageEnabled by remember { mutableStateOf(false) }
+
 
     Column(modifier = Modifier
         .fillMaxSize()
@@ -40,9 +47,17 @@ fun OnboardingScreen(navController: NavHostController,
             state = pagerState,
             modifier = Modifier
                 .fillMaxWidth()
-                .weight(1f)
+                .weight(1f),
+            userScrollEnabled = !(pagerState.currentPage == 2 && !isNextPageEnabled)
         ) { page ->
-            OnboardingPage(page = page, navController = navController, context = context)
+            OnboardingPage(page = page,
+                navController = navController,
+                context = context,
+                pagerState = pagerState,
+                onNextPageEnabledChanged = { enabled ->
+                    isNextPageEnabled = enabled
+                }
+            )
         }
 
         Row(
@@ -73,9 +88,16 @@ fun OnboardingScreen(navController: NavHostController,
 }
 
 
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
-fun OnboardingPage(page: Int, navController: NavHostController,
-     context: Context = LocalContext.current) {
+fun OnboardingPage(page: Int,
+                   navController: NavHostController,
+                   context: Context = LocalContext.current,
+                   pagerState: PagerState,
+                   onNextPageEnabledChanged: (Boolean) -> Unit
+) {
+
+
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -125,15 +147,22 @@ fun OnboardingPage(page: Int, navController: NavHostController,
                     textAlign = TextAlign.Center
                 )
             }
+            // Removable if you fork this for another kind of social:
+            // this page checks the presence of some kind of neurodiversity
             2 -> {
+                OnboardingAssessmentPageContent(pagerState = pagerState,
+                    onNextPageEnabledChanged = onNextPageEnabledChanged,context = context)
+            }
+
+            3 -> {
                 Text(
-                    text = stringResource(R.string.onboarding_screen3_title),
+                    text = stringResource(R.string.onboarding_screen4_title),
                     style = MaterialTheme.typography.headlineMedium,
                     textAlign = TextAlign.Center
                 )
                 Spacer(modifier = Modifier.height(16.dp))
                 Text(
-                    text = stringResource(R.string.onboarding_screen3_description),
+                    text = stringResource(R.string.onboarding_screen4_description),
                     textAlign = TextAlign.Center
                 )
                 Spacer(modifier = Modifier.height(32.dp)) // Spazio extra prima del bottone
@@ -141,11 +170,18 @@ fun OnboardingPage(page: Int, navController: NavHostController,
                 Button(
                     onClick = {
                         val sharedPreferences = context.getSharedPreferences("settings_prefs", Context.MODE_PRIVATE)
-                        sharedPreferences.edit().putBoolean("onboarding_completed", true).apply() // Salva true per indicare che onboarding è completato
+                        sharedPreferences.edit().putBoolean("onboarding_completed", true).apply()
 
-                        navController.navigate("mainTabs") {
-                            popUpTo("onboarding") {
-                                inclusive = true
+                        val auth = FirebaseAuth.getInstance()
+                        if (auth.currentUser != null) {
+                            // User is logged in - go to mainTabs
+                            navController.navigate("main") {
+                                popUpTo("onboarding") { inclusive = true }
+                            }
+                        } else {
+                            // User isn't logged in - go to auth flow
+                            navController.navigate("auth") {
+                                popUpTo("onboarding") { inclusive = true }
                             }
                         }
                     },

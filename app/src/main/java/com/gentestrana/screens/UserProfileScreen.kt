@@ -203,12 +203,12 @@ fun UserProfileScreen(
     if (showBlockDialog) {
         AlertDialog(
             onDismissRequest = { showBlockDialog = false },
-            title = { Text("Blocca Utente") },
-            text = { Text("Sei sicuro di voler bloccare questo utente?") },
+            title = { Text("Blocca Utente") }, // stringabile
+            text = { Text("Sei sicuro di voler bloccare questo utente?") }, // stringabile
             confirmButton = {
                 Button(
                     onClick = {
-                        // Inserisci qui la logica per bloccare l'utente
+                        // TODO: Inserisci qui la logica per bloccare l'utente
                         showBlockDialog = false
                     }
                 ) {

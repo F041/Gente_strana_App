@@ -6,7 +6,7 @@ import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
 
 @RunWith(RobolectricTestRunner::class)
-@Config(manifest = Config.DEFAULT, sdk = [35]) // Use Config.DEFAULT
+@Config() // Use Config.DEFAULT
 class MinimalRobolectricTest {
 
     @Test

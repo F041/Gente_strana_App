@@ -18,6 +18,7 @@ import com.gentestrana.screens.AppTheme
 import androidx.compose.runtime.CompositionLocalProvider
 import com.gentestrana.ui.theme.LocalAppTheme
 import com.gentestrana.utils.forceTokenRefreshIfNeeded
+import com.google.firebase.auth.FirebaseAuth
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -47,7 +48,10 @@ class MainActivity : ComponentActivity() {
             val sharedPreferences = remember {
                 context.getSharedPreferences("settings_prefs", Context.MODE_PRIVATE)
             }
+            val authState by remember { mutableStateOf(FirebaseAuth.getInstance().currentUser) }
             val appThemeKey = "app_theme"
+
+
 
             // Leggi il tema salvato da SharedPreferences (come stato ricordato!)
             var appTheme by remember {

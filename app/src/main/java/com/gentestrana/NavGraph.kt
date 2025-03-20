@@ -31,8 +31,8 @@ fun AppNavHost(navController: NavHostController,
 
     NavHost(
         navController = navController,
-        startDestination = startDestination
-        // cambiare con = startDestination se testo con = "onboarding"
+        startDestination = "onboarding"
+        // cambiare con = startDestination, se testo con = "onboarding"
         // "onboarding" l'ho usato quando ho creato il suo screen
     ) {
         // Authentication Flow
@@ -126,11 +126,14 @@ fun MainTabsScreen(navController: NavHostController,
             }
 
 //  services will become a part of Gente Strana, but for your own social you can delete it
-//            composable("services") {
-//                ServicesScreen()
-//            }
+            composable("services") {
+                ServicesScreen()
+            }
             composable("settings") {
-                SettingsScreen(navController = tabsNavController, onThemeChange = onThemeChange)
+                SettingsScreen(
+                    rootNavController = navController,
+                    navController = tabsNavController,
+                    onThemeChange = onThemeChange)
             }
 
             composable("changePassword") {

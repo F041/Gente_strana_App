@@ -32,6 +32,7 @@ enum class AppTheme { SYSTEM, LIGHT, DARK, /*SPECIAL*/ }
 @Composable
 
 fun SettingsScreen(
+    rootNavController: NavController,
     navController: NavController,
     onThemeChange: (AppTheme) -> Unit,
     auth: FirebaseAuth = FirebaseAuth.getInstance()
@@ -247,19 +248,25 @@ fun SettingsScreen(
                                         // Account eliminato con successo
                                         Toast.makeText(
                                             context,
-                                            "Account eliminato con successo.",
+                                            "🚮 ✔ ",
                                             Toast.LENGTH_SHORT
                                         ).show()
+                                        // 2. Log per debug
                                         Log.d("SettingsScreen", "Account eliminato, eseguendo signOut...")
+
+                                        // 3. Logout da Firebase
                                         auth.signOut()
-                                        Log.d("SettingsScreen", "Navigando a auth/login...")
-                                        // TODO: inserisco quei log perché nell'ultimo test che ho fatto
-                                        // non mi riportava al login
-                                        navController.navigate("auth/login") {  // Usa il percorso completo
-                                            popUpTo(navController.graph.id) {   // Cancella TUTTO lo stack
+
+
+                                        // 4. Pulisci dati locali (se hai una funzione clearUserData)
+
+                                        // 5. Navigazione con reset completo
+                                        rootNavController.navigate("auth") {
+                                            popUpTo(rootNavController.graph.id) {
                                                 inclusive = true
                                             }
                                             launchSingleTop = true
+                                            restoreState = false
                                         }
                                     },
                                     onFailure = { errorMessage ->
@@ -270,7 +277,8 @@ fun SettingsScreen(
                                             Toast.LENGTH_LONG
                                         ).show()
                                         showDeleteConfirmationDialog =
-                                            false // Chiudi il dialog in caso di errore
+                                            false
+                                    // Chiudi il dialog in caso di errore
                                     }
                                 )
                             }

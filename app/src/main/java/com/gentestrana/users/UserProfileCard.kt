@@ -71,6 +71,7 @@ fun UserProfileCard(
                 Column {
                     Text(
                         text = "${user.username.uppercase()}, $displayedAge",
+                        style = MaterialTheme.typography.titleLarge,
                         color = MaterialTheme.colorScheme.onSurface,
                         fontSize = 15.sp
                     )
@@ -84,9 +85,10 @@ fun UserProfileCard(
                                 user.topics[0]
                             }
                         } else {
-                            stringResource(R.string.no_topics_defined) // **TESTO DI DEFAULT SE LISTA VUOTA**
+                            stringResource(R.string.no_topics_defined)
+                               // **TESTO DI DEFAULT SE LISTA VUOTA**
                         },
-                        color = MaterialTheme.colorScheme.onSurface,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
                         fontFamily = FontFamily.SansSerif,
                         lineHeight = 20.sp
                     )
