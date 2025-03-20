@@ -10,21 +10,21 @@ an app designed to help people who belongs to the *neurodiverse group* to find a
 This app looks a bit like Tandem, the language exchange app, and connected2me. It has 2 languages, Italian and English, you can see it in res/values/strings and res/values-en/strings
 The user interace of the screenshots you see, might change in the future
 
-<img src="https://github.com/user-attachments/assets/1d6792ab-3b11-4e17-ab40-85707478d0ad" width="260">
+<img src="https://github.com/user-attachments/assets/7b6049a9-8e87-42cd-8513-03c333adb01b" width="240" height="500">
+
+<img src="https://github.com/user-attachments/assets/4d6755a7-5cde-4950-a4b5-0666badaa0d9" width="240" height="500">
+
+<img src="https://github.com/user-attachments/assets/dbeabc52-c9f8-4756-bfbb-de7d262bb993" width="240" height="500">
 
 
-<img src="https://github.com/user-attachments/assets/8a58715d-c615-46df-a42f-c92b86663d71" width="260">
+<img src="https://github.com/user-attachments/assets/94cc0437-a45a-46ee-9fde-83e29452a0a3" width="240" height="500">
 
-<img src="https://github.com/user-attachments/assets/4d6755a7-5cde-4950-a4b5-0666badaa0d9" width="260">
+<img src="https://github.com/user-attachments/assets/869efb2c-db75-4ab0-adca-05285d2923ba" width="240" height="500">
+
+<img src="https://github.com/user-attachments/assets/d1cf115f-ddac-4456-859f-0abfffe5d7a1" width="240" height="500">
 
 
-<img src="https://github.com/user-attachments/assets/c232a3a5-c359-4d8c-bc5f-7b753fe6d109" width="260">
-
-<img src="https://github.com/user-attachments/assets/6974a28e-401c-432f-ac65-67980fc063dc" width="260">
-
-<img src="https://github.com/user-attachments/assets/bf158444-4961-4dc9-bab1-cf456b03444e" width="260">
-
-<img src="https://github.com/user-attachments/assets/8bed4ee3-a8ec-43b8-b647-a795d0fe83cf" width="260">
+<img src="https://github.com/user-attachments/assets/8bed4ee3-a8ec-43b8-b647-a795d0fe83cf" width="240" height="500">
 
 
 
@@ -36,7 +36,7 @@ The visual design of the app, as shown in the screenshots, might change as I dev
 
 ## Features
 * Connect with quirky people:  find and chat other neurodiverse individuals. You can find them via the topic, for example. Maybe you get along with people obsessed with trains or birds. Or that collects Pokemon cards.
-* Multilingual support: app available in both Italian and English.
+* Multilingual support: app available in both Italian and English (default).
 * Themes: dark, white, system (white) and "special".
 * You can report and or block users. This can happen in such community too. 
 
