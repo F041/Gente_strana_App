@@ -14,8 +14,10 @@ import androidx.compose.ui.unit.sp
 import androidx.navigation.NavHostController
 import com.gentestrana.R
 import com.gentestrana.components.CompactSearchBar
+import com.gentestrana.components.FilterDialog
 import com.gentestrana.users.User
 import com.gentestrana.components.FilterState
+import com.gentestrana.components.FilterType
 import com.gentestrana.components.GenericLoadingScreen
 import com.gentestrana.users.UserProfileCard
 import com.google.firebase.firestore.DocumentSnapshot
@@ -31,9 +33,16 @@ fun UsersListScreen(navController: NavHostController) {
     var lastDocumentSnapshot by remember { mutableStateOf<DocumentSnapshot?>(null) }
     val hasMoreData = remember { mutableStateOf(true) }
     val pageSize = 10
+    var showEmojiHint by remember { mutableStateOf(false) }
+    var showFilterDialog by remember { mutableStateOf(false) }
+
+
+    LaunchedEffect(filterState.searchQuery) {
+        showEmojiHint = filterState.searchQuery.isNotEmpty() && filterState.searchQuery.length < 2
+    }
 
     fun onFilterClicked() {
-        // TODO: apri un dialog, naviga a una schermata di filtro, ecc.
+        showFilterDialog = true
     }
 
     fun loadUsers() {
@@ -69,11 +78,15 @@ fun UsersListScreen(navController: NavHostController) {
     }
 
     // Filtra gli utenti in base alla query di ricerca
-    val filteredUsers = users.filter { user ->
-        user.username.contains(filterState.searchQuery, ignoreCase = true) ||
-                user.topics.any { it.contains(filterState.searchQuery, ignoreCase = true) }
+    val filteredUsers = if (filterState.searchQuery.length >= 2) {
+        users.filter { user ->
+            user.username.contains(filterState.searchQuery, ignoreCase = true) ||
+                    user.topics.any { it.contains(filterState.searchQuery, ignoreCase = true) }
+        }
+    } else {
+        users // Mostra tutti gli utenti se la query è troppo corta
     }
-    // TODO: mettere almeno due lettere per fare ricerca
+
 
     Scaffold { paddingValues ->
         Column(modifier = Modifier.padding(paddingValues)) {
@@ -87,9 +100,39 @@ fun UsersListScreen(navController: NavHostController) {
                 onFilterClicked = { onFilterClicked() }
             )
 
+            if (showFilterDialog) {
+                FilterDialog(
+                    currentFilter = filterState.filterType,
+                    onFilterSelected = { newType ->
+                        filterState = filterState.copy(filterType = newType)
+                        showFilterDialog = false
+                    },
+                    onDismiss = { showFilterDialog = false }
+                )
+            }
+
+            // Logica di filtro
+            val filteredUsers = users.filter { user ->
+                val query = filterState.searchQuery.lowercase()
+                // Aggiungi lowercase()
+                when (filterState.filterType) {
+                    FilterType.ALL ->
+                        user.username.lowercase().contains(query) ||
+                                user.topics.any { it.lowercase().contains(query) }
+
+                    FilterType.LANGUAGE ->
+                        user.spokenLanguages.any { it.lowercase().contains(query) }                     
+
+                    FilterType.LOCATION ->
+                        user.location?.lowercase()?.contains(query) ?: false
+
+                    else -> true
+                }
+            }.takeIf { filterState.searchQuery.length >= 2 } ?: users
+
             // Contatore utenti trovati
             Text(
-                text = "${filteredUsers.size} ${stringResource(R.string.users_found)}",
+                text = if (showEmojiHint) "\uD83D\uDD0D2\uFE0F⃣" else "${filteredUsers.size} ${stringResource(R.string.users_found)}",
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 modifier = Modifier.padding(start = 8.dp, bottom = 8.dp)
@@ -162,6 +205,3 @@ private fun ErrorMessage(text: String) {
         lineHeight = 24.sp
     )
 }
-
-
-

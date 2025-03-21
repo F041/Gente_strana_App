@@ -10,12 +10,9 @@ import com.google.firebase.auth.ktx.userProfileChangeRequest
 import com.google.firebase.firestore.ktx.firestore
 import com.google.firebase.ktx.Firebase
 import com.gentestrana.utils.uploadMainProfileImage
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.tasks.await
-import kotlinx.coroutines.withContext
-import kotlin.coroutines.resume
-import kotlin.coroutines.suspendCoroutine
-import kotlin.coroutines.resumeWithException
+import com.google.firebase.Timestamp
+
 
 
 /**
@@ -54,6 +51,10 @@ class UserRepository(
 
                 // Invia email di verifica subito dopo la registrazione
                 authResult.user?.sendEmailVerification()
+                // Ottieni il tipo di registrazione (per ora, valore di default)
+                val registrationType = "self_assessment" // Per ora, supponiamo "autovalutazione"
+                // Crea un Timestamp per la data di registrazione (data e ora corrente)
+                val registrationTimestamp = Timestamp.now()
 
                 // Initial user data
                 val userData = mapOf(
@@ -61,7 +62,9 @@ class UserRepository(
                     "bio" to bio,
                     "profilePicUrl" to listOf<String>(),
                     "age" to 0,
-                    "sex" to sex //
+                    "sex" to sex,
+                    "registrationDate" to registrationTimestamp,
+                    "registrationType" to registrationType
                 )
                 firestore.collection("users").document(uid)
                     .set(userData)

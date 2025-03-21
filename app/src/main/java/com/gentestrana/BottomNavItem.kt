@@ -15,6 +15,8 @@ import androidx.compose.ui.unit.sp
 import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.currentBackStackEntryAsState
+import androidx.compose.ui.platform.LocalConfiguration
+
 
 sealed class BottomNavItem(
     val route: String,
@@ -68,6 +70,8 @@ fun BottomNavigationBar(navController: NavHostController) {
     NavigationBar {
         val navBackStackEntry by navController.currentBackStackEntryAsState()
         val currentRoute = navBackStackEntry?.destination?.route
+        val configuration = LocalConfiguration.current
+        val screenWidthDp = configuration.screenWidthDp
 
         items.forEach { item ->
             NavigationBarItem(
@@ -75,7 +79,9 @@ fun BottomNavigationBar(navController: NavHostController) {
                 label = {
                     Text(
                         text = stringResource(id = item.titleResId),
-                        fontSize = 15.sp
+                        fontSize = (screenWidthDp * 0.03).sp,
+                        softWrap = false
+                    // Evita il wrapping per mantenere una riga
                     )
                 },
                 selected = currentRoute == item.route,

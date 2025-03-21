@@ -27,7 +27,7 @@ private val NeuroDarkColorScheme = darkColorScheme(
     onSurface = Color.White,
     surfaceVariant = Color(0xFF333333),
     secondaryContainer = NeuroSecondary.copy(alpha = 0.6f),
-    outlineVariant = Color(0x999C9C9C),
+    outlineVariant =  Color(0xFFCBD5E0),
     error = Color(0xFFCF6679)
 )
 
@@ -35,8 +35,8 @@ private val NeuroLightColorScheme = lightColorScheme(
     primary = NeuroPrimary,
     secondary = NeuroSecondary,
     tertiary = NeuroAccent,
-    background = NeuroBackground,
-    surface = NeuroSurface,
+    background = NeuroSurfaceLightVariant,  // Sfondo principale leggermente grigiastro
+    surface = NeuroSurfaceLight,
     onPrimary = Color.White,
     onSecondary = Color.White,
     onTertiary = Color.Black,
@@ -45,7 +45,7 @@ private val NeuroLightColorScheme = lightColorScheme(
     onSurfaceVariant = Color.Black.copy(alpha = 0.80f),
     secondaryContainer = NeuroBeige,
     surfaceVariant = Color(0xFFF0F0F0),
-    outlineVariant = Color(0x33555555)
+    outlineVariant = Color(0xFFE2E8F0)
 )
 
 val LocalAppTheme = staticCompositionLocalOf<AppTheme> {

@@ -42,25 +42,25 @@
 
         // page 2
     <string name="onboarding_screen3_title">self-assessment test</string>
-    <string name="onboarding_screen3_description">to help you understand if Gente Strana is for you, we offer self-assessment tests, validated by scientific literature.
+    <string name="onboarding_screen3_description">to help you understand if Quirky People fits you, I invite you to take at least a self-assessment test, validated by scientific literature.
     </string>
     <string name="onboarding_screen3_gdpr_notice"><b>privacy guaranteed:</b> We do not collect or save your results.</string>
     <string name="onboarding_screen3_checkbox_consent">I have read and understood.</string>
     <string name="onboarding_screen3_autism">autism spectrum test</string>
     <string name="onboarding_screen3_adhd">ADHD test</string>
-    <string name="onboarding_screen3_score">score obtained</string>
+
     <string name="onboarding_screen3_score_threshold">you don\'t meet the criteria to join this app</string>
     <string name="onboarding_screen3_diagnosis_checkbox">I already have a neurodiversity diagnosis (I don\'t need to take the test)</string>
 
     <string name="onboarding_screen3_autism_test_link">https://embrace-autism.com/asrs-v1-1/#test</string>
     <string name="onboarding_screen3_adhd_test_link">https://psychology-tools.com/test/adult-adhd-self-report-scale</string>
 
-    <string name="onboarding_screen3_video_call_title">verify with video call </string>
-    <string name="onboarding_screen3_video_call_description">
-    book a 5-minute video call to check your diagnosis. No recording will be made.
-    </string>
-    <string name="onboarding_screen3_video_call_consent">I agree to the informal video call</string>
-    <string name="onboarding_screen3_video_call_button">book videocall</string>
+    <string name="onboarding_screen3_score">spectrum score obtained</string>
+    <string name="onboarding_screen3_score_adhd_label">How many ticks in the dark grey area?</string>
+    <string name="onboarding_screen3_score_adhd">ADHD test score</string>
+
+    <string name="onboarding_screen3_score_test">verify at least one score</string>
+    <string name="onboarding_screen3_score_threshold_both">Neither of the scores you entered reaches the minimum threshold. You don\'t meet the criteria to enter this app.</string>
 
         // page 3
     <string name="onboarding_screen4_title">Chat and share</string>
@@ -185,6 +185,11 @@
     <string name="profile">Profile</string>
     <string name="services">Services</string>
     <string name="settings">Settings</string>
+    <string name="filter_by">Filter by</string>
+    <string name="all_users">All</string>
+    <string name="language">Language</string>
+    <string name="location">Position</string>
+
 
     // Zone settings
 

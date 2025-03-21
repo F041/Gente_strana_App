@@ -13,39 +13,48 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import com.gentestrana.users.User
-import com.gentestrana.users.UserProfileCard
+import com.google.firebase.Timestamp
+import java.util.Date
+import android.content.Context
+import android.content.Intent
+import android.net.Uri
+import androidx.compose.ui.platform.LocalContext
+import com.gentestrana.users.Service
+import com.gentestrana.users.ServiceProfileCard
 
 @Composable
 fun ServicesScreen() {
     // Definiti manualmente, in futuro a mano tramite fb?
+    val context = LocalContext.current
     val services = listOf(
-        User(
+        Service(
             docId = "1",
             username = "STATiCalmo",
-            rawBirthTimestamp = 1672531200000L, // 1 gennaio 2023 => 2 anni (calcolato)
+            rawBirthTimestamp = Timestamp(Date(1672531200000L)), // 1 gennaio 2023 => 2 anni (calcolato)
             topics = listOf("studio di statistica per aziende ed organizzazioni"),
             profilePicUrl = listOf("https://staticalmo.com/wp-content/uploads/2023/04/cropped-Logo_STATiCalmo_-transformed-1-120x117.png"),
             spokenLanguages = emptyList()
         ),
-        User(
+        Service(
             docId = "2",
             username = "Auticon",
-            rawBirthTimestamp = 1420070400000L, // 1 gennaio 2011
+            rawBirthTimestamp = Timestamp(Date(1293840000000L)), // 1 gennaio 2011
             topics = listOf("consulenza IT che assume neurodiversi"),
             profilePicUrl = listOf("https://www.laboratoriolinc.it/wp-content/uploads/2020/11/Logo-auticon-1024x1024-1.png"),
             spokenLanguages = emptyList()
         ),
-        User(
+        Service(
             docId = "3",
             username = "Specialisterne",
-            rawBirthTimestamp = 1420070400000L, // 1 gennaio 2015 => 10 anni
+            rawBirthTimestamp = Timestamp(Date(1104537600000L)),
             topics = listOf("azienda internazionale danese che assume e fa assumere in altre aziende persone con autismo e Asperger, facendo svolgere loro attività come test del software, controllo di qualità e data entry, particolarmente adatte alle loro caratteristiche di buona memoria, attenzione ai dettagli, concentrazione e attitudine a svolgere azioni ripetitive."),
             profilePicUrl = listOf("https://d1byvvo791gp2e.cloudfront.net/public/assets/media/images/000/632/598/images/size_550x415_LogoSpec.png?1449765967"),
             spokenLanguages = emptyList()
         )
 
     )
+
+    val randomizedServices = services.shuffled()
 
     // Layout principale con Scaffold e LazyColumn per elencare le card
     Scaffold { paddingValues ->
@@ -54,26 +63,45 @@ fun ServicesScreen() {
                 .fillMaxSize()
                 .padding(paddingValues)
         ) {
-            // Header per la schermata dei servizi
             Text(
                 text = "Servizi",
                 style = MaterialTheme.typography.headlineSmall,
                 modifier = Modifier.padding(16.dp)
             )
 
-            // Lista dei servizi con le card utente
             LazyColumn(
                 modifier = Modifier.fillMaxSize(),
                 contentPadding = androidx.compose.foundation.layout.PaddingValues(16.dp)
             ) {
-                itemsIndexed(services) { index, service ->
-                    UserProfileCard(
-                        user = service,
-                        onClick = { /* Azione da definire al click della card */ }
+                itemsIndexed(randomizedServices) { index, service ->
+                    ServiceProfileCard(
+                        service = service,
+                        onClick = {
+                            // Quando l'utente tocca la card, apriamo il sito web associato
+                            val url = getServiceWebsite(service)
+                            openWebsite(context, url)
+                        }
                     )
-                  HorizontalDivider(thickness = 1.dp)
+                    HorizontalDivider(thickness = 1.dp)
                 }
             }
         }
     }
 }
+
+
+// Funzione per ottenere l'URL del sito web del servizio
+fun getServiceWebsite(service: Service): String = when(service.docId) {
+    "1" -> "https://staticalmo.com"
+    "2" -> "https://www.auticon.com"
+    "3" -> "https://specialisterne.com/"
+    else -> ""
+}
+
+fun openWebsite(context: Context, url: String) {
+    if (url.isNotBlank()) {
+        val intent = Intent(Intent.ACTION_VIEW, Uri.parse(url))
+        context.startActivity(intent)
+    }
+}
+

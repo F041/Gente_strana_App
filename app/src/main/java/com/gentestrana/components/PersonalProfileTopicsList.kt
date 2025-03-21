@@ -37,24 +37,24 @@ fun ProfileTopicsList(
     var isEditing by remember { mutableStateOf(false) }
     var newTopicText by remember { mutableStateOf("") }
 
-    // Corretto: usa mutableStateListOf e aggiorna la lista in-place
+    // Gestione della lista dei topics in locale
     val localTopics = remember { mutableStateListOf<String>().apply { addAll(topics) } }
 
-    // Aggiorna la lista quando topics cambia
+    // Sincronizza la lista locale se topics cambia
     LaunchedEffect(topics) {
         localTopics.clear()
         localTopics.addAll(topics)
     }
 
     Column(
-        modifier = modifier
-            .then(commonProfileBoxModifier())
+        modifier = modifier.then(commonProfileBoxModifier())
     ) {
+        // Titolo aggiornato con bodyMedium bold
         Text(
             text = title.uppercase(),
-            fontWeight = FontWeight.Bold,
-            fontSize = 14.sp,
-            color = MaterialTheme.colorScheme.onSurface
+            style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.Bold),
+            color = MaterialTheme.colorScheme.onSurface,
+            modifier = Modifier.fillMaxWidth()
         )
         Spacer(modifier = Modifier.height(8.dp))
 
@@ -68,10 +68,7 @@ fun ProfileTopicsList(
                     Chip(
                         text = topic,
                         onDelete = if (isEditing) {
-                            {
-                                // Modifica in-place invece di riassegnare
-                                localTopics.removeAt(index)
-                            }
+                            { localTopics.removeAt(index) }
                         } else null
                     )
                 }
@@ -85,14 +82,20 @@ fun ProfileTopicsList(
                 onValueChange = {
                     if (it.length <= newTopicMaxLength) newTopicText = it
                 },
-                placeholder = { Text(placeholder) },
-                modifier = Modifier.fillMaxWidth()
+                placeholder = {
+                    Text(
+                        text = placeholder,
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f)
+                    )
+                },
+                modifier = Modifier.fillMaxWidth(),
+                textStyle = MaterialTheme.typography.bodyMedium
             )
             Spacer(modifier = Modifier.height(4.dp))
             Button(
                 onClick = {
                     if (newTopicText.isNotBlank()) {
-                        // Aggiungi all'lista esistente invece di riassegnare
                         localTopics.add(newTopicText.trim())
                         newTopicText = ""
                     }

@@ -31,7 +31,7 @@ fun AppNavHost(navController: NavHostController,
 
     NavHost(
         navController = navController,
-        startDestination = "onboarding"
+        startDestination = startDestination
         // cambiare con = startDestination, se testo con = "onboarding"
         // "onboarding" l'ho usato quando ho creato il suo screen
     ) {

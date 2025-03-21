@@ -54,21 +54,24 @@ fun CompactSearchBar(
             Icon(
                 imageVector = Icons.Default.Search,
                 contentDescription = null,
-                modifier = Modifier.size(20.dp)  // icona più piccola
+                modifier = Modifier.size(20.dp),
+                tint = MaterialTheme.colorScheme.onSurfaceVariant
             )
         },
         trailingIcon = {
             IconButton(onClick = onFilterClicked) {
                 Icon(
                     imageVector = Icons.Default.FilterList,
-                    contentDescription = "users_filter"
+                    contentDescription = "users_filter",
+                    tint = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }
         },
         placeholder = {
             Text(
                 text = stringResource(R.string.users_search_bar),
-                style = MaterialTheme.typography.bodySmall
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
             )
         },
         textStyle = MaterialTheme.typography.bodySmall,

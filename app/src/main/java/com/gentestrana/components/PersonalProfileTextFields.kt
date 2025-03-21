@@ -111,10 +111,23 @@ fun ProfileTextField(
         OutlinedTextField(
             value = value,
             onValueChange = newOnValueChange,
-            label = { Text(label, color = MaterialTheme.colorScheme.onSurfaceVariant) },
-            placeholder = placeholder?.let { { Text(it) } },
+            label = {
+                Text(
+                    text = label,
+                    style = MaterialTheme.typography.bodyMedium, // Migliore leggibilità
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            },
+            placeholder = placeholder?.let {
+                {
+                    Text(
+                        text = it,
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f) // Placeholder più chiaro
+                    )
+                }
+            },
             isError = showError,
-            keyboardOptions = keyboardOptions,
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(horizontal = 16.dp),
@@ -141,10 +154,13 @@ fun ProfileTextField(
                 text = displayErrorMessage,
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(top = 4.dp),
-                color = MaterialTheme.colorScheme.error,
-                fontSize = 12.sp,
-                fontWeight = FontWeight.Normal
+                    .padding(top = 4.dp, start = 16.dp, end = 16.dp),
+                // Allineato al campo di testo
+                style = MaterialTheme.typography.bodySmall.copy(
+                    color = MaterialTheme.colorScheme.error,
+                    fontWeight = FontWeight.Bold
+                // Testo in grassetto per maggiore evidenza
+                )
             )
         }
     }
@@ -166,20 +182,18 @@ fun ProfileBioBox(
     var isEditing by remember { mutableStateOf(false) }
     var localText by remember { mutableStateOf(initialContent) }
 
-    // Sincronizza il contenuto locale con quello esterno (es. da Firebase)
+    // Sincronizza il contenuto locale con quello esterno
     LaunchedEffect(initialContent) {
         localText = initialContent
     }
 
     Column(
-        modifier = modifier
-                .then(commonProfileBoxModifier())
+        modifier = modifier.then(commonProfileBoxModifier())
     ) {
-        // Titolo (occupa tutta la larghezza)
+        // Titolo aggiornato con bodyMedium bold
         Text(
             text = title.uppercase(),
-            fontWeight = FontWeight.Bold,
-            fontSize = 14.sp,
+            style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.Bold),
             color = MaterialTheme.colorScheme.onSurface,
             modifier = Modifier.fillMaxWidth()
         )
@@ -192,27 +206,34 @@ fun ProfileBioBox(
                         localText = newText
                     }
                 },
-                placeholder = { Text(placeholder) },
+                placeholder = {
+                    Text(
+                        text = placeholder,
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f)
+                    )
+                },
                 modifier = Modifier
                     .fillMaxWidth()
                     .heightIn(min = 100.dp),
                 maxLines = 5,
-                textStyle = LocalTextStyle.current.copy(fontSize = 14.sp)
+                textStyle = MaterialTheme.typography.bodyMedium
             )
             Text(
                 text = "${localText.length} / $maxLength",
-                fontSize = 12.sp,
-                color = if (localText.length > maxLength) MaterialTheme.colorScheme.error else Color.Gray, //gray da modificare
+                style = MaterialTheme.typography.bodySmall.copy(
+                    color = if (localText.length > maxLength) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurfaceVariant,
+                    fontWeight = FontWeight.Bold
+                ),
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(top = 4.dp),
-                textAlign = TextAlign.End
+                    .padding(top = 4.dp)
             )
         } else {
             val displayText = if (localText.isEmpty()) placeholder else localText
             Text(
                 text = displayText,
-                fontSize = 14.sp,
+                style = MaterialTheme.typography.bodyMedium,
                 color = if (localText.isEmpty()) MaterialTheme.colorScheme.onSurfaceVariant else MaterialTheme.colorScheme.onSurface,
                 modifier = Modifier.fillMaxWidth()
             )

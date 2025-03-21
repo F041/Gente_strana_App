@@ -42,7 +42,11 @@ data class User(
     val fcmToken: String = "",
     val spokenLanguages: List<String> = emptyList(),
     val location: String = "",
-    val isAdmin: Boolean = false
+    val isAdmin: Boolean = false,
+    @PropertyName("registrationDate")
+    val registrationDate: Timestamp? = null,
+    @PropertyName("registrationType")
+    val registrationType: String? = null
 ) {
 
     // Normalizza il campo profilePicUrl: restituisce sempre una lista di stringhe

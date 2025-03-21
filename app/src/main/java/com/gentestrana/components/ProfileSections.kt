@@ -191,7 +191,10 @@ fun TopicsBox(
                 shape = MaterialTheme.shapes.medium
             )
             .padding(16.dp)
-            .widthIn(max = boxMaxWidth),
+//            .widthIn(max = boxMaxWidth)
+        // fonte di problemi senza di questo il Layout inspector non
+        // mostra problemi di spaziatura
+            ,
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         Text(
@@ -226,7 +229,7 @@ fun BioBox(
             )
             .padding(16.dp)
             .widthIn(max = boxMaxWidth),
-        horizontalAlignment = Alignment.CenterHorizontally  // Titolo centrato
+        horizontalAlignment = Alignment.CenterHorizontally
     ) {
         Text(
             text = stringResource(R.string.user_bio).uppercase(),

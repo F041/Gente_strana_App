@@ -87,8 +87,6 @@ dependencies {
     implementation("com.google.firebase:firebase-analytics")
     implementation("io.coil-kt:coil-compose:2.4.0")
     implementation("androidx.navigation:navigation-compose:2.7.5")
-    implementation ("org.burnoutcrew.composereorderable:reorderable:0.9.6")
-
 
     testImplementation ("org.mockito:mockito-core:5.3.1")  // Per creare oggetti "finti" (mock)
     testImplementation ("org.mockito.kotlin:mockito-kotlin:4.1.0") // Estensioni Kotlin per Mockito
