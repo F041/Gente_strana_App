@@ -189,6 +189,9 @@
     <string name="all_users">All</string>
     <string name="language">Language</string>
     <string name="location">Position</string>
+    <string name="translate">translate</string>
+    <string name="translation_failed">translation failed</string>
+    <string name="reset">reset</string>
 
 
     // Zone settings
@@ -197,6 +200,20 @@
     <string name="delete_account_confirmation_message">do you feel sure you want to delete your account? No way back for this action and all your data will get erased.</string>
     <string name="delete_account_confirm_button">delete account</string>
 
+    // Zone email
+    <string name="email_subject">Diagnosis Reminder from Quirky People</string>
+    <string name="email_greeting">Hello %s,</string>
+    <string name="email_body_1">We are writing to you from Quirky People to remind you of the importance of having a formal diagnosis if you have passed the self-assessment test.</string>
+    <string name="email_body_2">The self-assessment test is just a first step, but only a professional diagnosis can improve your self-awareness and open the door to a different life path.</string>
+    <string name="email_body_3">On Quirky People, having a verified diagnosis (in the future we will do more to facilitate this) increases the quality of the community.</string>
+    <string name="email_footer">If you have questions or want to know more about how to obtain a diagnosis, reply to this email or visit our website %s.</string>
+    <string name="email_signature">Gabriele Giordano, of Quirky People</string>
+    <string name="website_url">https://appgentestrana.wordpress.com</string>
+
+    <!-- Sostituisci "your_client_id_here" con il valore client ID ottenuto dalla console Firebase -->
+    <string name="default_web_client_id">
+        534267923003-2kr90ol3qteu8369e60se6nb4n8sdqet.apps.googleusercontent.com
+    </string>
 
 
 </resources>

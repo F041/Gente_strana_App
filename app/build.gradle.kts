@@ -10,6 +10,25 @@ android {
     namespace = "com.gentestrana"
     compileSdk = 35
 
+    val sendgridApiKey: String = project.findProperty("sendgrid_api_key") as? String ?: ""
+
+    packaging {
+        resources {
+            // Esclusioni per file di testo e metadati
+            excludes.add("META-INF/DEPENDENCIES")
+            excludes.add("META-INF/LICENSE")
+            excludes.add("META-INF/NOTICE")
+            excludes.add("META-INF/io.netty.versions.properties")
+            excludes.add("META-INF/INDEX.LIST")
+        }
+
+        jniLibs {
+            // Esclusioni specifiche per file .so (JNI libraries)
+            excludes.add("libnetty*.so")
+            excludes.add("libnetty-*.so")
+        }
+    }
+
     defaultConfig {
         applicationId = "com.gentestrana"
         minSdk = 24
@@ -18,10 +37,12 @@ android {
         versionName = "1.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+        buildConfigField("String", "SENDGRID_API_KEY", "\"$sendgridApiKey\"")
     }
 
     buildFeatures {
-        compose = true // Enable Jetpack Compose
+        compose = true
+        buildConfig = true
     }
 
     composeOptions {
@@ -81,6 +102,9 @@ dependencies {
     implementation("com.google.accompanist:accompanist-navigation-animation:0.32.0")
     implementation ("com.google.accompanist:accompanist-pager:0.30.1")
     // before 28.0
+    implementation ("com.google.mlkit:translate:16.1.2")
+    implementation ("com.google.mlkit:language-id:17.0.0")
+    implementation("com.sendgrid:sendgrid-java:4.9.3")
 
     implementation(platform("com.google.firebase:firebase-bom:33.9.0"))
     implementation("com.google.firebase:firebase-firestore-ktx")

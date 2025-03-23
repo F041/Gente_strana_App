@@ -3,7 +3,6 @@ package com.gentestrana.ui.theme
 import androidx.compose.foundation.border
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
@@ -16,10 +15,10 @@ import androidx.compose.ui.unit.dp
 
 @Composable
 fun commonProfileBoxModifier(
+    // .heightIn(min = minHeight) dava problemi
     cornerRadius: Dp = 12.dp,
     borderColor: Color = MaterialTheme.colorScheme.outline,
     backgroundColor: Color = MaterialTheme.colorScheme.surfaceVariant,
-    minHeight: Dp = 150.dp,
     paddingValue: Dp = 16.dp
 ): Modifier {
     return Modifier
@@ -28,5 +27,4 @@ fun commonProfileBoxModifier(
         .background(backgroundColor)
         .border(1.dp, borderColor, RoundedCornerShape(cornerRadius))
         .padding(paddingValue)
-        .heightIn(min = minHeight)
 }

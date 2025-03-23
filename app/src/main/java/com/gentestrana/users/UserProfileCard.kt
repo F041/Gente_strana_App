@@ -17,7 +17,6 @@ import androidx.compose.ui.layout.ContentScale
 import coil.compose.rememberAsyncImagePainter
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.platform.LocalConfiguration
-import com.gentestrana.ui.theme.*
 import com.gentestrana.utils.computeAgeFromTimestamp
 import androidx.compose.ui.res.stringResource
 import com.gentestrana.R
@@ -117,20 +116,21 @@ fun UserProfileCard(
                             verticalAlignment = Alignment.CenterVertically,
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .offset(y = 10.dp)
+
                         ) {
                             Text(
                                 text = stringResource(R.string.speaks) + ": ",
                                 style = MaterialTheme.typography.bodyMedium,
                                 color = MaterialTheme.colorScheme.onSurface,
-                                modifier = Modifier.padding(end = 4.dp)
+                                modifier = Modifier
+                                    .alignByBaseline()
                             )
                             user.spokenLanguages.forEach { code ->
                                 Text(
                                     text = "${getFlagEmoji(LocalContext.current, code)} ",
                                     style = MaterialTheme.typography.bodyMedium,
                                     color = MaterialTheme.colorScheme.onSurface,
-                                    modifier = Modifier.padding(vertical = 5.dp)
+                                    modifier = Modifier.alignByBaseline().padding(horizontal = 2.dp)
                                 )
                             }
                         }

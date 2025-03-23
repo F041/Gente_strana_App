@@ -46,7 +46,10 @@ data class User(
     @PropertyName("registrationDate")
     val registrationDate: Timestamp? = null,
     @PropertyName("registrationType")
-    val registrationType: String? = null
+    val registrationType: String? = null,
+     @PropertyName("lastActive")
+    val lastActive: Timestamp? = null
+    // TODO: non lo vedo su firebase, va aggiornato UserRepository probabilmente
 ) {
 
     // Normalizza il campo profilePicUrl: restituisce sempre una lista di stringhe

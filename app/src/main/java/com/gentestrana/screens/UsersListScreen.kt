@@ -7,6 +7,7 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -20,9 +21,11 @@ import com.gentestrana.components.FilterState
 import com.gentestrana.components.FilterType
 import com.gentestrana.components.GenericLoadingScreen
 import com.gentestrana.users.UserProfileCard
+import com.gentestrana.utils.getLanguageName
 import com.google.firebase.firestore.DocumentSnapshot
 import com.google.firebase.firestore.ktx.firestore
 import com.google.firebase.ktx.Firebase
+import com.google.firebase.auth.FirebaseAuth
 
 @Composable
 fun UsersListScreen(navController: NavHostController) {
@@ -35,7 +38,7 @@ fun UsersListScreen(navController: NavHostController) {
     val pageSize = 10
     var showEmojiHint by remember { mutableStateOf(false) }
     var showFilterDialog by remember { mutableStateOf(false) }
-
+    val context = LocalContext.current
 
     LaunchedEffect(filterState.searchQuery) {
         showEmojiHint = filterState.searchQuery.isNotEmpty() && filterState.searchQuery.length < 2
@@ -77,17 +80,6 @@ fun UsersListScreen(navController: NavHostController) {
         loadUsers()
     }
 
-    // Filtra gli utenti in base alla query di ricerca
-    val filteredUsers = if (filterState.searchQuery.length >= 2) {
-        users.filter { user ->
-            user.username.contains(filterState.searchQuery, ignoreCase = true) ||
-                    user.topics.any { it.contains(filterState.searchQuery, ignoreCase = true) }
-        }
-    } else {
-        users // Mostra tutti gli utenti se la query è troppo corta
-    }
-
-
     Scaffold { paddingValues ->
         Column(modifier = Modifier.padding(paddingValues)) {
 
@@ -99,38 +91,82 @@ fun UsersListScreen(navController: NavHostController) {
                 },
                 onFilterClicked = { onFilterClicked() }
             )
-
             if (showFilterDialog) {
                 FilterDialog(
                     currentFilter = filterState.filterType,
-                    onFilterSelected = { newType ->
-                        filterState = filterState.copy(filterType = newType)
+                    currentLanguage = filterState.selectedLanguage,
+                    currentLocation = filterState.selectedLocation,
+                    supportedLanguages = context.resources.getStringArray(R.array.supported_language_codes)
+                        .map { code -> getLanguageName(context, code) },
+                    onFilterSelected = { newType, newValue ->
+                        filterState = when(newType) {
+                            FilterType.LANGUAGE -> filterState.copy(
+                                filterType = newType,
+                                selectedLanguage = newValue,
+                                searchQuery = ""  // Resetta la ricerca testuale
+                            )
+                            FilterType.LOCATION -> filterState.copy(
+                                filterType = newType,
+                                selectedLocation = newValue,
+                                searchQuery = ""  // Resetta la ricerca testuale
+                            )
+                            else -> filterState.copy(filterType = newType)
+                        }
                         showFilterDialog = false
                     },
                     onDismiss = { showFilterDialog = false }
                 )
             }
+            val currentUserId = FirebaseAuth.getInstance().currentUser?.uid
 
-            // Logica di filtro
-            val filteredUsers = users.filter { user ->
-                val query = filterState.searchQuery.lowercase()
-                // Aggiungi lowercase()
-                when (filterState.filterType) {
-                    FilterType.ALL ->
-                        user.username.lowercase().contains(query) ||
-                                user.topics.any { it.lowercase().contains(query) }
+            // Unico filtro che applica sia la ricerca che il filtro in base a FilterType
+            val filteredUsers = remember(users, filterState) {
+                // Se non ci sono utenti o il caricamento è in corso, mostra tutto
+                if (users.isEmpty()) {
+                    users
+                } else {
+                    users.filter { user ->
+                        // Filtro per escludere l'utente corrente
+                        if (user.docId == currentUserId) return@filter false
 
-                    FilterType.LANGUAGE ->
-                        user.spokenLanguages.any { it.lowercase().contains(query) }                     
+                        // Applica i filtri in base al tipo selezionato
+                        when (filterState.filterType) {
+                            FilterType.ALL -> {
+                                // Se c'è una query di ricerca, applica il filtro
+                                if (filterState.searchQuery.length >= 2) {
+                                    val query = filterState.searchQuery.lowercase()
+                                    user.username.lowercase().contains(query) ||
+                                            user.topics.any { it.lowercase().contains(query) }
+                                } else {
+                                    // Se non c'è query, mostra tutti
+                                    true
+                                }
+                            }
 
-                    FilterType.LOCATION ->
-                        user.location?.lowercase()?.contains(query) ?: false
+                            FilterType.LANGUAGE -> {
+                                // Filtra per lingua selezionata
+                                user.spokenLanguages.any { langCode ->
+                                    getLanguageName(context, langCode).equals(
+                                        filterState.selectedLanguage,
+                                        ignoreCase = true
+                                    )
+                                }
+                            }
 
-                    else -> true
+                            FilterType.LOCATION -> {
+                                // Filtra per posizione selezionata
+                                user.location?.equals(filterState.selectedLocation, ignoreCase = true) ?: false
+                            }
+
+                            else -> true
+                        }
+                    }
+                        .sortedByDescending { it.lastActive?.toDate()?.time ?: 0L }
                 }
-            }.takeIf { filterState.searchQuery.length >= 2 } ?: users
+            }
 
-            // Contatore utenti trovati
+
+            // Contatore utenti trovati (usa la lista ordinata)
             Text(
                 text = if (showEmojiHint) "\uD83D\uDD0D2\uFE0F⃣" else "${filteredUsers.size} ${stringResource(R.string.users_found)}",
                 style = MaterialTheme.typography.bodySmall,
@@ -193,6 +229,7 @@ fun UsersListScreen(navController: NavHostController) {
 }
 
 
+// TODO: spostabile altrove
 @Composable
 private fun ErrorMessage(text: String) {
     Text(

@@ -25,13 +25,14 @@ import com.gentestrana.users.User
 import com.gentestrana.utils.computeAgeFromTimestamp
 import com.gentestrana.utils.getFlagEmoji
 import com.gentestrana.utils.getLanguageName
+import com.gentestrana.utils.rememberTranslation
 
 @Composable
 fun ProfileContent(
     user: User,
     padding: PaddingValues,
-    onProfileImageClick: () -> Unit, // da togliere?
     navController: NavHostController,
+    onProfileImageClick: () -> Unit, // se lo tolgo ho problemi in UserProfileScreen
     onStartChat: () -> Unit
 ) {
     Column(
@@ -87,14 +88,14 @@ fun ProfileContent(
         ) {
             Column(
                 modifier = Modifier
-                    .fillMaxWidth() // <== Usa fillMaxWidth() senza frazione (occupa tutta la larghezza)
+                    .fillMaxWidth()
                     .padding(horizontal = 16.dp)
             ) {
                 TopicsBox(
                     topics = user.topics
                 )
                 Spacer(modifier = Modifier.height(16.dp))
-                BioBox(
+                ReadOnlyBioBox(
                     bioText = user.bio
                 )
             }

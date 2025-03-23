@@ -195,16 +195,27 @@
     <string name="all_users">tutti</string>
     <string name="language">lingua</string>
     <string name="location">posizione</string>
+    <string name="translate">traduci</string>
+    <string name="translation_failed">traduzione fallita</string>
+    <string name="reset">resetta</string>
+
 
     // Zona impostazioni
     <string name="delete_account_confirmation_title">conferma eliminazione account</string>
     <string name="delete_account_confirmation_message">sicuro di voler eliminare il tuo account? Non si torna indietro e tutti i tuoi dati verranno cancellati.</string>
     <string name="delete_account_confirm_button">elimina account</string>
 
+    // Zona email
+    <string name="email_subject">Promemoria diagnosi da Gente Strana</string>
+    <string name="email_greeting">Ciao %s,</string>
+    <string name="email_body_1">Ti scrivo da Gente Strana per ricordarti l\'importanza di avere una diagnosi formale se hai passato il testo di autovalutazione.</string>
+    <string name="email_body_2">Il test di autovalutazione rappresenta un primo passo, ma solo una diagnosi professionale può migliorare la tua auto-consapevolezza e aprirti le porte ad un percorso di vita diverso.</string>
+    <string name="email_body_3">Su Gente Strana, avere una diagnosi verificata (in futuro farò di più per favorirlo) aumenta la qualità della comunità.</string>
+    <string name="email_footer">Se hai domande o vuoi saperne di più su come ottenere una diagnosi, rispondi a questa email o visita il nostro sito %s.</string>
+    <string name="email_signature">Gabriele Giordano, di Gente Strana</string>
+    <string name="website_url">https://appgentestrana.wordpress.com</string>
 
-    <!-- Sostituisci "your_client_id_here" con il valore client ID ottenuto dalla console Firebase -->
-    <string name="default_web_client_id">
-        534267923003-2kr90ol3qteu8369e60se6nb4n8sdqet.apps.googleusercontent.com
-    </string>
+
+
 
 </resources>
