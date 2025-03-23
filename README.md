@@ -58,5 +58,6 @@ This repo doesn't come with Firebase Functions, that help, for example, to manag
 
 
 ### Disclaimer
-I developed this app with 3 gen AIs. 
+I developed this app with 4 gen AIs and Android Studio, very useful for the history of files, when major breakups happened...
+
 If you don't know the meaning of neurodiversity or you never got labeled as *weird*, most likely this app doesn't fit you, it could even trigger your uneasiness 
