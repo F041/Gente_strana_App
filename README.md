@@ -47,7 +47,6 @@ As you read from the name of this repository, Gente Strana becomes the Italian v
 ### To do:
 - fix chatScreen when sending the first message in a chat
 - sort usersListScreen by last active and remove the user's personal profile from the list
-- translations for bio, topics
 - speacial theme for who has dyslexia
 - facebook registration and login
 
