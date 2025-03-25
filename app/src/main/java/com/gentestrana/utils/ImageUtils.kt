@@ -14,6 +14,7 @@ import android.provider.MediaStore
 import java.io.ByteArrayOutputStream
 import java.io.File
 import androidx.core.content.FileProvider
+import java.util.concurrent.ConcurrentHashMap
 
 
 /**
@@ -29,6 +30,13 @@ fun uploadMainProfileImage(
     onComplete: (String) -> Unit
 ) {
     Log.d("ImageUpload", "uploadMainProfileImage STARTED - uid: $uid, imageUri: $imageUri")
+
+    // Controllo rate limiter per upload
+    if (!UploadRateLimiter.canUpload(uid)) {
+        Log.d("ImageUpload", "Upload rate limit exceeded for user: $uid")
+        onComplete("LIMIT_EXCEEDED")
+        return
+    }
 
     // 1. Genera l'hash MD5 dall'URI dell'immagine
     val md5Hash = generateMD5HashFromUri(context, imageUri)
@@ -236,5 +244,28 @@ fun saveByteArrayToTempFile(context: Context, data: ByteArray, filename: String)
     } catch (e: Exception) {
         e.printStackTrace()
         null
+    }
+}
+
+/**
+ * Rate limiter per gli upload di immagini.
+ * Consente al massimo 10 upload ogni 60 secondi per utente.
+ */
+object UploadRateLimiter {
+    private val userUploadTimestamps = ConcurrentHashMap<String, MutableList<Long>>()
+    private const val TIME_WINDOW = 40 * 1000L  // 40 secondi
+    private const val MAX_UPLOADS = 4          // massimo 4 upload per finestra
+
+    fun canUpload(userId: String): Boolean {
+        val now = System.currentTimeMillis()
+        val timestamps = userUploadTimestamps.getOrPut(userId) { mutableListOf() }
+        // Rimuove i timestamp più vecchi della finestra
+        timestamps.removeAll { now - it > TIME_WINDOW }
+        return if (timestamps.size < MAX_UPLOADS) {
+            timestamps.add(now)
+            true
+        } else {
+            false
+        }
     }
 }

@@ -1,4 +1,4 @@
-// File: TranslationHooks.kt (package com.gentestrana.utils)
+// a che serviva?
 package com.gentestrana.utils
 
 import androidx.compose.runtime.*
@@ -10,7 +10,7 @@ fun rememberTranslation(text: String): String {
     val deviceLanguage = Locale.getDefault().language
     LaunchedEffect(text, deviceLanguage) {
         if (deviceLanguage != "en") {
-            TranslationHelper.translateText(
+            TranslationHelper.translateTextWithDetection(
                 text = text,
                 targetLanguageCode = deviceLanguage,
                 onSuccess = { translatedText = it },

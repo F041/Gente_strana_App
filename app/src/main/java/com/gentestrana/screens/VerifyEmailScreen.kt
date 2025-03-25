@@ -21,10 +21,6 @@ import kotlinx.coroutines.launch
 import androidx.compose.runtime.LaunchedEffect
 import kotlinx.coroutines.delay
 
-//TODO: dal link email, rimanda all'app? Dalla schermata come si può aprire l'app email
-// del dispositivo?
-// TODO: come aggiornare automaticamente la schermata una volta che l'utente clicca
-// sul link di conferma?
 @Composable
 fun VerifyEmailScreen(
     navController: NavHostController // Aggiunto NavController come parametro

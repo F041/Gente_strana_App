@@ -25,14 +25,14 @@ import com.gentestrana.users.User
 import com.gentestrana.utils.computeAgeFromTimestamp
 import com.gentestrana.utils.getFlagEmoji
 import com.gentestrana.utils.getLanguageName
-import com.gentestrana.utils.rememberTranslation
 
 @Composable
 fun ProfileContent(
     user: User,
     padding: PaddingValues,
     navController: NavHostController,
-    onProfileImageClick: () -> Unit, // se lo tolgo ho problemi in UserProfileScreen
+    onProfileImageClick: () -> Unit,
+    // se lo tolgo ho problemi in UserProfileScreen
     onStartChat: () -> Unit
 ) {
     Column(
@@ -58,9 +58,8 @@ fun ProfileContent(
         Box(
             modifier = Modifier
                 .fillMaxWidth(0.4f)
-                // <--- Usa una frazione di fillMaxWidth, es. 0.5f
                 .aspectRatio(1f)
-                // <--- Forza aspect ratio 1:1 (quadrato)
+                // Forza aspect ratio 1:1 (quadrato)
                 .clip(RoundedCornerShape(8.dp))
                 .background(MaterialTheme.colorScheme.surfaceVariant)
                 .align(Alignment.CenterHorizontally)
@@ -69,7 +68,7 @@ fun ProfileContent(
                     navController.currentBackStackEntry?.savedStateHandle?.set("imageUrls", user.profilePicUrl)
                     navController.navigate("profile_pictures_screen")
                 },
-            contentAlignment = Alignment.Center // <--- Mantieni contentAlignment
+            contentAlignment = Alignment.Center
         ) {
             Image(
                 painter = rememberAsyncImagePainter(user.profilePicUrl.firstOrNull()), // Prendi la prima immagine per ora
@@ -91,7 +90,7 @@ fun ProfileContent(
                     .fillMaxWidth()
                     .padding(horizontal = 16.dp)
             ) {
-                TopicsBox(
+                ReadOnlyTopicsBox(
                     topics = user.topics
                 )
                 Spacer(modifier = Modifier.height(16.dp))
@@ -124,6 +123,7 @@ fun ProfileContent(
         }
 
         // Pulsante "Chatta"
+        // TODO: deactivate if user received 100 messages in day?
         Button(
             onClick = onStartChat,
             modifier = Modifier

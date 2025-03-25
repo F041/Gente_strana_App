@@ -4,7 +4,6 @@ import android.content.Context
 import android.net.Uri
 import android.util.Log
 import com.gentestrana.R
-import com.gentestrana.utils.EmailUtils
 import com.gentestrana.utils.FirestoreDeletionUtils
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.GoogleAuthProvider
@@ -14,7 +13,6 @@ import com.google.firebase.ktx.Firebase
 import com.gentestrana.utils.uploadMainProfileImage
 import kotlinx.coroutines.tasks.await
 import com.google.firebase.Timestamp
-import com.gentestrana.BuildConfig
 
 
 
@@ -30,7 +28,6 @@ class UserRepository(
 // Parametro iniettato con valore di default
 ) {
     private val firestore = Firebase.firestore
-    private val sendgridApiKey = BuildConfig.SENDGRID_API_KEY
 
     /**
      * Registers a new user with email and password, and uploads a profile image if provided.
@@ -127,12 +124,6 @@ class UserRepository(
                                             }
                                         }
 
-                                    // CODICE PER PROMEMORIA IMMEDIATO
-                                    if (registrationType == "self_assessment") {
-                                        // Chiama EmailUtils.sendReminderEmail e passa Context e API Key!
-                                        sendReminderEmail(context, email, username, sendgridApiKey)
-                                        Log.d("PromemoriaDiagnosi", "Inviata email promemoria a utente con UID: $uid tramite EmailUtils con API Key sicura e Context")
-                                    }
 
 
                                 }
@@ -173,30 +164,6 @@ class UserRepository(
         }
     }
 
-
-
-    /**
-     * Adds a new profile image URL to the user's profilePicUrl list.
-     */
-    fun addProfileImage(
-        docId: String,
-        newImageUrl: String,
-        onSuccess: () -> Unit,
-        onFailure: (String?) -> Unit
-    ) {
-        firestore.collection("users").document(docId).get()
-            .addOnSuccessListener { document ->
-                val user = document.toObject(User::class.java)
-                val currentImages = user?.profilePicUrl ?: emptyList()
-                val updatedImages = currentImages + newImageUrl
-
-                firestore.collection("users").document(docId)
-                    .update("profilePicUrl", updatedImages)
-                    .addOnSuccessListener { onSuccess() }
-                    .addOnFailureListener { e -> onFailure(e.message) }
-            }
-            .addOnFailureListener { e -> onFailure(e.message) }
-    }
 
     /**
      * Authenticates the user on Firebase using a Google ID token.
@@ -329,14 +296,7 @@ class UserRepository(
             }
     }
 
-    private fun sendReminderEmail(
-        context: Context,
-        recipientEmail: String,
-        recipientUsername: String,
-        apiKey: String
-    ) {
-        EmailUtils.sendReminderEmail(context, recipientEmail, recipientUsername, apiKey)
-    }
+
 
     /**
      * Elimina l'account utente corrente da Firebase Authentication.

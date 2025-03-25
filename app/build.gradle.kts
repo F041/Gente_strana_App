@@ -10,7 +10,6 @@ android {
     namespace = "com.gentestrana"
     compileSdk = 35
 
-    val sendgridApiKey: String = project.findProperty("sendgrid_api_key") as? String ?: ""
 
     packaging {
         resources {
@@ -37,8 +36,8 @@ android {
         versionName = "1.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
-        buildConfigField("String", "SENDGRID_API_KEY", "\"$sendgridApiKey\"")
     }
+
 
     buildFeatures {
         compose = true
@@ -102,9 +101,8 @@ dependencies {
     implementation("com.google.accompanist:accompanist-navigation-animation:0.32.0")
     implementation ("com.google.accompanist:accompanist-pager:0.30.1")
     // before 28.0
-    implementation ("com.google.mlkit:translate:16.1.2")
-    implementation ("com.google.mlkit:language-id:17.0.0")
-    implementation("com.sendgrid:sendgrid-java:4.9.3")
+    implementation ("com.google.mlkit:translate:17.0.2")
+    implementation ("com.google.mlkit:language-id:17.0.5")
 
     implementation(platform("com.google.firebase:firebase-bom:33.9.0"))
     implementation("com.google.firebase:firebase-firestore-ktx")

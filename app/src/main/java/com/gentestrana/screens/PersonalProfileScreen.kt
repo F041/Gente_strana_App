@@ -66,6 +66,7 @@ fun PersonalProfileScreen(
     val auth = FirebaseAuth.getInstance()
     // val uid = auth.currentUser?.uid ?: return
 
+
     // Stati osservati dal ViewModel
     val username by profileViewModel.username.collectAsState()
     val bio by profileViewModel.bio.collectAsState()
@@ -78,7 +79,9 @@ fun PersonalProfileScreen(
         .map { it.trim() } // Rimuove spazi extra
         .filter { it.isNotEmpty() } // Evita elementi vuoti
 
-    val spokenLanguages by profileViewModel.spokenLanguages // Nessun .collectAsState()
+    val spokenLanguages by profileViewModel.spokenLanguages
+    var uploadLimitExceeded by remember { mutableStateOf(false) }
+
 
     // Altri stati locali per campi non ancora gestiti nel ViewModel
     var isUploading by remember { mutableStateOf(false) }
@@ -142,23 +145,26 @@ fun PersonalProfileScreen(
                             context.getString(R.string.duplicate_image),
                             Toast.LENGTH_SHORT
                         ).show()
+                        uploadLimitExceeded = false
                     }
-
+                    result == "LIMIT_EXCEEDED" -> {
+                        // Imposta lo stato per mostrare il messaggio con la clessidra
+                        uploadLimitExceeded = true
+                    }
                     result.isEmpty() -> {
                         Toast.makeText(
                             context, "❌",
                             Toast.LENGTH_SHORT
                         ).show()
-                        // TODO: STRINGABILE
+                        uploadLimitExceeded = false
                     }
-
                     else -> {
                         Toast.makeText(context, "👌", Toast.LENGTH_SHORT).show()
+                        uploadLimitExceeded = false
                     }
                 }
             }
         } else {
-            // Se l'utente annulla la selezione, disattiva l'indicatore
             isUploading = false
         }
     }
@@ -221,6 +227,15 @@ fun PersonalProfileScreen(
             }
 
             Spacer(modifier = Modifier.height(8.dp))
+
+            if (uploadLimitExceeded) {
+                Text(
+                    text = "⏰⏳",
+                    style = MaterialTheme.typography.bodyLarge,
+                    color = MaterialTheme.colorScheme.error,
+                    modifier = Modifier.padding(8.dp)
+                )
+            }
 
             // Gli space si potrebbero reintrodurre per coerenza ed eliminarli in ProfileImageSection
 
