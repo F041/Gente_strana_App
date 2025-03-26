@@ -49,15 +49,8 @@ data class User(
     val registrationType: String? = null,
      @PropertyName("lastActive")
     val lastActive: Timestamp? = null
-    // TODO: non lo vedo su firebase, va aggiornato UserRepository probabilmente
 ) {
 
-    // Normalizza il campo profilePicUrl: restituisce sempre una lista di stringhe
-    // a cosa serviva? Quando non avevo la variabile come lista e forzare firebase?
-    val normalizedProfilePicUrl: List<String>
-        get() = profilePicUrl.ifEmpty {
-            listOf("res/drawable/random_user.webp")
-        }
 
     // Proprietà calcolata per ottenere il timestamp in millisecondi
     val birthTimestamp: Long

@@ -121,7 +121,12 @@ private fun SingleTopicNavigator(
             Icon(
                 imageVector = Icons.AutoMirrored.Filled.ArrowBack,
                 contentDescription = "Argomento precedente",
-                tint = MaterialTheme.colorScheme.onSurface
+                tint = if (currentTopicIndex > 0) {
+                    MaterialTheme.colorScheme.onSurface
+                } else {
+                    MaterialTheme.colorScheme.onSurface.copy(alpha = 0f)
+                // Trasparenza quando disabilitato
+                }
             )
         }
 
@@ -148,7 +153,12 @@ private fun SingleTopicNavigator(
             Icon(
                 imageVector = Icons.AutoMirrored.Filled.ArrowForward,
                 contentDescription = "Argomento successivo",
-                tint = MaterialTheme.colorScheme.onSurface
+                tint = if (currentTopicIndex < topics.lastIndex) {
+                    MaterialTheme.colorScheme.onSurface
+                } else {
+                    MaterialTheme.colorScheme.onSurface.copy(alpha = 0f)
+                // Trasparenza quando disabilitato
+                }
             )
         }
     }

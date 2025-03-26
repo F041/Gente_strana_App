@@ -27,7 +27,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import com.gentestrana.components.GenericLoadingScreen
 
 val userRepository = UserRepository()
-const val emailRegex = "^[A-Za-z0-9._%+-]+@(?:gmail\\.com|outlook\\.com|yahoo\\.com|icloud\\.com|protonmail\\.com|live\\.com|hotmail\\.it)$"
+const val emailRegex = "^[A-Za-z0-9._%+-]+@(?:gmail\\.com|outlook\\.com|yahoo\\.com|icloud\\.com|protonmail\\.com|live\\.com|hotmail\\.it|yahoo\\.it)$"
 
 @Composable
 fun RegistrationScreen(

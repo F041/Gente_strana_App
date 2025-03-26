@@ -2,32 +2,35 @@ package com.gentestrana.utils
 
 import com.google.firebase.firestore.ktx.firestore
 import com.google.firebase.ktx.Firebase
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.withContext
+
 import kotlinx.coroutines.tasks.await
 
 /**
  * Utility function per eliminare i dati utente da Firestore, incluso il documento utente.
- * Al momento, questa funzione elimina SOLO il documento utente principale.
- * TODO: Estendere per eliminare anche chat e altri dati correlati in futuro.
+ * e chat in cui è stato partecipante.
  */
+// FirestoreDeletionUtils.kt
 object FirestoreDeletionUtils {
-    suspend fun deleteUserDataFromFirestore(
-        userId: String,
-        onSuccess: () -> Unit,
-        onFailure: (String?) -> Unit
-    ) {
+    suspend fun deleteUserDataFromFirestore(userId: String) {
         val firestore = Firebase.firestore
-        val userDocumentRef = firestore.collection("users").document(userId)
 
-        withContext(Dispatchers.IO) {
-            // Esegui operazioni Firestore in background
-            try {
-                userDocumentRef.delete().await()
-                onSuccess()
-            } catch (e: Exception) {
-                onFailure(e.message)
+        try {
+            // Elimina il documento utente
+            firestore.collection("users").document(userId).delete().await()
+
+            // Elimina le chat associate
+            val chatsSnapshot = firestore.collection("chats")
+                .whereArrayContains("participants", userId)
+                .get()
+                .await()
+
+            for (chatDoc in chatsSnapshot.documents) {
+                chatDoc.reference.delete().await()
             }
+
+            // Aggiungi qui altre eliminazioni correlate
+        } catch (e: Exception) {
+            throw e // Propaga l'eccezione per gestirla nel chiamante
         }
     }
 }

@@ -2,12 +2,8 @@ package com.gentestrana.components
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.Button
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -18,7 +14,6 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
-import androidx.navigation.NavHostController
 import coil.compose.rememberAsyncImagePainter
 import com.gentestrana.R
 import com.gentestrana.users.User
@@ -27,20 +22,15 @@ import com.gentestrana.utils.getFlagEmoji
 import com.gentestrana.utils.getLanguageName
 
 @Composable
-fun ProfileContent(
+fun PersonalProfilePreviewCard(
     user: User,
-    padding: PaddingValues,
-    navController: NavHostController,
-    onProfileImageClick: () -> Unit,
-    // se lo tolgo ho problemi in UserProfileScreen
-    onStartChat: () -> Unit,
-    showChatButton: Boolean
+    modifier: Modifier = Modifier
 ) {
+    val context = LocalContext.current
     Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(padding)
-            .verticalScroll(rememberScrollState())
+        modifier = modifier
+            .fillMaxWidth()
+            .padding(16.dp) // Aggiunto padding esterno per separarlo dal bordo schermo
     ) {
         // Nome ed età
         Text(
@@ -52,30 +42,19 @@ fun ProfileContent(
         )
 
         Spacer(modifier = Modifier.height(8.dp))
-        // 8 perché senno vedo uno spazio aggiuntivo
-        // per niente elegante ma pazienza
 
         // Immagine profilo
         Box(
             modifier = Modifier
-                .fillMaxWidth(0.4f)
+                .fillMaxWidth(0.4f) // Larghezza ridotta per l'anteprima
                 .aspectRatio(1f)
-                // Forza aspect ratio 1:1 (quadrato)
                 .clip(RoundedCornerShape(8.dp))
                 .background(MaterialTheme.colorScheme.surfaceVariant)
-                .align(Alignment.CenterHorizontally)
-                .clickable {
-                    // <--- Mantieni il comportamento clickable
-                    navController.currentBackStackEntry?.savedStateHandle?.set(
-                        "imageUrls",
-                        user.profilePicUrl
-                    )
-                    navController.navigate("profile_pictures_screen")
-                },
+                .align(Alignment.CenterHorizontally),
             contentAlignment = Alignment.Center
         ) {
             Image(
-                painter = rememberAsyncImagePainter(user.profilePicUrl.firstOrNull()), // Prendi la prima immagine per ora
+                painter = rememberAsyncImagePainter(user.profilePicUrl.firstOrNull()),
                 contentDescription = "Profile Picture",
                 modifier = Modifier.fillMaxSize(),
                 contentScale = ContentScale.Crop
@@ -84,14 +63,14 @@ fun ProfileContent(
 
         Spacer(modifier = Modifier.height(16.dp))
 
-        // Contenitore esterno con larghezza fissa per TopicsBox e BioBox
+        // Contenitore esterno per TopicsBox e BioBox (larghezza ridotta per anteprima)
         Box(
             modifier = Modifier.fillMaxWidth(),
             contentAlignment = Alignment.Center
         ) {
             Column(
                 modifier = Modifier
-                    .fillMaxWidth()
+                    .fillMaxWidth(0.8f) // Larghezza ridotta per l'anteprima
                     .padding(horizontal = 16.dp)
             ) {
                 ReadOnlyTopicsBox(
@@ -104,14 +83,17 @@ fun ProfileContent(
             }
         }
 
-        // Sezione lingue parlate
-        Column(modifier = Modifier.padding(16.dp)) {
+        // Sezione lingue parlate (larghezza ridotta per anteprima)
+        Column(modifier = Modifier
+            .fillMaxWidth(0.8f) // Larghezza ridotta per l'anteprima
+            .padding(horizontal = 16.dp)
+            .padding(top = 16.dp) // Spazio dalla BioBox
+        ) {
             Text(
                 text = stringResource(R.string.languages_spoken).uppercase(),
                 style = MaterialTheme.typography.titleMedium,
                 modifier = Modifier.padding(vertical = 8.dp)
             )
-            val context = LocalContext.current
             user.spokenLanguages.forEach { code ->
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
@@ -125,20 +107,5 @@ fun ProfileContent(
                 }
             }
         }
-
-        // Pulsante "Chatta"
-        // TODO: deactivate if user received 100 messages in day?
-        if (showChatButton) {
-            Button(
-                onClick = onStartChat,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(16.dp)
-            ) {
-                Text(stringResource(R.string.chat_with_user, user.username).uppercase())
-            }
-        }
     }
 }
-
-

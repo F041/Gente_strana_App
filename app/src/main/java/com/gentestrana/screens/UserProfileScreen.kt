@@ -1,5 +1,6 @@
 package com.gentestrana.screens
 
+import android.util.Log
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
@@ -24,6 +25,7 @@ import com.gentestrana.users.UserRepository
 import kotlinx.coroutines.launch
 import androidx.compose.material.icons.filled.WarningAmber
 import com.gentestrana.users.ReportReason
+import com.google.firebase.auth.FirebaseAuth
 
 
 @OptIn(ExperimentalFoundationApi::class, ExperimentalMaterial3Api::class)
@@ -32,9 +34,10 @@ fun UserProfileScreen(
     docId: String,
     navController: NavHostController,) {
     val userRepository = remember { UserRepository() }
-    val chatRepository = remember { ChatRepository() } // <-- Aggiungi questa linea
+    val chatRepository = remember { ChatRepository() }
     var showGallery by remember { mutableStateOf(false) }
     var showReportDialog by remember { mutableStateOf(false) }
+    val currentUserId = FirebaseAuth.getInstance().currentUser?.uid
 
     // Stato per il motivo selezionato e per eventuali commenti aggiuntivi
     var selectedReportReason by remember { mutableStateOf(ReportReason.CONTENUTI_INAPPROPRIATI) }
@@ -74,11 +77,14 @@ fun UserProfileScreen(
                     }
                 },
                 actions = {
-                    IconButton(onClick = { showReportDialog = true }) {
-                        Icon(Icons.Filled.WarningAmber, contentDescription = "Segnala utente")
-                    }
-                    IconButton(onClick = { showBlockDialog = true }) {
-                        Icon(Icons.Filled.Block, contentDescription = "Blocca utente")
+                    // Mostra i pulsanti SOLO se non è il profilo personale
+                    if (docId != currentUserId) {
+                        IconButton(onClick = { showReportDialog = true }) {
+                            Icon(Icons.Filled.WarningAmber, contentDescription = "Segnala utente")
+                        }
+                        IconButton(onClick = { showBlockDialog = true }) {
+                            Icon(Icons.Filled.Block, contentDescription = "Blocca utente")
+                        }
                     }
                 }
             )
@@ -88,24 +94,31 @@ fun UserProfileScreen(
             showGallery = showGallery,
             images = user.profilePicUrl,
             onCloseGallery = { showGallery = false }
-        ) {
+        )
+        {
+            Log.d("UserProfileScreen", "docId: $docId, currentUserId: $currentUserId")
+
             ProfileContent(
                 user = user,
                 padding = padding,
                 //scrollState = scrollState,
                 onProfileImageClick = { showGallery = true },
                 navController = navController,
-                onStartChat = {
-                    // Lambda per avviare la chat
-                    coroutineScope.launch {
-                        try {
-                            val chatId = chatRepository.createNewChat(user)
-                            navController.navigate("chat/$chatId")
-                        } catch (e: Exception) {
-                            // Gestisci l'errore (es. mostra un Snackbar)
+                onStartChat = if (docId != currentUserId) {
+                    { // Lambda per avviare la chat (solo se NON è il profilo personale)
+                        coroutineScope.launch {
+                            try {
+                                val chatId = chatRepository.createNewChat(user)
+                                navController.navigate("chat/$chatId")
+                            } catch (e: Exception) {
+                                // Gestisci l'errore (es. mostra un Snackbar)
+                            }
                         }
                     }
-                }
+                } else {
+                    {} // Lambda vuota: NON fare nulla se è il profilo personale
+                },
+                showChatButton = docId != currentUserId
             )
         }
     }

@@ -14,8 +14,6 @@ import com.gentestrana.utils.uploadMainProfileImage
 import kotlinx.coroutines.tasks.await
 import com.google.firebase.Timestamp
 
-
-
 /**
  * 1. Controllare lo stato di verifica email all'avvio dell'app e/o al login.
  * 2. Se l'email NON è verificata, reindirizzare l'utente a VerifyEmailScreen.
@@ -65,7 +63,8 @@ class UserRepository(
                     "age" to 0,
                     "sex" to sex,
                     "registrationDate" to registrationTimestamp,
-                    "registrationType" to registrationType
+                    "registrationType" to registrationType,
+                    "lastActive" to Timestamp.now()
                 )
                 firestore.collection("users").document(uid)
                     .set(userData)
@@ -296,8 +295,6 @@ class UserRepository(
             }
     }
 
-
-
     /**
      * Elimina l'account utente corrente da Firebase Authentication.
      * Questa funzione elimina SOLO l'account di autenticazione, non i dati utente in Firestore.
@@ -306,26 +303,22 @@ class UserRepository(
         onSuccess: () -> Unit,
         onFailure: (String?) -> Unit
     ) {
-        val user = auth.currentUser
-        if (user != null) {
-            try {
-                // 1. Elimina prima i dati da Firestore
-                FirestoreDeletionUtils.deleteUserDataFromFirestore(
-                    userId = user.uid,
-                    onSuccess = {}, // Ora gestito
-                    onFailure = { throw Exception("Firestore deletion failed: $it") }
-                )
+        val user = auth.currentUser ?: return onFailure("Utente non trovato")
 
-                // 2. Elimina l'account Auth SOLO dopo il successo di Firestore
-                // sta roba qui causava PERMISSION_DENIED col codice di Gemini..
-                user.delete().await()
+        try {
+            // Refresh token
+            user.reload().await()
+            user.getIdToken(true).await()
 
-                onSuccess()
-            } catch (e: Exception) {
-                onFailure("Errore eliminazione: ${e.message}")
-            }
-        } else {
-            onFailure("Utente non autenticato.")
+            // Elimina dati Firestore
+            FirestoreDeletionUtils.deleteUserDataFromFirestore(user.uid)
+
+            // Elimina utente Auth
+            user.delete().await()
+
+            onSuccess()
+        } catch (e: Exception) {
+            onFailure("Errore: ${e.message}")
         }
     }
 }

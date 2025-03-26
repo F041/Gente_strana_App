@@ -118,6 +118,7 @@ fun getLanguageName(context: Context, code: String): String {
             "jv" -> "Basa Jawa" // or "Javanese"
             "ha" -> "Hausa"
             else -> code
+
         }
     } else {
         code

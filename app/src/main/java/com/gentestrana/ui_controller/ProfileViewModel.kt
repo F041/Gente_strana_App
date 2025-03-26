@@ -25,6 +25,9 @@ import com.gentestrana.utils.saveByteArrayToTempFile
 import com.gentestrana.utils.uploadMultipleImages
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.stateIn
 import java.util.UUID
 
 
@@ -54,6 +57,16 @@ class ProfileViewModel : ViewModel() {
 
     private val _location = MutableStateFlow("")
     val location: StateFlow<String> = _location
+
+    // Stato per l'utente corrente
+    private val _userState = MutableStateFlow<User?>(null)
+    val userState: StateFlow<User?> = _userState.asStateFlow()
+    // Versione StateFlow "calda" per l'utente
+    val liveUserState: StateFlow<User?> = _userState.stateIn(
+        scope = viewModelScope,
+        started = SharingStarted.WhileSubscribed(5000), // Mantiene lo stato attivo per 5 secondi dopo l'ultima sottoscrizione
+        initialValue = null
+    )
 
 
     init {

@@ -14,6 +14,8 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Logout
+import androidx.compose.material.icons.filled.AccountCircle
+import androidx.compose.material.icons.filled.RemoveRedEye
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -29,6 +31,7 @@ import com.gentestrana.ui_controller.ProfileViewModel
 import com.gentestrana.users.User
 import com.gentestrana.components.DateOfBirthPicker
 import com.gentestrana.components.GenericLoadingScreen
+import com.gentestrana.components.PersonalProfilePreviewCard
 import com.gentestrana.components.ProfileBioBox
 import com.gentestrana.components.ProfileLanguagesField
 import com.gentestrana.components.ProfileLocationDisplay
@@ -147,10 +150,12 @@ fun PersonalProfileScreen(
                         ).show()
                         uploadLimitExceeded = false
                     }
+
                     result == "LIMIT_EXCEEDED" -> {
                         // Imposta lo stato per mostrare il messaggio con la clessidra
                         uploadLimitExceeded = true
                     }
+
                     result.isEmpty() -> {
                         Toast.makeText(
                             context, "❌",
@@ -158,6 +163,7 @@ fun PersonalProfileScreen(
                         ).show()
                         uploadLimitExceeded = false
                     }
+
                     else -> {
                         Toast.makeText(context, "👌", Toast.LENGTH_SHORT).show()
                         uploadLimitExceeded = false
@@ -173,11 +179,29 @@ fun PersonalProfileScreen(
         profileViewModel.loadUserData()
     }
 
+    val user by profileViewModel.userState.collectAsState()
+
     Scaffold(
         topBar = {
             TopAppBar(
                 title = { Text(stringResource(id = R.string.personal_profile)) },
                 actions = {
+                    IconButton(onClick = {
+                        val currentUserId = auth.currentUser?.uid
+                        if (currentUserId != null) {
+                            navController.navigate("userProfile/${currentUserId}")
+                        // Naviga a UserProfileScreen SBAGLIATO!
+                        } else {
+                            Toast.makeText(context, "Utente non loggato", Toast.LENGTH_SHORT).show()
+                        }
+                    }) {
+                        Icon(
+                            imageVector = Icons.Filled.RemoveRedEye,
+                            contentDescription = "Profilo (anteprima)",
+                            tint = MaterialTheme.colorScheme.primary,
+                        )
+                    }
+                    Spacer(modifier = Modifier.width(4.dp))
                     // Pulsante di logout
                     IconButton(onClick = {
                         auth.signOut()
@@ -319,6 +343,13 @@ fun PersonalProfileScreen(
                     horizontalAlignment = Alignment.CenterHorizontally, // Centra orizzontalmente
                     modifier = Modifier.padding(vertical = 8.dp) // Padding verticale
                 ) {
+                    user?.let {
+                        PersonalProfilePreviewCard(
+                            user = it,
+                            modifier = Modifier.padding(bottom = 16.dp) // Spazio sotto l'anteprima
+                        )
+                    }
+
                     GenericLoadingScreen(modifier = Modifier.size(24.dp)) // ProgressIndicator
                     Spacer(modifier = Modifier.height(4.dp))
                     Text(

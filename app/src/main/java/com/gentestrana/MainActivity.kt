@@ -19,6 +19,7 @@ import androidx.compose.runtime.CompositionLocalProvider
 import com.gentestrana.ui.theme.LocalAppTheme
 import com.gentestrana.utils.forceTokenRefreshIfNeeded
 import com.google.firebase.auth.FirebaseAuth
+import com.gentestrana.utils.updateUserLastActive
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -31,7 +32,6 @@ class MainActivity : ComponentActivity() {
 
         if (action == Intent.ACTION_VIEW && data != null) {
             // Se l'app è stata avviata tramite un Intent ACTION_VIEW (Deep Link)
-            Log.d("DeepLink", "Deep Link ricevuto: ${data.toString()}") // Log di debug
             if (data.scheme == "gentestrana" && data.host == "verifyemail") {
                 // È un deep link per la verifica email!
                 val token = data.getQueryParameter("token") // Estrai il token (se presente)
@@ -109,8 +109,15 @@ class MainActivity : ComponentActivity() {
         }
         forceTokenRefreshIfNeeded(this)
     }
+
+    override fun onUserInteraction() {
+        super.onUserInteraction()
+        updateUserLastActive()
+    }
+
     private fun isOnboardingCompleted(): Boolean {
         val sharedPreferences = getSharedPreferences("settings_prefs", Context.MODE_PRIVATE)
-        return sharedPreferences.getBoolean("onboarding_completed", false) // "false" è il valore di default (onboarding non completato)
+        return sharedPreferences.getBoolean("onboarding_completed", false)
+    // "false" è il valore di default (onboarding non completato)
     }
 }
