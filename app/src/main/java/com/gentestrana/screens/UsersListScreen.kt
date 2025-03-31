@@ -19,8 +19,10 @@ import com.gentestrana.components.FilterDialog
 import com.gentestrana.components.FilterState
 import com.gentestrana.components.FilterType
 import com.gentestrana.components.GenericLoadingScreen
+import com.gentestrana.ui.theme.LocalDimensions
 import com.gentestrana.ui_controller.UserListViewModel
 import com.gentestrana.users.UserProfileCard
+import com.gentestrana.utils.getCountryIsoFromName
 import com.gentestrana.utils.getLanguageName
 import com.google.firebase.auth.FirebaseAuth
 
@@ -36,13 +38,18 @@ fun UsersListScreen(navController: NavHostController) {
     var filterState by remember { mutableStateOf(FilterState()) }
     var showFilterDialog by remember { mutableStateOf(false) }
     val currentUserId = FirebaseAuth.getInstance().currentUser?.uid
+    val dimensions = LocalDimensions.current
 
     LaunchedEffect(Unit) {
         viewModel.loadUsers()
     }
 
     Scaffold { paddingValues ->
-        Column(modifier = Modifier.padding(paddingValues)) {
+        Column(modifier = Modifier
+            .padding(paddingValues)
+            .padding(dimensions.smallPadding) // medium non mi piace
+            // prima non avevo padding
+        ) {
             // Barra di ricerca con filtro
             CompactSearchBar(
                 query = filterState.searchQuery,
@@ -72,33 +79,41 @@ fun UsersListScreen(navController: NavHostController) {
             val filteredUsers by remember {
                 derivedStateOf {
                     users.filter { user ->
-                        if (currentUserId != null && user.docId == currentUserId) {
-                            return@filter false
-                        }
-                        when (filterState.filterType) {
-                            FilterType.ALL -> {
-                                if (filterState.searchQuery.length >= 2) {
-                                    val query = filterState.searchQuery.lowercase()
-                                    user.username.lowercase().contains(query) ||
-                                            user.topics.any { it.lowercase().contains(query) }
-                                } else true
-                            }
+                        // Condizione per escludere il profilo corrente
+                        if (currentUserId != null && user.docId == currentUserId) return@filter false
+
+                        // Condizione 1: query di ricerca (se presente, almeno 2 caratteri)
+                        val searchMatches = if (filterState.searchQuery.length >= 2) {
+                            val query = filterState.searchQuery.lowercase()
+                            user.username.lowercase().contains(query) ||
+                                    user.topics.any { it.lowercase().contains(query) }
+                        } else true
+
+                        // Condizione 2: filtro avanzato per lingua/locazione
+                        val filterMatches = when (filterState.filterType) {
+                            FilterType.ALL -> true
                             FilterType.LANGUAGE -> {
-                                // Se non è stata selezionata alcuna lingua, non filtrare per lingua.
+                                // Se il filtro per lingua è impostato, verifica la condizione
                                 if (filterState.selectedLanguage.isBlank()) true
                                 else user.spokenLanguages.any { langCode ->
-                                    val userLanguage = getLanguageName(context, langCode).trim().lowercase()
-                                    val selectedLanguage = filterState.selectedLanguage.trim().lowercase()
-                                    Log.d("DEBUG_LANGUAGE", "langCode: $langCode, getLanguageName: '$userLanguage', selected: '$selectedLanguage'")
-                                    userLanguage == selectedLanguage || langCode.trim().lowercase() == selectedLanguage
+                                    getLanguageName(context, langCode).trim().lowercase() ==
+                                            filterState.selectedLanguage.trim().lowercase()
                                 }
                             }
                             FilterType.LOCATION -> {
-                                user.location.equals(filterState.selectedLocation, ignoreCase = true)
+                                // Supponendo di aver normalizzato come descritto, oppure usando direttamente il confronto
+                                val userCountryIso = getCountryIsoFromName(user.location) ?: ""
+                                val filterCountryIso = getCountryIsoFromName(filterState.selectedLocation) ?: ""
+                                userCountryIso == filterCountryIso
                             }
                             else -> true
                         }
-                    }.sortedByDescending { it.lastActive?.toDate()?.time ?: 0L }
+
+                        // L'utente viene incluso se soddisfa entrambe le condizioni (AND)
+                        searchMatches && filterMatches
+
+
+                }.sortedByDescending { it.lastActive?.toDate()?.time ?: 0L }
                 }
             }
 

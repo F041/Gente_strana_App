@@ -147,7 +147,7 @@
 
     <string name="account_section">account</string>
     <string name="delete_account">delete account</string>
-    <string name="notifications_section">motifications</string>
+    <string name="notifications_section">notifications</string>
     <string name="push_notifications">push notifications</string>
     <string name="theme_section">theme</string>
     <string name="system_theme">system default</string>
@@ -157,6 +157,7 @@
     <string name="info_section">information</string>
     <string name="privacy_policy">privacy policy</string>
     <string name="terms_of_service">terms of service</string>
+    <string name="community_guidelines">community guidelines</string>
     <string name="app_version">app version</string>
 
     // Zone notifications
@@ -194,6 +195,11 @@
     <string name="reset">reset</string>
     <string name="apply">apply</string>">
     <string name="enter_location">insert country</string>">
+    <string name="notification_new_user_title">New arrival! 🎉</string>
+    <string name="notification_new_user_body">%1$s joined the community!</string>
+    <string name="default_notification_title">New message</string>
+    <string name="default_notification_body">You received a new notification</string>
+
 
 
     // Zone settings
@@ -211,6 +217,55 @@
     <string name="email_footer">If you have questions or want to know more about how to obtain a diagnosis, reply to this email or visit our website %s.</string>
     <string name="email_signature">Gabriele Giordano, of Quirky People</string>
     <string name="website_url">https://appgentestrana.wordpress.com</string>
+
+    <!-- ===== Terms of Service Strings ===== -->
+    <string name="tos_screen_title">Terms of Service</string>
+    <string name="tos_last_updated">Last Updated: March 28, 2025</string>
+    <string name="tos_introduction_header">Welcome to Quirky People!</string>
+    <string name="tos_introduction_text">These terms of service ("Terms") govern your use of the Quirky People mobile application ("App", "Service"), provided by <b>Gabriele Giordano</b> ("we", "us"). By using the App, you agree to these Terms, our Privacy Policy (<a href="https://appgentestrana.wordpress.com/trattamento-dati-personali/">available here</a>), and our Community Guidelines (accessible within the App\'s Settings screen). If you don\'t agree, please do not use the App.</string>
+    <string name="tos_eligibility_header">Who can use the app</string>
+    <!-- Google Play gestisce la distribuzione, ma devi impostare un requisito per il tuo servizio -->
+    <string name="tos_eligibility_text"> You must be at least 16 years old.\n Provide accurate registration info.\n The App is intended for neurodivergent individuals and those wishing to connect respectfully with the community.</string>
+    <string name="tos_account_header">Your account</string>
+    <string name="tos_account_text"> Keep your password secret and secure.\n You are responsible for all activity on your account.\n Report any unauthorized use immediately to: info.gestestrana@gmail.com</string>
+    <string name="tos_conduct_header">Your conduct and content</string>
+    <string name="tos_conduct_text"> Our goal is a safe and respectful space. You MUST follow our <b>Community Guidelines</b> (in Settings).\n Do not use the App for illegal activities, harassment, hate speech, spam, impersonation, or violating others\' privacy.</string>
+    <string name="tos_user_content_header">Your content, our license</string>
+    <string name="tos_user_content_text"> You own the content you post (profile text, photos, messages - "User Content").\n To operate the App (e.g., display your profile/messages), you grant us a worldwide, non-exclusive, royalty-free license to use, host, display, modify (like resizing images), and distribute your User Content *solely for providing and improving the Quirky People service*.\n You confirm you have the rights to post your User Content.</string>
+    <string name="tos_our_rights_header">Our rights</string>
+    <string name="tos_our_rights_text"> We may modify or stop the Service at any time.\n We may suspend or terminate your account for violating these Terms or the Community Guidelines.</string>
+    <string name="tos_disclaimer_header">Disclaimers and limits</string>
+    <string name="tos_disclaimer_text"><b>"AS IS" Service:</b> The App is provided "as is". We don\'t promise it will always be perfect, secure, or available.\n<b>Limited Liability:</b> To the maximum extent permitted by law, Gabriele Giordano is not liable for any damages arising from your use of the App or interactions with other users.</string>
+    <string name="tos_app_ip_header">App ownership</string>
+    <string name="tos_app_ip_text">The App, its design, the "Quirky People" name and logo belong to us. The open-source code is available under the MIT License.</string> <!-- Riferimento alla MIT -->
+    <string name="tos_privacy_header">Privacy</string>
+    <string name="tos_privacy_text">Our <a href="https://appgentestrana.wordpress.com/trattamento-dati-personali/">Privacy Policy</a> explains how we handle your data. Using the App means you agree to it.</string>
+    <string name="tos_changes_header">Changes to terms</string>
+    <string name="tos_changes_text">We may update these Terms. We\'ll try to notify you of significant changes. Continued use after changes means you accept them.</string>
+    <string name="tos_termination_header">Ending this agreement</string>
+    <string name="tos_termination_text">You can delete your account anytime in Settings. We may terminate your account if you violate these Terms or the Guidelines.</string>
+    <string name="tos_law_header">Governing law and disputes</string>
+    <string name="tos_law_text">These Terms are governed by Italian law. We hope to resolve any disputes amicably, but otherwise, they will be handled exclusively in the courts of Busto Arsizio (VA), Italy. <b>(Seek legal advice for this section!)</b></string>
+    <string name="tos_contact_header">Contact us</string>
+    <string name="tos_contact_text">Questions? Email us at: info.gestestrana@gmail.com</string>
+    <!-- ===== Fine Terms of Service Strings ===== -->
+
+    <!-- Stringhe per CommunityGuidelinesScreen -->
+    <string name="guidelines_intro_title">Our common goal</string>
+    <string name="guidelines_intro_text">We want Quirky People to be a safe, welcoming, and supportive place where neurodivergent people can connect. To help us keep this space positive, we ask you to keep these guidelines in mind.</string>
+    <string name="guidelines_respect_title">Respect and empathy</string>
+    <string name="guidelines_respect_text"> Be kind and respectful to everyone. Remember that everyone has different experiences and sensitivities.\n• Try to understand others\' points of view, even if you don\'t agree. Assume good intentions.\n• Be aware that communication styles can vary greatly. Be patient and ask for clarification if something is unclear, without judgment.\n• Avoid generalizations about neurodiversity or groups of people.</string>
+    <string name="guidelines_communication_title">Clear and mindful communication (Marshall Rosenberg)</string>
+    <string name="guidelines_communication_text"> Express your thoughts, feelings, and needs clearly and respectfully. Using \"I feel...\" or \"I need...\" statements can help.\n• Respect others\' boundaries. If someone expresses a limit or asks for space, please respect it.\n• It\'s okay to need time to respond to messages. Don\'t pressure others for an immediate reply and feel free to take your time.</string>
+    <string name="guidelines_disagreements_title">Handling disagreements</string>
+    <string name="guidelines_disagreements_text"> It\'s normal to have different opinions. Focus on mutual understanding rather than \"winning\" an argument.\n• Express disagreement constructively, without personal attacks, insults, or invalidating others\' experiences.\n• If a conversation becomes too difficult or stressful, it\'s okay to take a break or respectfully withdraw.</string>
+    <string name="guidelines_not_accepted_title">What is not accepted</string>
+    <string name="guidelines_not_accepted_text"> Harassment, bullying, hate speech, discrimination of any kind.\n• Spam or excessive promotion.\n• Illegal content, unsolicited explicit content, or inappropriate content.\n• Sharing others\' private information without consent.</string>
+    <string name="guidelines_reporting_title">Reporting and moderation</string>
+    <string name="guidelines_reporting_text"> Use the \"Report User\" feature if you see behavior that violates these guidelines. Reports help us keep the community safe.\n• We review reports and take appropriate action, which may include warnings or removal from the app.</string>
+    <string name="guidelines_selfcare_title">Take care of yourself</string>
+    <string name="guidelines_selfcare_text"> Remember to take breaks if you need them.\n Manage your notifications and time on the app so it remains a positive experience for you.</string>
+    <string name="guidelines_closing_text">Thank you for helping make Quirky People a special place!</string>
 
     <!-- Sostituisci "your_client_id_here" con il valore client ID ottenuto dalla console Firebase -->
     <string name="default_web_client_id">

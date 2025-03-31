@@ -25,6 +25,9 @@ import com.gentestrana.users.User
 import com.gentestrana.utils.computeAgeFromTimestamp
 import com.gentestrana.utils.getFlagEmoji
 import com.gentestrana.utils.getLanguageName
+import coil.request.ImageRequest
+
+private const val DEFAULT_PROFILE_IMAGE_URL = "https://icons.veryicon.com/png/o/system/ali-mom-icon-library/random-user.png"
 
 @Composable
 fun ProfileContent(
@@ -36,6 +39,7 @@ fun ProfileContent(
     onStartChat: () -> Unit,
     showChatButton: Boolean
 ) {
+    val context = LocalContext.current
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -74,8 +78,22 @@ fun ProfileContent(
                 },
             contentAlignment = Alignment.Center
         ) {
+            val imageUrlToLoad: String = if (user.profilePicUrl.isEmpty()) {
+                DEFAULT_PROFILE_IMAGE_URL // Usa default se la lista è vuota
+            } else {
+                // Se non è vuota, prendi la prima (non serve thumbnail qui, è già piccola)
+                user.profilePicUrl.first()
+            }
+
             Image(
-                painter = rememberAsyncImagePainter(user.profilePicUrl.firstOrNull()), // Prendi la prima immagine per ora
+                painter = rememberAsyncImagePainter(
+                    ImageRequest.Builder(context)
+                        .data(imageUrlToLoad)
+                        .placeholder(R.drawable.random_user)
+                        .error(R.drawable.random_user)
+                        .crossfade(true)
+                        .build()
+                ),
                 contentDescription = "Profile Picture",
                 modifier = Modifier.fillMaxSize(),
                 contentScale = ContentScale.Crop
@@ -111,7 +129,8 @@ fun ProfileContent(
                 style = MaterialTheme.typography.titleMedium,
                 modifier = Modifier.padding(vertical = 8.dp)
             )
-            val context = LocalContext.current
+
+
             user.spokenLanguages.forEach { code ->
                 Row(
                     verticalAlignment = Alignment.CenterVertically,

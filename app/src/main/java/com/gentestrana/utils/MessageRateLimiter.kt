@@ -9,7 +9,7 @@ import java.util.concurrent.ConcurrentHashMap
 object MessageRateLimiter {
     private val userMessageTimestamps = ConcurrentHashMap<String, MutableList<Long>>()
     private const val TIME_WINDOW = 50 * 1000L  // 5 secondi
-    private const val MAX_MESSAGES = 3          // massimo 3 messaggi per finestra
+    private const val MAX_MESSAGES = 4          // massimo 4 messaggi per finestra
 
     fun canSendMessage(userId: String): Boolean {
         val now = System.currentTimeMillis()

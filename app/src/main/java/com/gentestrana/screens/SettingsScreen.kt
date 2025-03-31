@@ -212,11 +212,22 @@ fun SettingsScreen(
             )
             HorizontalDivider()
             ListItem(
-                headlineContent = { Text(stringResource(R.string.privacy_policy)) } // Usa string resource
+                headlineContent = { Text(stringResource(R.string.privacy_policy)) }
             )
             ListItem(
-                headlineContent = { Text(stringResource(R.string.terms_of_service)) }
+                headlineContent = { Text(stringResource(R.string.terms_of_service)) },
+                modifier = Modifier.clickable {
+                    navController.navigate("termsOfService")
+                }
             )
+
+            ListItem(
+                headlineContent = { Text(stringResource(R.string.community_guidelines)) }, // Usa la stringa aggiunta prima
+                modifier = Modifier.clickable {
+                    navController.navigate("communityGuidelines")
+                }
+            )
+
             ListItem(
                 headlineContent = { Text(stringResource(R.string.app_version)) },
                 trailingContent = { Text("1.0") }
@@ -228,7 +239,6 @@ fun SettingsScreen(
                     .clip(RoundedCornerShape(16.dp))
                     .border(2.dp, MaterialTheme.colorScheme.error, RoundedCornerShape(22.dp)),
                 // i .dp differiscono, non proprio elegante
-                // Bordo rosso DIRETTO sull'AlertDialog
                 onDismissRequest = { showDeleteConfirmationDialog = false },
                 title = {
                     Text(
@@ -256,7 +266,6 @@ fun SettingsScreen(
 
                                         // 3. Logout da Firebase
                                         auth.signOut()
-
 
                                         // 4. Pulisci dati locali (se hai una funzione clearUserData)
 

@@ -14,6 +14,8 @@ import android.provider.MediaStore
 import java.io.ByteArrayOutputStream
 import java.io.File
 import androidx.core.content.FileProvider
+import java.net.URLDecoder
+import java.net.URLEncoder
 import java.util.concurrent.ConcurrentHashMap
 
 
@@ -72,6 +74,82 @@ fun uploadMainProfileImage(
             Log.e("ImageUpload", "Errore nel caricamento dell'immagine: ${e.message}")
             onComplete("")  // Notifica il fallimento
         }
+}
+
+/**
+ * Costruisce l'URL di una miniatura ridimensionata dall'URL originale.
+ * Si aspetta che le miniature siano in una cartella "_resized"
+ * e abbiano un suffisso tipo "_200x200" prima dell'estensione.
+ *
+ * @param originalUrl L'URL completo dell'immagine originale su Firebase Storage.
+ * @param size Il suffisso della dimensione (es. "200x200").
+ * @return L'URL della miniatura o null se l'URL originale non è valido o la costruzione fallisce.
+ */
+fun getThumbnailUrl(originalUrl: String?, size: String = "200x200"): String? {
+    if (originalUrl.isNullOrBlank() || !originalUrl.contains("/users%2F")) {
+        // Se l'URL è nullo, vuoto o non sembra un URL di storage valido per le gallerie utente
+        return originalUrl // Restituisci l'originale (o null se era null)
+    }
+
+    return try {
+        // 1. Decodifica l'URL per lavorare con i path normali
+        val decodedUrl = URLDecoder.decode(originalUrl, "UTF-8")
+
+        // 2. Trova l'ultima occorrenza di "/" per separare percorso e nome file
+        val lastSlashIndex = decodedUrl.lastIndexOf('/')
+        if (lastSlashIndex == -1 || lastSlashIndex == decodedUrl.length - 1) {
+            return originalUrl // Non c'è nome file? Restituisci originale
+        }
+        val filePath = decodedUrl.substring(0, lastSlashIndex)
+        val fullFileName = decodedUrl.substring(lastSlashIndex + 1)
+
+        // 3. Trova l'ultima occorrenza di "." per separare nome e estensione
+        val lastDotIndex = fullFileName.lastIndexOf('.')
+        val fileName = if (lastDotIndex != -1) fullFileName.substring(0, lastDotIndex) else fullFileName
+        val extension = if (lastDotIndex != -1) fullFileName.substring(lastDotIndex) else "" // include il "."
+
+        // 4. Modifica il percorso inserendo "_resized" prima del nome file
+        // Assumiamo che il percorso originale sia tipo ".../gallery/nomefile.ext"
+        // e vogliamo ".../gallery_resized/nomefile_sizexsize.ext"
+        val resizedFilePath = filePath.replace("/gallery", "/gallery_resized", ignoreCase = true)
+
+        // 5. Costruisci il nuovo nome file con il suffisso della dimensione
+        val resizedFileName = "${fileName}_${size}${extension}"
+
+        // 6. Ricodifica le parti del percorso e nome file separatamente per sicurezza
+        //    (Anche se gli hash MD5 non dovrebbero contenere caratteri speciali, è più robusto)
+        //    Prima dividiamo il percorso in segmenti
+        val pathSegments = resizedFilePath.split('/')
+        val encodedPathSegments = pathSegments.map { URLEncoder.encode(it, "UTF-8") }
+        //    Ricostruiamo il percorso codificato, gestendo gli slash iniziali/doppi
+        val encodedResizedPath = encodedPathSegments.joinToString("/")
+            .replace("%2F", "/") // Assicura che gli slash rimangano slash
+            .replace("//", "/") // Evita slash doppi
+
+        val encodedResizedFileName = URLEncoder.encode(resizedFileName, "UTF-8")
+
+        // 7. Ricostruisci l'URL completo, trovando la parte base prima di "/users%2F"
+        val baseUrlEndIndex = originalUrl.indexOf("/users%2F")
+        if (baseUrlEndIndex == -1) return originalUrl // Se non troviamo "/users%2F", qualcosa è strano
+
+        val baseUrl = originalUrl.substring(0, baseUrlEndIndex)
+
+        // 8. Combina base URL, percorso codificato e nome file codificato
+        //    Assicurati che ci sia uno e un solo slash tra base e percorso
+        val finalThumbnailUrl = "${baseUrl.removeSuffix("/")}/${encodedResizedPath.removePrefix("/")}/${encodedResizedFileName}"
+
+        // 9. Recupera eventuali token dall'URL originale
+        val tokenPart = originalUrl.substringAfter("?", "")
+        if (tokenPart.isNotEmpty()) {
+            "$finalThumbnailUrl?$tokenPart"
+        } else {
+            finalThumbnailUrl
+        }
+
+    } catch (e: Exception) {
+        Log.e("getThumbnailUrl", "Errore costruzione URL thumbnail per: $originalUrl", e)
+        originalUrl // In caso di errore, restituisci l'URL originale
+    }
 }
 
 // TODO: TITOLO AMBIGUO!
@@ -268,4 +346,5 @@ object UploadRateLimiter {
             false
         }
     }
+
 }

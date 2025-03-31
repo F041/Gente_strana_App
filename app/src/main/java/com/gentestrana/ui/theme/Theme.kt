@@ -13,6 +13,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import com.gentestrana.screens.AppTheme
 import androidx.compose.runtime.staticCompositionLocalOf
+import androidx.compose.ui.platform.LocalConfiguration
 
 private val NeuroDarkColorScheme = darkColorScheme(
     primary = NeuroAccent,
@@ -53,36 +54,46 @@ val LocalAppTheme = staticCompositionLocalOf<AppTheme> {
     // Nota: potremmo anche usare AppTheme.SYSTEM come default "sicuro"
 }
 
-// GenteStranaTheme ora accetta appTheme: AppTheme**
 @Composable
 fun GenteStranaTheme(
     appTheme: AppTheme, // Manteniamo il parametro appTheme (per ora)
     dynamicColor: Boolean = true,
     content: @Composable () -> Unit
 ) {
-    // Fornisci il tema corrente a LocalAppTheme usando CompositionLocalProvider**
+    // Fornisci il tema corrente a LocalAppTheme
     CompositionLocalProvider(
-        LocalAppTheme provides appTheme // Fornisce il valore di appTheme a LocalAppTheme
+        LocalAppTheme provides appTheme
     ) {
-        // **MODIFICATO: colorScheme ora LEGGE il tema da LocalAppTheme**
-        val colorScheme = when (LocalAppTheme.current) { // Usa LocalAppTheme.current per leggere il tema
+        // Calcola il colorScheme in base a LocalAppTheme.current
+        val colorScheme = when (LocalAppTheme.current) {
             AppTheme.SYSTEM -> {
                 if (dynamicColor && Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
                     val context = LocalContext.current
-                    if (isSystemInDarkTheme()) dynamicDarkColorScheme(context) else dynamicLightColorScheme(context)
+                    if (isSystemInDarkTheme()) dynamicDarkColorScheme(context)
+                    else dynamicLightColorScheme(context)
                 } else {
                     if (isSystemInDarkTheme()) NeuroDarkColorScheme else NeuroLightColorScheme
                 }
             }
             AppTheme.LIGHT -> NeuroLightColorScheme
             AppTheme.DARK -> NeuroDarkColorScheme
-            // AppTheme.SPECIAL -> TODO: Define NeuroSpecialColorScheme (se lo implementeremo)
+            // AppTheme.SPECIAL -> TODO: Define NeuroSpecialColorScheme
         }
 
-        MaterialTheme(
-            colorScheme = colorScheme,
-            typography = Typography,
-            content = content
-        )
+        // Recupera la configurazione del dispositivo
+        val configuration = LocalConfiguration.current
+        // Se lo schermo ha una larghezza maggiore o uguale a 600dp, consideriamo il dispositivo come tablet
+        val dimensions = if (configuration.screenWidthDp >= 600) TabletDimensions else MobileDimensions
+
+        // Fornisci anche le dimensioni dinamiche tramite LocalDimensions
+        CompositionLocalProvider(
+            LocalDimensions provides dimensions
+        ) {
+            MaterialTheme(
+                colorScheme = colorScheme,
+                typography = Typography,
+                content = content
+            )
+        }
     }
 }

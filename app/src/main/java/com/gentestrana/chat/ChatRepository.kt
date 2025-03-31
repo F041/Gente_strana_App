@@ -48,7 +48,8 @@ class ChatRepository(
         // Otherwise, create a new chat
         val chatData = hashMapOf(
             "participants" to listOf(currentUserId, user.docId),
-            "createdAt" to FieldValue.serverTimestamp()
+            "createdAt" to FieldValue.serverTimestamp(),
+            "hasMessages" to false
         )
 
         val documentRef = db.collection("chats").add(chatData).await()
@@ -244,6 +245,23 @@ class ChatRepository(
             throw Exception("Daily message limit exceeded. Please try again tomorrow.")
         }
         try {
+            // 1. Riferimento al documento chat principale
+            val chatDocRef = db.collection("chats").document(chatId)
+
+            // 2. Controlla e aggiorna il flag (se necessario)
+            //    Usiamo una transazione per sicurezza, anche se un semplice get+update
+            //    potrebbe bastare data la logica (lo impostiamo solo da false a true).
+            //    Un get+update è più semplice:
+            val chatDocSnapshot = chatDocRef.get().await()
+            val currentlyHasMessages = chatDocSnapshot.getBoolean("hasMessages") ?: false // Default a false se non esiste
+
+            if (!currentlyHasMessages) {
+                // Se hasMessages è false, aggiornalo a true
+                chatDocRef.update("hasMessages", true).await()
+                Log.d("ChatRepository", "Flag 'hasMessages' impostato a true per chat $chatId")
+            }
+
+            // 3. Procedi con l'invio del messaggio (codice esistente)
             val sanitizedMessage = sanitizeInput(removeSpaces(message))
             Log.d("ChatRepository", "Invio messaggio: '$sanitizedMessage'")
             val messageData = hashMapOf(
@@ -252,17 +270,14 @@ class ChatRepository(
                 "timestamp" to Timestamp.now(),
                 "status" to "SENT"
             )
-            db.collection("chats")
-                .document(chatId)
-                .collection("messages")
+            chatDocRef.collection("messages")
                 .add(messageData)
                 .await()
 
-            // Incrementa il contatore giornaliero se l'invio è andato a buon fine
             MessageDailyLimitManager.incrementCount(context, sender)
         } catch (e: Exception) {
-            Log.e("ChatRepository", "Errore durante l'invio del messaggio", e)
-            throw e
+            Log.e("ChatRepository", "Errore durante l'invio del messaggio o aggiornamento flag", e)
+            throw e // Rilancia l'eccezione
         }
     }
 

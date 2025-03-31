@@ -24,13 +24,10 @@ import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.gentestrana.R
+import com.gentestrana.ui.theme.LocalDimensions
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-// TODO: possiamo farla scomparire se l'utente scrolla?
-// TODO: se faccio una ricerca e clicco sul primo user card e torno indietro
-//  il testo della ricerca scompare. Come salvarlo?
-
 fun CompactSearchBar(
     query: String,
     onQueryChanged: (String) -> Unit,
@@ -40,6 +37,9 @@ fun CompactSearchBar(
     val configuration = LocalConfiguration.current
     val screenHeight = configuration.screenHeightDp.dp
     val desiredHeight = screenHeight * 0.07f
+
+    // Recupera le dimensioni dinamiche dal tema
+    val dimensions = LocalDimensions.current
 
     // 2) Definire un shape unico (bordo e contenitore)
     val roundedShape = RoundedCornerShape(8.dp)
@@ -75,11 +75,10 @@ fun CompactSearchBar(
             )
         },
         textStyle = MaterialTheme.typography.bodySmall,
-        // font settings ricerca, altrimenti non si comporta
-        // come placeholder
         modifier = Modifier
             .fillMaxWidth()
-            .padding(horizontal = 16.dp, vertical = 6.dp)
+            // Utilizza le dimensioni dinamiche per il padding
+            .padding(horizontal = dimensions.mediumPadding, vertical = dimensions.smallPadding)
             .height(desiredHeight)
             .clip(roundedShape)
             .border(1.dp, MaterialTheme.colorScheme.outlineVariant, roundedShape),

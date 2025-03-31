@@ -14,7 +14,6 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Logout
-import androidx.compose.material.icons.filled.AccountCircle
 import androidx.compose.material.icons.filled.RemoveRedEye
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -76,7 +75,7 @@ fun PersonalProfileScreen(
     val topicsText by profileViewModel.topicsText.collectAsState()
     val profilePicUrl by profileViewModel.profilePicUrl.collectAsState()
 
-    var birthTimestamp by remember { mutableStateOf(0L) }
+    var birthTimestamp by remember { mutableLongStateOf(0L) }
     val topicsList = profileViewModel.topicsText.collectAsState().value
         .split(",") // Divide la stringa in base alla virgola
         .map { it.trim() } // Rimuove spazi extra
@@ -229,7 +228,7 @@ fun PersonalProfileScreen(
         ) {
 
             // Zona gallery immagini profilo
-            Box() {
+            Box {
                 key(profilePicUrl) {
                     ReorderableProfileImageGridWithAdd(
                         images = profilePicUrl,

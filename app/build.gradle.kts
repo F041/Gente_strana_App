@@ -32,7 +32,7 @@ android {
         applicationId = "com.gentestrana"
         minSdk = 24
         targetSdk = 35
-        versionCode = 1
+        versionCode = 7
         versionName = "1.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
@@ -109,6 +109,8 @@ dependencies {
     implementation("com.google.firebase:firebase-analytics")
     implementation("io.coil-kt:coil-compose:2.4.0")
     implementation("androidx.navigation:navigation-compose:2.7.5")
+
+    implementation ("com.android.billingclient:billing-ktx:6.0.1")
 
     testImplementation ("org.mockito:mockito-core:5.3.1")  // Per creare oggetti "finti" (mock)
     testImplementation ("org.mockito.kotlin:mockito-kotlin:4.1.0") // Estensioni Kotlin per Mockito

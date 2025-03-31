@@ -37,6 +37,11 @@ import androidx.compose.ui.unit.dp
 import coil.compose.rememberAsyncImagePainter
 import com.gentestrana.R
 import kotlin.math.roundToInt
+import coil.request.ImageRequest
+import androidx.compose.ui.platform.LocalContext
+
+private const val DEFAULT_PROFILE_IMAGE_URL = "https://icons.veryicon.com/png/o/system/ali-mom-icon-library/random-user.png"
+
 
 /**
  * Raggruppa una lista in righe da [count] elementi.
@@ -68,6 +73,7 @@ fun ReorderableProfileImageGridWithAdd(
 ) {
     // Mantieni una copia mutabile delle immagini
     var imageList by remember { mutableStateOf(images.toMutableList()) }
+    val context = LocalContext.current
 
     // Aggiorna imageList quando "images" cambia da fuori
     LaunchedEffect(images) {
@@ -122,7 +128,7 @@ fun ReorderableProfileImageGridWithAdd(
 
         // Converte (row,col) in un indice di displayList
         val newIndex = (newRow * 3) + newCol
-        return newIndex.coerceAtMost(displayList.size - 1)
+        return newIndex.coerceAtMost(imageList.size - 1)
     }
 
     // Layout a colonna statica con altezza pari a gridHeight
@@ -194,17 +200,22 @@ fun ReorderableProfileImageGridWithAdd(
                                             }
                                         },
                                         onDrag = { change, dragAmount ->
-                                            change.consume() // Consuma l'evento
-                                            dragOffset += dragAmount
+                                            change.consume()
+                                            // Solo se stiamo effettivamente trascinando questo item
+                                            if (draggingIndex == flatIndex) {
+                                                dragOffset += dragAmount
+                                            }
                                         },
                                         onDragEnd = {
                                             // Calcola la nuova posizione
                                             draggingIndex?.let { originalIndex ->
                                                 val targetIndex = calculateNewIndex(originalIndex, dragOffset)
+                                                    .coerceIn(0, imageList.size -1)
                                                 if (targetIndex != originalIndex) {
                                                     val mutable = imageList.toMutableList()
                                                     val draggedItem = mutable.removeAt(originalIndex)
-                                                    mutable.add(targetIndex, draggedItem)
+                                                    val finalTargetIndex = targetIndex.coerceAtMost(mutable.size)
+                                                    mutable.add(finalTargetIndex, draggedItem)
                                                     imageList = mutable
                                                     onImageOrderChanged(mutable)
                                                 }
@@ -223,7 +234,14 @@ fun ReorderableProfileImageGridWithAdd(
                         ) {
                             // Immagine
                             Image(
-                                painter = rememberAsyncImagePainter(item),
+                                painter = rememberAsyncImagePainter(
+                                    ImageRequest.Builder(context)
+                                        .data(item) // Usa direttamente l'URL dell'item
+                                        .placeholder(R.drawable.random_user)
+                                        .error(R.drawable.random_user) // Fallback locale
+                                        .crossfade(true)
+                                        .build()
+                                ),
                                 contentDescription = "Profile Image $flatIndex",
                                 modifier = Modifier.fillMaxSize(),
                                 contentScale = ContentScale.Crop
@@ -233,10 +251,14 @@ fun ReorderableProfileImageGridWithAdd(
                                 onClick = {
                                     val mutable = imageList.toMutableList()
                                     Log.d("DeleteImage", "Elimina immagine CLICKED, flatIndex: $flatIndex, listSize: ${mutable.size}")
-                                    mutable.removeAt(flatIndex)
-                                    imageList = mutable
-                                    onImageOrderChanged(mutable)
-                                    onDeleteImage(item)
+                                    if(flatIndex >= 0 && flatIndex < mutable.size) { // Aggiungi controllo indice
+                                        val removedItem = mutable.removeAt(flatIndex) // Prendi l'item rimosso
+                                        imageList = mutable
+                                        onImageOrderChanged(mutable) // Notifica il nuovo ordine
+                                        onDeleteImage(removedItem) // Notifica l'URL cancellato
+                                    } else {
+                                        Log.e("DeleteImage", "Indice non valido per la cancellazione: $flatIndex, size: ${mutable.size}")
+                                    }
                                 },
                                 modifier = Modifier
                                     .align(Alignment.TopEnd)

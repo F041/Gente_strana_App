@@ -32,8 +32,8 @@ data class User(
     val username: String = "",
     val bio: String = "",
     val topics: List<String> = emptyList(),
-    @PropertyName("profilePicUrl")
-    val profilePicUrl: List<String> = listOf("res/drawable/random_user.webp"), // Sempre una lista
+     @PropertyName("profilePicUrl")
+     val profilePicUrl: List<String> = emptyList(),
      @PropertyName("rawBirthTimestamp")
      val rawBirthTimestamp: Any? = null,
     val sex: String = "Undefined", // Campo per il sesso: "M", "F" o "Undefined"

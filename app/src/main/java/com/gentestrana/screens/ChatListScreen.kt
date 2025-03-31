@@ -12,6 +12,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import com.gentestrana.components.ChatList
 import com.gentestrana.ui_controller.ChatListViewModel
+import com.gentestrana.ui.theme.LocalDimensions
 import com.gentestrana.R
 // lasciamo che n'si sa mai
 
@@ -23,6 +24,7 @@ fun ChatListScreen(
 // Utilizza viewModel() invece di hiltViewModel()
 // hiltViewModel() dava problemi, non la prima volta...
 ) {
+    val dimensions = LocalDimensions.current
     // Osserva lo stato delle chat dal ViewModel
     val chats by viewModel.chats.collectAsState()
 
@@ -36,6 +38,7 @@ fun ChatListScreen(
                 modifier = Modifier
                     .fillMaxSize()
                     .padding(paddingValues)
+                    .padding(dimensions.smallPadding)
             ) {
                 ChatList(chats = chats, onChatClick = { chat ->
                     navController.navigate("chat/${chat.id}")

@@ -166,7 +166,9 @@
     <string name="info_section">informazioni</string>
     <string name="privacy_policy">privacy policy</string>
     <string name="terms_of_service">termini di servizio</string>
+    <string name="community_guidelines">linee guida della comunità</string>
     <string name="app_version">versione app</string>
+
 
     // Zona notifiche
     <string name="notification_channel_id">gentestrana_messages</string> <string name="notification_channel_name">Messaggi</string>
@@ -200,7 +202,10 @@
     <string name="reset">resetta</string>
     <string name="apply">applica</string>">
     <string name="enter_location">inserisci paese</string>">
-
+    <string name="notification_new_user_title">Nuovo arrivo! 🎉</string>
+    <string name="notification_new_user_body">%1$s si è unito alla comunità!</string>
+    <string name="default_notification_title">Nuovo messaggio</string>
+    <string name="default_notification_body">Hai ricevuto una nuova notifica</string>
 
     // Zona impostazioni
     <string name="delete_account_confirmation_title">conferma eliminazione account</string>
@@ -216,6 +221,56 @@
     <string name="email_footer">Se hai domande o vuoi saperne di più su come ottenere una diagnosi, rispondi a questa email o visita il nostro sito %s.</string>
     <string name="email_signature">Gabriele Giordano, di Gente Strana</string>
     <string name="website_url">https://appgentestrana.wordpress.com</string>
+
+    <!-- ===== Stringhe Termini di Servizio (Italiano) ===== -->
+    <string name="tos_screen_title">Termini di servizio</string>
+    <string name="tos_last_updated">Ultimo Aggiornamento: 28 Marzo 2025</string> <!-- Modifica con la data reale -->
+    <string name="tos_introduction_header">Benvenuto/a in Gente Strana!</string>
+    <string name="tos_introduction_text">Questi termini di servizio ("Termini") regolano il tuo utilizzo dell\'applicazione mobile Gente Strana ("App", "Servizio"), fornita da <b>Gabriele Giordano</b> ("noi"). Utilizzando l\'App, accetti questi Termini, la nostra Informativa sulla Privacy (https://appgentestrana.wordpress.com/trattamento-dati-personali/) e le nostre Linee Guida della Community (accessibili dalla schermata Impostazioni dell\'App). Se non sei d\'accordo con uno qualsiasi di questi documenti, ti preghiamo di non utilizzare l\'App.</string>
+    <string name="tos_eligibility_header">Chi può usare l\'App</string>
+    <string name="tos_eligibility_text">• Devi avere almeno 16 anni.\n• Fornisci informazioni di registrazione accurate e mantienile aggiornate.\n• L\'App è destinata a persone neurodivergenti e a coloro che desiderano connettersi rispettosamente con la community.</string>
+    <string name="tos_account_header">Il Tuo Account</string>
+    <string name="tos_account_text">• Mantieni la tua password segreta e al sicuro.\n• Sei responsabile per tutte le attività svolte tramite il tuo account.\n• Segnalaci immediatamente qualsiasi uso non autorizzato a: info.gestestrana@gmail.com</string>
+    <string name="tos_conduct_header">La tua condotta e i tuoi Contenuti</string>
+    <string name="tos_conduct_text">• Il nostro obiettivo è uno spazio sicuro e rispettoso. DEVI seguire le nostre <b>Linee Guida della Community</b> (in Impostazioni).\n• Non usare l\'App per attività illegali, molestie, linguaggio d\'odio, spam, impersonificazione o per violare la privacy altrui.</string>
+    <string name="tos_user_content_header">I tuoi contenuti, la nostra licenza</string>
+    <string name="tos_user_content_text">• I contenuti che pubblichi (testo profilo, foto, messaggi - "Contenuti Utente") rimangono tuoi.\n• Per permetterci di far funzionare l\'App (es. mostrare il tuo profilo/messaggi), ci concedi una licenza mondiale, non esclusiva e gratuita per utilizzare, ospitare, mostrare, modificare (es. ridimensionare immagini) e distribuire i tuoi Contenuti Utente *unicamente allo scopo di fornire e migliorare il servizio Gente Strana*.\n• Confermi di avere i diritti necessari per pubblicare i tuoi Contenuti Utente.</string>
+    <string name="tos_our_rights_header">I nostri diritti</string>
+    <string name="tos_our_rights_text">• Possiamo modificare o interrompere il Servizio in qualsiasi momento.\n• Possiamo sospendere o chiudere il tuo account se violi questi Termini o le Linee Guida.</string>
+    <string name="tos_disclaimer_header">Esclusioni e limiti</string>
+    <string name="tos_disclaimer_text"><b>Servizio "COSÌ COM'È":</b> L\'App è fornita "così com'è". Non garantiamo che sarà sempre perfetta, sicura o disponibile.\n<b>Responsabilità Limitata:</b> Nei limiti massimi consentiti dalla legge, Gabriele Giordano non è responsabile per danni derivanti dal tuo uso dell\'App o dalle interazioni con altri utenti. <b>(Consulenza legale fortemente raccomandata qui!)</b></string>
+    <string name="tos_app_ip_header">Proprietà dell\'App</string>
+    <string name="tos_app_ip_text">L\'App, il suo design, il nome e logo "Gente Strana" sono di nostra proprietà. Il codice sorgente open-source è disponibile sotto Licenza MIT.</string> <!-- Riferimento alla MIT -->
+    <string name="tos_privacy_header">Privacy</string>
+    <string name="tos_privacy_text">La nostra <a href="https://appgentestrana.wordpress.com/trattamento-dati-personali/">Informativa sulla Privacy</a> spiega come trattiamo i tuoi dati. Usando l\'App, la accetti.</string>
+    <string name="tos_changes_header">Modifiche ai termini</string>
+    <string name="tos_changes_text">Potremmo aggiornare questi Termini. Cercheremo di notificarti le modifiche importanti. L\'uso continuato dopo le modifiche implica l\'accettazione.</string>
+    <string name="tos_termination_header">Cessazione dell\'accordo</string>
+    <string name="tos_termination_text">Puoi cancellare il tuo account in qualsiasi momento dalle Impostazioni. Possiamo chiudere il tuo account se violi i Termini o le Linee Guida.</string>
+    <string name="tos_law_header">Legge applicabile e controversie</string>
+    <string name="tos_law_text">Questi termini sono regolati dalla legge italiana. Speriamo di risolvere amichevolmente eventuali dispute, altrimenti la competenza esclusiva sarà del foro di Busto Arsizio (VA), Italia.</string>
+    <string name="tos_contact_header">Contatti</string>
+    <string name="tos_contact_text">Domande? Scrivici a: info.gestestrana@gmail.com</string>
+
+    <!-- ===== Fine Stringhe Termini di Servizio ===== -->
+
+    <!-- Stringhe per CommunityGuidelinesScreen -->
+    <string name="guidelines_intro_title">Il nostro obiettivo comune</string>
+    <string name="guidelines_intro_text">Vogliamo che Gente Strana sia un luogo sicuro, accogliente e di supporto dove persone neurodivergenti possano connettersi. Per aiutarci a mantenere questo spazio positivo, ti chiediamo di tenere a mente queste linee guida.</string>
+    <string name="guidelines_respect_title">Rispetto ed empatia</string>
+    <string name="guidelines_respect_text">• Sii gentile e rispettoso/a con tutti. Ricorda che ognuno ha esperienze e sensibilità diverse.\n• Cerca di capire il punto di vista altrui, anche se non sei d\'accordo. Presumi buone intenzioni.\n• Sii consapevole che gli stili comunicativi possono variare molto. Sii paziente e chiedi chiarimenti se qualcosa non ti è chiaro, senza giudicare.\n• Evita generalizzazioni sulla neurodivergenza o su gruppi di persone.</string>
+    <string name="guidelines_communication_title">Comunicazione chiara e consapevole (Marshall Rosenberg)</string>
+    <string name="guidelines_communication_text">• Esprimi i tuoi pensieri, sentimenti e bisogni in modo chiaro e rispettoso. Usare frasi che iniziano con \"Io sento...\" o \"Io ho bisogno di...\" può aiutare.\n• Rispetta i confini degli altri. Se qualcuno esprime un limite o chiede spazio, per favore, rispettalo.\n• Va bene avere bisogno di tempo per rispondere ai messaggi. Non mettere pressione agli altri per una risposta immediata e sentiti libero/a di prenderti il tuo tempo.</string>
+    <string name="guidelines_disagreements_title">Gestire i disaccordi</string>
+    <string name="guidelines_disagreements_text">• È normale avere opinioni diverse. Concentrati sulla comprensione reciproca piuttosto che sul \"vincere\" una discussione.\n• Esprimi il tuo disaccordo in modo costruttivo, senza attacchi personali, insulti o invalidare l\'esperienza altrui.\n• Se una conversazione diventa troppo difficile o stressante, è giusto fare una pausa o ritirarsi rispettosamente.</string>
+    <string name="guidelines_not_accepted_title">Cosa non è èccettato</string>
+    <string name="guidelines_not_accepted_text">• Molestie, bullismo, linguaggio d\'odio, discriminazione di qualsiasi tipo.\n• Spam o promozione eccessiva.\n• Contenuti illegali, sessualmente espliciti non richiesti o inappropriati.\n• Condivisione di informazioni private di altri senza consenso.</string>
+    <string name="guidelines_reporting_title">Segnalazioni e moderazione</string>
+    <string name="guidelines_reporting_text">• Usa la funzione \"Segnala Utente\" se vedi comportamenti che violano queste linee guida. Le segnalazioni ci aiutano a mantenere la community sicura.\n• Esaminiamo le segnalazioni e prendiamo provvedimenti appropriati, che possono includere avvertimenti o la rimozione dall\'app.</string>
+    <string name="guidelines_selfcare_title">Prenditi cura di te</string>
+    <string name="guidelines_selfcare_text">• Ricorda di fare pause se ne senti il bisogno.\n• Gestisci le tue notifiche e il tuo tempo sull\'app in modo che sia un\'esperienza positiva per te.</string>
+    <string name="guidelines_closing_text">Grazie per contribuire a rendere Gente Strana un posto speciale!</string>
+
 
 
 

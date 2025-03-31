@@ -30,33 +30,65 @@ import androidx.compose.ui.unit.dp
 import coil.compose.rememberAsyncImagePainter
 import com.gentestrana.chat.Chat
 import com.gentestrana.chat.MessageStatusIcon
+import com.gentestrana.ui.theme.LocalDimensions
 import com.gentestrana.utils.formatTimestamp
 import com.gentestrana.utils.getDateSeparator
+import com.gentestrana.utils.getThumbnailUrl
+import coil.request.ImageRequest
+import androidx.compose.ui.platform.LocalContext
+import com.gentestrana.R
+
+
+private const val DEFAULT_PROFILE_IMAGE_URL = "https://icons.veryicon.com/png/o/system/ali-mom-icon-library/random-user.png"
 
 @Composable
 fun ChatListItem(chat: Chat, onClick: () -> Unit) {
     // Utilizziamo remember per memorizzare i valori formattati finché chat.timestamp non cambia
     val dateSeparator = remember(chat.timestamp) { getDateSeparator(chat.timestamp) }
     val formattedTime = remember(chat.timestamp) { formatTimestamp(chat.timestamp) }
+    // Recupera le dimensioni dinamiche dal tema
+    val dimensions = LocalDimensions.current
+    val context = LocalContext.current
 
     Row(
         modifier = Modifier
             .fillMaxWidth()
             .clickable(onClick = onClick)
-            .padding(horizontal = 4.dp, vertical = 4.dp),
+            // Sostituiamo il padding hardcoded con il valore dinamico
+            .padding(horizontal = dimensions.smallPadding, vertical = dimensions.smallPadding),
         verticalAlignment = Alignment.CenterVertically
     ) {
         Box {
-            // Immagine profilo
+            val originalPhotoUrl = chat.photoUrl // Questo URL proviene dal campo User.profilePicUrl[0]
+            val imageUrlToLoad: String
+            val fallbackImageUrl: String = DEFAULT_PROFILE_IMAGE_URL
+            // Controlliamo se l'URL originale è vuoto o la nostra vecchia stringa di default
+            // (anche se ora dovrebbe essere vuoto se non c'è immagine reale)
+            // Aggiungiamo un controllo esplicito per la stringa di risorsa per sicurezza retroattiva.
+            imageUrlToLoad = if (originalPhotoUrl.isEmpty() || originalPhotoUrl == "res/drawable/random_user.webp") {
+                fallbackImageUrl // Usa l'URL web di default
+            } else {
+                // C'è un URL reale, genera la thumbnail
+                getThumbnailUrl(originalPhotoUrl, "200x200") ?: originalPhotoUrl
+                // Se la thumbnail fallisce, usa l'originale
+            }
+            // Immagine profilo (dimensione mantenuta fissa, ma potrebbe essere resa dinamica se aggiungi una proprietà apposita)
             Image(
-                painter = rememberAsyncImagePainter(chat.photoUrl),
+                painter = rememberAsyncImagePainter(
+                    ImageRequest.Builder(context)
+                        .data(imageUrlToLoad) // Usa l'URL determinato
+                        .placeholder(R.drawable.random_user) // Placeholder locale
+                        .error(R.drawable.random_user) // Fallback locale
+                        .crossfade(true)
+                        .build()
+                ),
                 contentDescription = "Profile picture of ${chat.participantName}",
                 modifier = Modifier
                     .size(56.dp)
                     .clip(CircleShape),
                 contentScale = ContentScale.Crop
             )
-            // Indicatore online dinamico
+            // Indicatore online/offline
             if (chat.isOnline) {
                 Box(
                     modifier = Modifier
@@ -67,7 +99,6 @@ fun ChatListItem(chat: Chat, onClick: () -> Unit) {
                         .border(1.dp, Color.White, CircleShape)
                 )
             } else {
-                // Indicatore offline (cerchio grigio)
                 Box(
                     modifier = Modifier
                         .align(Alignment.BottomEnd)
@@ -79,7 +110,7 @@ fun ChatListItem(chat: Chat, onClick: () -> Unit) {
             }
         }
 
-        Spacer(modifier = Modifier.width(6.dp))
+        Spacer(modifier = Modifier.width(dimensions.smallPadding))
 
         // Nome e dettagli della chat
         Row(
@@ -94,7 +125,7 @@ fun ChatListItem(chat: Chat, onClick: () -> Unit) {
                     color = MaterialTheme.colorScheme.onSurface
                 )
 
-                Spacer(modifier = Modifier.height(4.dp))
+                Spacer(modifier = Modifier.height(dimensions.smallPadding))
 
                 // Ultimo messaggio e stato
                 Row(verticalAlignment = Alignment.CenterVertically) {
@@ -107,13 +138,13 @@ fun ChatListItem(chat: Chat, onClick: () -> Unit) {
                         modifier = Modifier.weight(1f)
                     )
 
-                    Spacer(modifier = Modifier.width(4.dp))
+                    Spacer(modifier = Modifier.width(dimensions.smallPadding))
 
                     // Indicatore di stato
                     MessageStatusIcon(status = chat.lastMessageStatus)
                 }
 
-                Spacer(modifier = Modifier.height(6.dp))
+                Spacer(modifier = Modifier.height(dimensions.smallPadding))
 
                 // Data e ora
                 Text(
@@ -122,7 +153,7 @@ fun ChatListItem(chat: Chat, onClick: () -> Unit) {
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
 
-                Spacer(modifier = Modifier.height(8.dp))
+                Spacer(modifier = Modifier.height(dimensions.mediumPadding))
                 HorizontalDivider(modifier = Modifier.fillMaxWidth())
             }
         }

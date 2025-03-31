@@ -278,7 +278,7 @@ private fun GalleryOverlay(images: List<String>, onClose: () -> Unit) {
             UserPicsGallery(
                 imageUrls = images,
                 modifier = Modifier.fillMaxSize(),
-                imageSize = 300
+                imageSize = 300,
             )
         }
     }

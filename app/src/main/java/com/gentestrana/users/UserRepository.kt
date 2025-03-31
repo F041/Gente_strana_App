@@ -3,16 +3,15 @@ package com.gentestrana.users
 import android.content.Context
 import android.net.Uri
 import android.util.Log
-import com.gentestrana.R
 import com.gentestrana.utils.FirestoreDeletionUtils
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.GoogleAuthProvider
-import com.google.firebase.auth.ktx.userProfileChangeRequest
 import com.google.firebase.firestore.ktx.firestore
 import com.google.firebase.ktx.Firebase
 import com.gentestrana.utils.uploadMainProfileImage
 import kotlinx.coroutines.tasks.await
 import com.google.firebase.Timestamp
+import com.google.firebase.auth.UserProfileChangeRequest
 
 /**
  * 1. Controllare lo stato di verifica email all'avvio dell'app e/o al login.
@@ -59,7 +58,7 @@ class UserRepository(
                 val userData = mapOf(
                     "username" to username,
                     "bio" to bio,
-                    "profilePicUrl" to listOf<String>(),
+                    "profilePicUrl" to emptyList<String>(),
                     "age" to 0,
                     "sex" to sex,
                     "registrationDate" to registrationTimestamp,
@@ -71,69 +70,68 @@ class UserRepository(
                     .addOnSuccessListener {
                         if (selectedImageUri != null) {
                             // Use centralized function to upload the image
-                              uploadMainProfileImage(context, uid, selectedImageUri,  { imageUrl ->                                 if (imageUrl.isNotEmpty()) {
-                                    // Update Firestore with the profile photo URL
-                                    firestore.collection("users").document(uid)
-                                        .update("profilePicUrl", listOf(imageUrl))
-                                        .addOnSuccessListener {
-                                            // Also update the profile in FirebaseAuth
-                                            val user = auth.currentUser
-                                            val profileUpdates = userProfileChangeRequest {
-                                                photoUri = Uri.parse(imageUrl)
-                                                displayName = username
-                                            }
-                                            user?.updateProfile(profileUpdates)
-                                                ?.addOnCompleteListener { task ->
-                                                    if (task.isSuccessful) {
-                                                        onSuccess()
-                                                    } else {
-                                                        onFailure(task.exception?.message)
-                                                    }
-                                                }
-                                        }
-                                        .addOnFailureListener { e ->
-                                            onFailure(e.message)
-                                        }
-                                } else {
-                                    onFailure("Image upload failed")
-                                }
-                            }
-                              )
+                              uploadMainProfileImage(context, uid, selectedImageUri
+                              ) { imageUrl ->
+                                  if (imageUrl.isNotEmpty()) {
+                                      // Update Firestore with the profile photo URL
+                                      firestore.collection("users").document(uid)
+                                          .update("profilePicUrl", listOf(imageUrl))
+                                          .addOnSuccessListener {
+                                              // Also update the profile in FirebaseAuth
+                                              val user = auth.currentUser
+                                              val profileUpdates = UserProfileChangeRequest.Builder()
+                                                  .setPhotoUri(Uri.parse(imageUrl)) // Usa .setPhotoUri()
+                                                  .setDisplayName(username)          // Usa .setDisplayName()
+                                                  .build()
+                                              user?.updateProfile(profileUpdates)
+                                                  ?.addOnCompleteListener { task ->
+                                                      if (task.isSuccessful) {
+                                                          onSuccess()
+                                                      } else {
+                                                          onFailure(task.exception?.message)
+                                                      }
+                                                  }
+                                          }
+                                          .addOnFailureListener { e ->
+                                              onFailure(e.message)
+                                          }
+                                  } else {
+                                      onFailure("Image upload failed")
+                                  }
+                              }
                         } else {
-                            // Nessuna immagine selezionata: utilizziamo l'immagine di default
-                            // Costruiamo l'URI della risorsa default
-                            val defaultImageUri = Uri.parse("android.resource://${context.packageName}/${R.drawable.random_user}")
-
-                            // Aggiorna Firestore con il default URI
-                            firestore.collection("users").document(uid)
-                                .update("profilePicUrl", listOf(defaultImageUri.toString()))
-                                .addOnSuccessListener {
-                                    // Aggiorna il profilo in FirebaseAuth con il default URI
-                                    val user = auth.currentUser
-                                    val profileUpdates = userProfileChangeRequest {
-                                        photoUri = defaultImageUri
-                                        displayName = username
+                            // Nessuna immagine selezionata dall'utente.
+                            // Il documento Firestore ha già profilePicUrl: [].
+                            // Aggiorniamo solo il displayName in FirebaseAuth.
+                            Log.d("UserRepository", "No image selected. Updating FirebaseAuth displayName only.")
+                            val user = auth.currentUser
+                            val profileUpdates = UserProfileChangeRequest.Builder()
+                                .setDisplayName(username)
+                                .build()
+                            user?.updateProfile(profileUpdates)
+                                ?.addOnCompleteListener { task ->
+                                    if (task.isSuccessful) {
+                                        Log.d("UserRepository", "FirebaseAuth profile updated (displayName only).")
+                                        onSuccess() // La registrazione di base è riuscita
+                                    } else {
+                                        // Il fallimento dell'aggiornamento del displayName in Auth
+                                        // non dovrebbe bloccare il successo della registrazione.
+                                        Log.w("UserRepository", "FirebaseAuth profile update (displayName only) failed: ${task.exception?.message}")
+                                        onSuccess() // Consideriamo comunque la registrazione riuscita
                                     }
-                                    user?.updateProfile(profileUpdates)
-                                        ?.addOnCompleteListener { task ->
-                                            if (task.isSuccessful) {
-                                                onSuccess()
-                                            } else {
-                                                onFailure(task.exception?.message)
-                                            }
-                                        }
-
-
-
-                                }
-                                .addOnFailureListener { e ->
-                                    onFailure(e.message)
                                 }
                         }
                     }
-                    .addOnFailureListener { e ->
+                    .addOnFailureListener { e -> // Questo è il listener del .set(userData)
+                        Log.e("UserRepository", "Failed to create user document in Firestore: ${e.message}")
                         onFailure(e.message)
+                        // Considera qui logica di cleanup per l'utente Auth se necessario
                     }
+            } // Chiusura del .addOnSuccessListener del createUserWithEmailAndPassword
+            .addOnFailureListener { e ->
+                // Questo è il listener del createUserWithEmailAndPassword
+                Log.e("UserRepository", "Failed to create user in FirebaseAuth: ${e.message}")
+                onFailure(e.message)
             }
     }
 
@@ -273,7 +271,7 @@ class UserRepository(
         onFailure: (String?) -> Unit
     ) {
         auth.signInWithEmailAndPassword(email, password)
-            .addOnSuccessListener { authResult ->
+            .addOnSuccessListener {
                 val user = auth.currentUser
                 if (user != null) {
                     // Ricarica i dati dell'utente per avere lo stato aggiornato della verifica

@@ -46,7 +46,7 @@ fun VerifyEmailScreen(
                     isEmailVerified = false // Anche se dovrebbe essere già false all'inizio
                 }
             )
-            delay(3000) // Attendi 3 secondi prima del prossimo controllo
+            delay(2400) // Attendi 2,4 secondi prima del prossimo controllo
         }
     }
 
@@ -82,7 +82,7 @@ fun VerifyEmailScreen(
                 )
             } else { // Altrimenti, mostra un messaggio di successo
                 Text(
-                    stringResource(R.string.email_verified_success_message), // Dovremo aggiungere questa stringa
+                    stringResource(R.string.email_verified_success_message),
                     style = MaterialTheme.typography.headlineSmall,
                     color = MaterialTheme.colorScheme.primary,
                     textAlign = TextAlign.Center
@@ -91,7 +91,8 @@ fun VerifyEmailScreen(
 
 
             Spacer(modifier = Modifier.height(24.dp))
-            if (!isEmailVerified) { // Mostra il pulsante di "Reinvia email" solo se l'email NON è verificata
+            if (!isEmailVerified) {
+                // Mostra il pulsante di "Reinvia email" solo se l'email NON è verificata
                 Button(
                     onClick = {
                         isResendingEmail = true
@@ -125,7 +126,8 @@ fun VerifyEmailScreen(
                     }
                 }
                 Spacer(modifier = Modifier.height(8.dp))
-                Button( // Mostra il pulsante "Apri App Email" solo se l'email NON è verificata
+                Button(
+                    // Mostra il pulsante "Apri App Email" solo se l'email NON è verificata
                     onClick = {
                         val intent = Intent(Intent.ACTION_SENDTO).apply {
                             data = Uri.parse("mailto:")
@@ -136,7 +138,8 @@ fun VerifyEmailScreen(
                     Text(stringResource(R.string.open_email_app_button))
                 }
                 Spacer(modifier = Modifier.height(8.dp))
-                Text( // Mostra il testo "Controlla spam" solo se l'email NON è verificata
+                Text(
+                    // Mostra il testo "Controlla spam" solo se l'email NON è verificata
                     stringResource(R.string.verify_email_check_spam),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.secondary,

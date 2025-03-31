@@ -22,6 +22,9 @@ import androidx.compose.ui.res.stringResource
 import com.gentestrana.R
 import com.gentestrana.utils.getFlagEmoji
 import androidx.compose.ui.platform.LocalContext
+import coil.request.ImageRequest
+
+private const val DEFAULT_PROFILE_IMAGE_URL = "https://icons.veryicon.com/png/o/system/ali-mom-icon-library/random-user.png"
 
 @Composable
 fun UserProfileCard(
@@ -34,6 +37,7 @@ fun UserProfileCard(
     val screenWidth = configuration.screenWidthDp.dp
 // Ad esempio, vogliamo che l'immagine occupi circa il 30% della larghezza dello schermo
     val imageSize = screenWidth * 0.275f
+    val context = LocalContext.current
 
     Card(
         modifier = modifier
@@ -49,16 +53,24 @@ fun UserProfileCard(
                 .padding(16.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            // Profile Image
-            val profilePicUrlList = user.profilePicUrl
-            // Get the list directly
-            val profileImageUrl: String? = profilePicUrlList.firstOrNull()
-            // Safely get the first URL or null
+
+            val imageUrlToLoad: String = if (user.profilePicUrl.isEmpty()) {
+                // Se la lista è vuota, usa l'URL web di default
+                DEFAULT_PROFILE_IMAGE_URL
+            } else {
+                // Se la lista NON è vuota, prendi SEMPRE il primo URL (originale)
+                user.profilePicUrl.first()
+            }
 
             Image(
+                // Usa rememberAsyncImagePainter con placeholder e error
                 painter = rememberAsyncImagePainter(
-                    model = profileImageUrl ?: "res/drawable/random_user.webp"
-                // Use default URL if profileImageUrl is null
+                    ImageRequest.Builder(context)
+                        .data(imageUrlToLoad)
+                        .placeholder(R.drawable.random_user)
+                        .error(R.drawable.random_user)
+                        .crossfade(true)
+                        .build()
                 ),
                 contentDescription = "Profile",
                 modifier = Modifier
@@ -66,6 +78,7 @@ fun UserProfileCard(
                     .clip(RoundedCornerShape(8.dp)),
                 contentScale = ContentScale.Crop
             )
+
             Spacer(Modifier.width(16.dp))
 
             // User Details Column

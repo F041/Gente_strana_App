@@ -20,6 +20,10 @@ import com.gentestrana.users.User
 import com.gentestrana.utils.computeAgeFromTimestamp
 import com.gentestrana.utils.getFlagEmoji
 import com.gentestrana.utils.getLanguageName
+import coil.request.ImageRequest
+
+private const val DEFAULT_PROFILE_IMAGE_URL = "https://icons.veryicon.com/png/o/system/ali-mom-icon-library/random-user.png"
+// sta roba si può stringare
 
 @Composable
 fun PersonalProfilePreviewCard(
@@ -53,8 +57,20 @@ fun PersonalProfilePreviewCard(
                 .align(Alignment.CenterHorizontally),
             contentAlignment = Alignment.Center
         ) {
+            val imageUrlToLoad: String = if (user.profilePicUrl.isEmpty()) {
+                DEFAULT_PROFILE_IMAGE_URL
+            } else {
+                user.profilePicUrl.first()
+            }
             Image(
-                painter = rememberAsyncImagePainter(user.profilePicUrl.firstOrNull()),
+                painter = rememberAsyncImagePainter(
+                    ImageRequest.Builder(context)
+                        .data(imageUrlToLoad)
+                        .placeholder(R.drawable.random_user)
+                        .error(R.drawable.random_user)
+                        .crossfade(true)
+                        .build()
+                ),
                 contentDescription = "Profile Picture",
                 modifier = Modifier.fillMaxSize(),
                 contentScale = ContentScale.Crop

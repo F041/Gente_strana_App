@@ -1,6 +1,5 @@
 package com.gentestrana
 
-
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
@@ -97,6 +96,7 @@ fun AppNavHost(navController: NavHostController,
         composable("onboarding") {
             OnboardingScreen(navController = navController)
         }
+
     }
 }
 
@@ -138,6 +138,14 @@ fun MainTabsScreen(navController: NavHostController,
 
             composable("changePassword") {
                 ChangePasswordScreen(navController = navController)
+            }
+
+            composable("communityGuidelines") {
+                CommunityGuidelinesScreen(navController = navController)
+            }
+
+            composable("termsOfService") {
+                TermsOfServiceScreen(navController = navController)
             }
         }
     }
