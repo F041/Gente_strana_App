@@ -197,56 +197,71 @@ fun ReadOnlyTopicsBox(
         Spacer(modifier = Modifier.height(12.dp))
 
         // Topic Navigator senza logica di traduzione
-        SingleTopicNavigator(
-            topics = topics,
-            currentTopicIndex = currentTopicIndex,
-            translatedText = translatedTopic,
-            onIndexChange = { newIndex ->
-                currentTopicIndex = newIndex
-                translatedTopic = null
-            },
-            modifier = Modifier.fillMaxWidth()
-        )
+        if (topics.isNotEmpty()) {
+            SingleTopicNavigator(
+                topics = topics,
+                currentTopicIndex = currentTopicIndex,
+                translatedText = translatedTopic,
+                onIndexChange = { newIndex ->
+                    currentTopicIndex = newIndex
+                    translatedTopic = null
+                // Resetta la traduzione quando si cambia topic
+                },
+                modifier = Modifier.fillMaxWidth()
+            )
 
-        // Sezione traduzione
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.End
-        ) {
-            IconButton(
-                onClick = {
-                    if (translatedTopic == null) {
-                        isTranslating = true
-                        TranslationHelper.translateTextWithDetection(
-                            text = topics[currentTopicIndex],
-                            targetLanguageCode = targetLanguageCode,
-                            onSuccess = { result ->
-                                translatedTopic = result
-                                isTranslating = false
-                            },
-                            onFailure = {
-                                isTranslating = false
-                            }
+            // Sezione traduzione (solo se ci sono topic)
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.End
+            ) {
+                IconButton(
+                    onClick = {
+                        if (translatedTopic == null) {
+                            isTranslating = true
+                            TranslationHelper.translateTextWithDetection(
+                                text = topics[currentTopicIndex],
+                                // Ora è sicuro accedere qui
+                                targetLanguageCode = targetLanguageCode,
+                                onSuccess = { result ->
+                                    translatedTopic = result
+                                    isTranslating = false
+                                },
+                                onFailure = {
+                                    isTranslating = false
+                                }
+                            )
+                        } else {
+                            translatedTopic = null
+                        }
+                    },
+                    enabled = !isTranslating
+                ) {
+                    if (isTranslating) {
+                        CircularProgressIndicator(
+                            modifier = Modifier.size(18.dp),
+                            strokeWidth = 2.dp
                         )
                     } else {
-                        translatedTopic = null
+                        Icon(
+                            imageVector = Icons.Default.Translate,
+                            contentDescription = "Traduci topic",
+                            modifier = Modifier.size(18.dp)
+                        )
                     }
-                },
-                enabled = !isTranslating
-            ) {
-                if (isTranslating) {
-                    CircularProgressIndicator(
-                        modifier = Modifier.size(18.dp),
-                        strokeWidth = 2.dp
-                    )
-                } else {
-                    Icon(
-                        imageVector = Icons.Default.Translate,
-                        contentDescription = "Traduci topic",
-                        modifier = Modifier.size(18.dp)
-                    )
                 }
             }
+        } else {
+            // Mostra un messaggio placeholder se non ci sono topic
+            Text(
+                text = stringResource(R.string.no_topics_defined_placeholder),
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant, // Colore più tenue
+                textAlign = TextAlign.Center,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(vertical = 16.dp)
+            )
         }
     }
 }

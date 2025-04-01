@@ -41,15 +41,20 @@
 
 
         // page 2
-    <string name="onboarding_screen3_title">self-assessment test</string>
-    <string name="onboarding_screen3_description">to help you understand if Quirky People fits you, I invite you to take at least a self-assessment test, validated by scientific literature.
+    <string name="onboarding_screen3_title">Self-assessment test</string>
+    <string name="onboarding_screen3_description">To help you understand if Quirky People fits you, I invite you to take at least a self-assessment test, validated by scientific literature.
     </string>
     <string name="onboarding_screen3_gdpr_notice"><b>privacy guaranteed:</b> We do not collect or save your results.</string>
     <string name="onboarding_screen3_checkbox_consent">I have read and understood.</string>
-    <string name="onboarding_screen3_autism">autism spectrum test</string>
+    <string name="onboarding_screen3_autism">Autism spectrum test</string>
     <string name="onboarding_screen3_adhd">ADHD test</string>
+    <string name="open_external_link">open external link</string>
+    <string name="adhd_score_error">Please enter a value between 1 and 6</string>
 
-    <string name="onboarding_screen3_score_threshold">you don\'t meet the criteria to join this app</string>
+    <string name="onboarding_screen3_score_threshold">None of the scores entered meet the minimum threshold.\n
+    You are not eligible to be on this app.\n
+    If this is an error, contact info.gentestrana@gmail.com\n
+    or watch the videos set on the TikTok page</string>
     <string name="onboarding_screen3_diagnosis_checkbox">I already have a neurodiversity diagnosis (I don\'t need to take the test)</string>
 
     <string name="onboarding_screen3_autism_test_link">https://embrace-autism.com/asrs-v1-1/#test</string>
@@ -59,7 +64,7 @@
     <string name="onboarding_screen3_score_adhd_label">How many ticks in the dark grey area?</string>
     <string name="onboarding_screen3_score_adhd">ADHD test score</string>
 
-    <string name="onboarding_screen3_score_test">verify at least one score</string>
+    <string name="verify_score_button">Verify Score</string>
     <string name="onboarding_screen3_score_threshold_both">Neither of the scores you entered reaches the minimum threshold. You don\'t meet the criteria to enter this app.</string>
 
         // page 3
@@ -199,6 +204,9 @@
     <string name="notification_new_user_body">%1$s joined the community!</string>
     <string name="default_notification_title">New message</string>
     <string name="default_notification_body">You received a new notification</string>
+    <string name="no_topics_defined_placeholder">No topics defined yet
+        </string>
+
 
 
 

@@ -75,7 +75,7 @@ fun PersonalProfileScreen(
     val topicsText by profileViewModel.topicsText.collectAsState()
     val profilePicUrl by profileViewModel.profilePicUrl.collectAsState()
 
-    var birthTimestamp by remember { mutableLongStateOf(0L) }
+    val birthTimestamp by profileViewModel.birthTimestamp
     val topicsList = profileViewModel.topicsText.collectAsState().value
         .split(",") // Divide la stringa in base alla virgola
         .map { it.trim() } // Rimuove spazi extra
@@ -83,7 +83,6 @@ fun PersonalProfileScreen(
 
     val spokenLanguages by profileViewModel.spokenLanguages
     var uploadLimitExceeded by remember { mutableStateOf(false) }
-
 
     // Altri stati locali per campi non ancora gestiti nel ViewModel
     var isUploading by remember { mutableStateOf(false) }
@@ -304,9 +303,9 @@ fun PersonalProfileScreen(
 
             DateOfBirthPicker(
                 context = LocalContext.current,
-                birthTimestamp = birthTimestamp,
+                birthTimestamp = birthTimestamp ?: 0L, // Rimosso .value
                 onDateSelected = { newTimestamp ->
-                    birthTimestamp = newTimestamp
+                    profileViewModel.setBirthTimestamp(newTimestamp)
                 }
             )
 
@@ -384,6 +383,7 @@ fun PersonalProfileScreen(
                         updatedBio = bio,
                         updatedTopics = topicsText,
                         updatedProfilePicUrl = profilePicUrl,
+                        updatedBirthTimestamp = birthTimestamp,
                         onSuccess = {
                             Toast.makeText(context, "✅", Toast.LENGTH_SHORT).show()
                         },

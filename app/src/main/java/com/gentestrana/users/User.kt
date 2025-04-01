@@ -51,7 +51,6 @@ data class User(
     val lastActive: Timestamp? = null
 ) {
 
-
     // Proprietà calcolata per ottenere il timestamp in millisecondi
     val birthTimestamp: Long
         get() = when (rawBirthTimestamp) {

@@ -43,16 +43,17 @@
 
         // pagina 2
 
-    <string name="onboarding_screen3_title">test di auto-valutazione</string>
-    <string name="onboarding_screen3_description">per aiutarti a capire se Gente Strana fa per te, ti invito a compilare almeno un test di auto-valutazione, validati dalla letteratura scientifica.
+    <string name="onboarding_screen3_title">Test di auto-valutazione</string>
+    <string name="onboarding_screen3_description">Per aiutarti a capire se Gente Strana fa per te, ti invito a compilare almeno un test di auto-valutazione, validati dalla letteratura scientifica.
     </string>
     <string name="onboarding_screen3_gdpr_notice"><b>Privacy garantita:</b> non raccogliamo né salviamo i tuoi risultati. </string>
-    <string name="onboarding_screen3_checkbox_consent">ho letto e compreso.</string>
-    <string name="onboarding_screen3_autism">test per lo spettro autistico </string>
-    <string name="onboarding_screen3_adhd">test per ADHD </string>
+    <string name="onboarding_screen3_checkbox_consent">Ho letto e compreso.</string>
+    <string name="onboarding_screen3_autism">Test per lo spettro autistico </string>
+    <string name="onboarding_screen3_adhd">Test per ADHD </string>
+    <string name="open_external_link">apri link esterno</string>
 
     <string name="onboarding_screen3_score_threshold">non soddisfi il criterio per unirti a quest\'app</string>
-    <string name="onboarding_screen3_diagnosis_checkbox">ho già una diagnosi di neurodivergenza (non serve fare il test)
+    <string name="onboarding_screen3_diagnosis_checkbox">Ho già una diagnosi di neurodivergenza (non serve fare il test)
     </string>
 
     <string name="onboarding_screen3_autism_test_link">https://aspergeronline.org/raads-r/#test</string>
@@ -61,9 +62,14 @@
     <string name="onboarding_screen3_score">Punteggio ottenuto spettro autistico </string>
     <string name="onboarding_screen3_score_adhd_label">Somma il numero di segni che hai nell’area giallo scuro</string>
     <string name="onboarding_screen3_score_adhd">Punteggio test ADHD:</string>
+    <string name="adhd_score_error">Inserisci un valore da 1 a 6</string>
 
-    <string name="onboarding_screen3_score_test">verifica almeno un punteggio</string>
-    <string name="onboarding_screen3_score_threshold_both">Nessuno dei punteggi inseriti raggiunge la soglia minima. Non hai i requisiti per poter far parte di questa app.</string>
+    <string name="verify_score_button">Verifica punteggio</string>
+    <string name="onboarding_screen3_score_threshold_both">Nessuno dei punteggi inseriti raggiunge la soglia minima.\n
+        Non hai i requisiti per poter far parte di questa app.\n
+        Se si tratta di un errore, contatta info.gentestrana@gmail.com\n
+        oppure guarda i video fissati sulla pagina TikTok
+    </string>
 
 
     // pagina 3
@@ -206,6 +212,7 @@
     <string name="notification_new_user_body">%1$s si è unito alla comunità!</string>
     <string name="default_notification_title">Nuovo messaggio</string>
     <string name="default_notification_body">Hai ricevuto una nuova notifica</string>
+    <string name="no_topics_defined_placeholder">Nessun argomento definito dall\'utente.</string>
 
     // Zona impostazioni
     <string name="delete_account_confirmation_title">conferma eliminazione account</string>

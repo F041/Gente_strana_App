@@ -31,7 +31,6 @@
         <activity
             android:name=".MainActivity"
             android:exported="true"
-            android:label="@string/app_name"
             android:windowSoftInputMode="adjustResize"
             android:theme="@style/Theme.GenteStrana">
             <intent-filter>
@@ -45,8 +44,6 @@
                 <category android:name="android.intent.category.BROWSABLE" />
                 <data android:scheme="gentestrana" android:host="verifyemail" />
             </intent-filter>
-
-
 
         </activity>
         <activity
