@@ -67,7 +67,7 @@ class ChatRepository(
 
             val userObj = otherUser.toObject(User::class.java)
             val profilePicList = otherUser["profilePicUrl"] as? List<String> ?: emptyList()
-            val firstPhotoUrl = profilePicList.firstOrNull() ?: "res/drawable/random_user.webp"
+            val firstPhotoUrl = profilePicList.firstOrNull() ?: ""
 
             val lastMessageQuery = db.collection("chats")
                 .document(doc.id)

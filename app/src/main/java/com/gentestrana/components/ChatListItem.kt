@@ -1,5 +1,6 @@
 package com.gentestrana.components
 
+import android.util.Log
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -59,18 +60,16 @@ fun ChatListItem(chat: Chat, onClick: () -> Unit) {
         verticalAlignment = Alignment.CenterVertically
     ) {
         Box {
-            val originalPhotoUrl = chat.photoUrl // Questo URL proviene dal campo User.profilePicUrl[0]
-            val imageUrlToLoad: String
-            val fallbackImageUrl: String = DEFAULT_PROFILE_IMAGE_URL
-            // Controlliamo se l'URL originale è vuoto o la nostra vecchia stringa di default
-            // (anche se ora dovrebbe essere vuoto se non c'è immagine reale)
-            // Aggiungiamo un controllo esplicito per la stringa di risorsa per sicurezza retroattiva.
-            imageUrlToLoad = if (originalPhotoUrl.isEmpty() || originalPhotoUrl == "res/drawable/random_user.webp") {
-                fallbackImageUrl // Usa l'URL web di default
+            val originalPhotoUrl = chat.photoUrl // Questo ora può essere ""
+            val imageUrlToLoad: Any
+            if (originalPhotoUrl.isEmpty()) {
+                // Se l'URL è vuoto, usa la risorsa locale
+                imageUrlToLoad = R.drawable.random_user
+                Log.d("ChatListItem", "Utente ${chat.participantName}: URL vuoto, uso placeholder locale.") // Log opzionale
             } else {
-                // C'è un URL reale, genera la thumbnail
-                getThumbnailUrl(originalPhotoUrl, "200x200") ?: originalPhotoUrl
-                // Se la thumbnail fallisce, usa l'originale
+                // Altrimenti, usa l'URL originale direttamente
+                imageUrlToLoad = originalPhotoUrl
+                Log.d("ChatListItem", "Utente ${chat.participantName}: URL originale: $originalPhotoUrl. Tento caricamento.") // Log opzionale
             }
             // Immagine profilo (dimensione mantenuta fissa, ma potrebbe essere resa dinamica se aggiungi una proprietà apposita)
             Image(

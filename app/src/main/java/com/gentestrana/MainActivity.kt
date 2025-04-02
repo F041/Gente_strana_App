@@ -8,7 +8,6 @@ import androidx.navigation.compose.rememberNavController
 import com.gentestrana.ui.theme.GenteStranaTheme
 import android.content.Intent
 import android.content.Context
-import android.os.Build
 import android.util.Log
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -17,21 +16,14 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.platform.LocalContext
 import com.gentestrana.screens.AppTheme
 import androidx.compose.runtime.CompositionLocalProvider
-import androidx.core.content.ContextCompat
 import com.gentestrana.ui.theme.LocalAppTheme
 import com.gentestrana.utils.forceTokenRefreshIfNeeded
 import com.google.firebase.auth.FirebaseAuth
 import com.gentestrana.utils.updateUserLastActive
-import android.Manifest
-import android.content.pm.PackageManager
-import androidx.activity.result.contract.ActivityResultContracts
-
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-
-        requestNotificationPermission()
 
         // Gestione Deep Link all'avvio
         val intent = intent // Intent che ha avviato MainActivity
@@ -117,50 +109,6 @@ class MainActivity : ComponentActivity() {
         }
         forceTokenRefreshIfNeeded(this)
     }
-
-    private fun requestNotificationPermission() {
-        // Controllo: Android 13+ richiede runtime permission per le notifiche
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-            if (ContextCompat.checkSelfPermission(
-                    this,
-                    Manifest.permission.POST_NOTIFICATIONS
-                ) != PackageManager.PERMISSION_GRANTED
-            ) {
-                // Richiede il permesso tramite il launcher
-                notificationPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
-            }
-        }
-    }
-
-
-    private val notificationPermissionLauncher = registerForActivityResult(
-        ActivityResultContracts.RequestPermission()
-    ) { isGranted ->
-        if (isGranted) {
-            Log.d("MainActivity", "Permesso notifiche concesso")
-        } else {
-            Log.w("MainActivity", "Permesso notifiche negato")
-            // Puoi mostrare un messaggio all'utente per spiegare l'importanza del permesso
-        }
-    }
-
-
-    override fun onRequestPermissionsResult(
-        requestCode: Int,
-        permissions: Array<out String>,
-        grantResults: IntArray
-    ) {
-        super.onRequestPermissionsResult(requestCode, permissions, grantResults)
-        if (requestCode == 1001) {
-            if (grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-                Log.d("MainActivity", "Permesso notifiche concesso")
-            } else {
-                Log.w("MainActivity", "Permesso notifiche negato")
-                // Qui puoi, ad esempio, mostrare un messaggio all'utente per spiegare perché il permesso è necessario
-            }
-        }
-    }
-
 
     override fun onUserInteraction() {
         super.onUserInteraction()

@@ -2,7 +2,6 @@ package com.gentestrana.components
 
 import android.util.Log
 import androidx.compose.foundation.BorderStroke
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -11,9 +10,9 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -34,11 +33,11 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
-import coil.compose.rememberAsyncImagePainter
 import com.gentestrana.R
 import kotlin.math.roundToInt
 import coil.request.ImageRequest
 import androidx.compose.ui.platform.LocalContext
+import coil.compose.AsyncImage
 
 private const val DEFAULT_PROFILE_IMAGE_URL = "https://icons.veryicon.com/png/o/system/ali-mom-icon-library/random-user.png"
 
@@ -93,11 +92,11 @@ fun ReorderableProfileImageGridWithAdd(
     // Calcola l'altezza della griglia in base al numero di righe
     val cellSize = 100.dp
     val verticalSpacing = 16.dp
-    val extraPadding = 32.dp
-    val rowCount = if (displayList.size % 3 == 0) displayList.size / 3 else (displayList.size / 3 + 1)
-    val gridHeight = (cellSize * rowCount) +
-            (if (rowCount > 0) verticalSpacing * (rowCount - 1) else 0.dp) +
-            extraPadding
+//    val extraPadding = 32.dp
+//    val rowCount = if (displayList.size % 3 == 0) displayList.size / 3 else (displayList.size / 3 + 1)
+//    val gridHeight = (cellSize * rowCount) +
+//            (if (rowCount > 0) verticalSpacing * (rowCount - 1) else 0.dp) +
+//            extraPadding
 
     // Drag & drop states
     var draggingIndex by remember { mutableStateOf<Int?>(null) }
@@ -233,18 +232,18 @@ fun ReorderableProfileImageGridWithAdd(
                             contentAlignment = Alignment.TopCenter
                         ) {
                             // Immagine
-                            Image(
-                                painter = rememberAsyncImagePainter(
-                                    ImageRequest.Builder(context)
-                                        .data(item) // Usa direttamente l'URL dell'item
-                                        .placeholder(R.drawable.random_user)
-                                        .error(R.drawable.random_user) // Fallback locale
-                                        .crossfade(true)
-                                        .build()
-                                ),
+                            AsyncImage(
+                                model = ImageRequest.Builder(context)
+                                    .data(item) // URL dell'immagine
+                                    .placeholder(R.drawable.random_user)
+                                    .error(R.drawable.random_user)
+                                    .crossfade(true)
+                                    .build(),
                                 contentDescription = "Profile Image $flatIndex",
-                                modifier = Modifier.fillMaxSize(),
-                                contentScale = ContentScale.Crop
+                                modifier = Modifier
+                                    .fillMaxSize() // AsyncImage riempie il Box
+                                    .aspectRatio(1f), // Mantiene le proporzioni quadrate
+                                contentScale = ContentScale.Crop // Applica il crop
                             )
                             // Pulsante di eliminazione
                             IconButton(

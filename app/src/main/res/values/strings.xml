@@ -206,6 +206,7 @@
     <string name="default_notification_body">You received a new notification</string>
     <string name="no_topics_defined_placeholder">No topics defined yet
         </string>
+    <string name="downloading_language_model">Downloading language model...</string>
 
 
 

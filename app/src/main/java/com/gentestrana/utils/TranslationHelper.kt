@@ -55,7 +55,9 @@ object TranslationHelper {
         text: String,
         targetLanguageCode: String,
         onSuccess: (String) -> Unit,
-        onFailure: (Exception) -> Unit
+        onFailure: (Exception) -> Unit,
+        onDownloadStarted: () -> Unit,
+        onDownloadCompleted: () -> Unit
     ) {
         println("🟢 Avvio rilevamento lingua per: $text")
 
@@ -80,23 +82,45 @@ object TranslationHelper {
             val translator = Translation.getClient(options)
 
             val conditions = DownloadConditions.Builder().requireWifi().build()
-            translator.downloadModelIfNeeded(conditions)
-                .addOnSuccessListener {
-                    println("✅ Modello scaricato, avvio traduzione...")
-                    translator.translate(text)
-                        .addOnSuccessListener { translatedText ->
-                            println("✅ Traduzione completata: $translatedText")
-                            onSuccess(translatedText)
-                        }
-                        .addOnFailureListener { exception ->
-                            println("❌ Errore nella traduzione: ${exception.message}")
-                            onFailure(exception)
-                        }
+            isTranslationModelDownloaded(targetLanguageCode) { isDownloaded ->
+                if (!isDownloaded) {
+                    println("⏳ Modello non presente, avvio download...")
+                    onDownloadStarted() // Notifica l'inizio del download
+                } else {
+                    println("✅ Modello già presente.")
                 }
-                .addOnFailureListener { exception ->
-                    println("❌ Errore nel download del modello: ${exception.message}")
-                    onFailure(exception)
-                }
+
+                translator.downloadModelIfNeeded(conditions)
+                    .addOnSuccessListener {
+                        println("✅ Download (se necessario) completato.")
+                        if (!isDownloaded) {
+                            onDownloadCompleted() // Notifica la fine del download SOLO se è avvenuto
+                        }
+                        println("Avvio traduzione...")
+                        translator.translate(text)
+                            .addOnSuccessListener { translatedText ->
+                                println("✅ Traduzione completata: $translatedText")
+                                onSuccess(translatedText)
+                            }
+                            .addOnFailureListener { exception ->
+                                println("❌ Errore nella traduzione: ${exception.message}")
+                                if (!isDownloaded) onDownloadCompleted() // Assicurati di notificare anche in caso di fallimento post-download
+                                onFailure(exception)
+                            }.addOnCompleteListener {
+                                // Chiudi il translator per liberare risorse quando finito
+                                translator.close()
+                            }
+                    }
+                    .addOnFailureListener { exception ->
+                        println("❌ Errore nel download del modello: ${exception.message}")
+                        if (!isDownloaded) {
+                            onDownloadCompleted() // Notifica la fine del (tentativo di) download
+                        }
+                        onFailure(exception)
+                        translator.close() // Chiudi anche in caso di fallimento download
+                    }
+            } // Fine callback isTranslationModelDownloaded
+
         }, { exception ->
             println("❌ Errore nel rilevamento lingua: ${exception.message}")
             onFailure(exception)

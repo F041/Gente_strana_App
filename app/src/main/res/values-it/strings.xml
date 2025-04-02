@@ -213,6 +213,7 @@
     <string name="default_notification_title">Nuovo messaggio</string>
     <string name="default_notification_body">Hai ricevuto una nuova notifica</string>
     <string name="no_topics_defined_placeholder">Nessun argomento definito dall\'utente.</string>
+    <string name="downloading_language_model">Scaricamento modello lingua...</string>
 
     // Zona impostazioni
     <string name="delete_account_confirmation_title">conferma eliminazione account</string>

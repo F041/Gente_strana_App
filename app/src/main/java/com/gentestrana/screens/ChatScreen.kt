@@ -43,6 +43,15 @@ import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.collectLatest
 import com.gentestrana.ui_controller.SendMessageEvent
 
+/*
+ChatScreen fa varie cose:
+- quando si apre la chat, scrolla automaticamente all'ultimo messaggio
+- quando scrollo in alto e scrivo un messagio, scrolla automaticamente all'ultimo messaggio
+- quando scrollo in basso e elimino un messaggio, scrolla automaticamente all'ultimo messaggio
+- anche quando l'altro partecipante alla chat manda un messaggio, scrolla automaticamente all'ultimo messaggio
+- mostra il primo messaggio senza scrollare in alto
+ */
+
 
 // Factory per il ViewModel
 class ChatViewModelFactory(private val chatId: String) : ViewModelProvider.Factory {
@@ -78,6 +87,7 @@ fun ChatScreen(docId: String, navController: NavController) {
     val listState = rememberLazyListState()
     val focusRequester = remember { FocusRequester() }
     val scope = rememberCoroutineScope() // Mantenuto per l'eliminazione
+    val initialScrollDone = remember { mutableStateOf(false) }
 
 
     // Gestione Eventi di Invio dal ViewModel
@@ -103,17 +113,33 @@ fun ChatScreen(docId: String, navController: NavController) {
     }
 
     // Effetto per scrollare in fondo quando arrivano nuovi messaggi
+    // File: ChatScreen.kt
+
+// Effetto per scrollare in fondo quando arrivano nuovi messaggi o all'apertura
     LaunchedEffect(messages.size) {
         if (messages.isNotEmpty()) {
-            // Controlla se l'ultimo messaggio è dell'utente corrente per decidere se scrollare subito
-            val lastMessage = messages.lastOrNull()
-            if (lastMessage?.sender == currentUserId || listState.firstVisibleItemIndex > messages.size - 5) {
-                // Scorre se l'ultimo messaggio è mio o se l'utente è già vicino al fondo
-                delay(100) // Piccolo delay per rendering
-                listState.animateScrollToItem(messages.size - 1)
+            val lastIndex = messages.size - 1
+            if (!initialScrollDone.value) {
+                // PRIMO SCROLL: Vai subito in fondo senza animazione
+                listState.scrollToItem(lastIndex)
+                initialScrollDone.value = true // Marca lo scroll iniziale come fatto
+                Log.d("ChatScreenScroll", "Initial scroll to index: $lastIndex")
+            } else {
+                // SCROLL SUCCESSIVI (nuovi messaggi mentre la chat è aperta)
+                val lastMessage = messages.lastOrNull()
+                // Condizione originale: scrolla solo se l'ultimo è mio o se ero già vicino al fondo
+                if (lastMessage?.sender == currentUserId || listState.firstVisibleItemIndex > lastIndex - 5) {
+                    // Usa animateScroll per gli aggiornamenti successivi
+                    listState.animateScrollToItem(lastIndex)
+                    Log.d("ChatScreenScroll", "Animated scroll to index: $lastIndex")
+                } else {
+                    Log.d("ChatScreenScroll", "Scroll skipped (user reading older messages)")
+                }
             }
         }
     }
+
+
 
     // Effetto per caricare messaggi più vecchi quando si raggiunge l'inizio della lista
     LaunchedEffect(listState) {

@@ -1,5 +1,7 @@
 package com.gentestrana.components
 
+import android.util.Log
+import android.widget.Toast
 import androidx.compose.animation.animateContentSize
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.Image
@@ -35,6 +37,7 @@ import androidx.compose.material.icons.filled.Translate
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.LinearProgressIndicator
+import androidx.compose.ui.platform.LocalContext
 import com.gentestrana.utils.TranslationHelper
 import com.gentestrana.utils.TranslationHelper.isTranslationModelDownloaded
 import java.util.Locale
@@ -172,8 +175,10 @@ fun ReadOnlyTopicsBox(
 ) {
     var currentTopicIndex by remember { mutableIntStateOf(0) }
     var translatedTopic by remember { mutableStateOf<String?>(null) }
-    var isTranslating by remember { mutableStateOf(false) }
+    var isTranslating by remember { mutableStateOf(false) } // Stato per spinner (traduzione)
+    var isDownloading by remember { mutableStateOf(false) } // Stato per barra lineare (download)
     val targetLanguageCode = Locale.getDefault().language
+    val context = LocalContext.current // Per Toast
 
     Column(
         modifier = modifier
@@ -187,6 +192,7 @@ fun ReadOnlyTopicsBox(
             .animateContentSize(),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
+        // Titolo (invariato)
         Text(
             text = stringResource(R.string.topics_title).uppercase(),
             style = MaterialTheme.typography.labelLarge.copy(fontWeight = FontWeight.Bold),
@@ -196,67 +202,127 @@ fun ReadOnlyTopicsBox(
 
         Spacer(modifier = Modifier.height(12.dp))
 
-        // Topic Navigator senza logica di traduzione
+        // Topic Navigator (invariato)
         if (topics.isNotEmpty()) {
+            // Assicurati che currentTopicIndex sia valido
+            val validIndex = currentTopicIndex.coerceIn(topics.indices)
+
             SingleTopicNavigator(
                 topics = topics,
-                currentTopicIndex = currentTopicIndex,
-                translatedText = translatedTopic,
+                currentTopicIndex = validIndex, // Usa indice validato
+                // Mostra il topic tradotto se disponibile, altrimenti l'originale
+                translatedText = translatedTopic ?: topics.getOrNull(validIndex),
                 onIndexChange = { newIndex ->
                     currentTopicIndex = newIndex
-                    translatedTopic = null
-                // Resetta la traduzione quando si cambia topic
+                    translatedTopic = null // Resetta la traduzione quando si cambia topic
+                    isTranslating = false  // Resetta stato traduzione
+                    isDownloading = false  // Resetta stato download
                 },
                 modifier = Modifier.fillMaxWidth()
             )
 
-            // Sezione traduzione (solo se ci sono topic)
+            // --- SEZIONE TRADUZIONE MODIFICATA ---
             Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.End
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .heightIn(min = 24.dp), // Altezza minima per indicatori/icona
+                horizontalArrangement = Arrangement.End,
+                verticalAlignment = Alignment.CenterVertically // Centra verticalmente
             ) {
-                IconButton(
-                    onClick = {
-                        if (translatedTopic == null) {
-                            isTranslating = true
-                            TranslationHelper.translateTextWithDetection(
-                                text = topics[currentTopicIndex],
-                                // Ora è sicuro accedere qui
-                                targetLanguageCode = targetLanguageCode,
-                                onSuccess = { result ->
-                                    translatedTopic = result
-                                    isTranslating = false
-                                },
-                                onFailure = {
-                                    isTranslating = false
-                                }
+                if (isDownloading) {
+                    Column(
+                        horizontalAlignment = Alignment.End,
+                        modifier = Modifier
+                            .fillMaxWidth(0.7f)
+                            .padding(vertical = 8.dp, horizontal = 8.dp)
+                    ) {
+                        LinearProgressIndicator(
+                            modifier = Modifier
+                                .height(4.dp)
+                        )
+                        Text(
+                            text = stringResource(R.string.downloading_language_model),
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            modifier = Modifier.padding(top = 2.dp)
+                        )
+                    }
+                } else {
+                    // Altrimenti mostra l'IconButton (se non sta scaricando)
+                    IconButton(
+                        onClick = {
+                            val topicToTranslate = topics.getOrNull(validIndex) ?: return@IconButton
+
+                            if (translatedTopic == null) {
+                                // *** NUOVA LOGICA onClick ***
+                                // Imposta isTranslating a true QUI per mostrare subito lo spinner,
+                                // a meno che onDownloadStarted non lo imposti a false.
+                                isTranslating = true
+                                isDownloading = false // Assicurati che isDownloading sia false all'inizio
+
+                                Log.d("ReadOnlyTopicsBox", "Translate clicked. Initial state: isTranslating=true, isDownloading=false")
+
+                                TranslationHelper.translateTextWithDetection(
+                                    text = topicToTranslate,
+                                    targetLanguageCode = targetLanguageCode,
+                                    onSuccess = { result ->
+                                        Log.d("ReadOnlyTopicsBox", "onSuccess received.")
+                                        translatedTopic = result
+                                        isTranslating = false
+                                        isDownloading = false
+                                    },
+                                    onFailure = { exception ->
+                                        Log.d("ReadOnlyTopicsBox", "onFailure received.")
+                                        isTranslating = false
+                                        isDownloading = false
+                                        Toast.makeText(context, context.getString(R.string.translation_failed), Toast.LENGTH_SHORT).show()
+                                        Log.e("ReadOnlyTopicsBox", "Translation/Download failed", exception)
+                                    },
+                                    onDownloadStarted = {
+                                        Log.d("ReadOnlyTopicsBox", "onDownloadStarted received.")
+                                        isDownloading = true  // Mostra barra lineare
+                                        isTranslating = false // Nascondi spinner
+                                    },
+                                    onDownloadCompleted = {
+                                        Log.d("ReadOnlyTopicsBox", "onDownloadCompleted received.")
+                                        isDownloading = false // Nascondi barra lineare
+                                        isTranslating = true  // Mostra di nuovo spinner per fase traduzione
+                                    }
+                                )
+                                // *** FINE NUOVA LOGICA onClick ***
+                            } else {
+                                // Rimuovi traduzione (invariato)
+                                translatedTopic = null
+                                isTranslating = false
+                                isDownloading = false
+                            }
+                        },
+                        enabled = !isTranslating && !isDownloading
+                    ) {
+                        if (isTranslating) {
+                            // Mostra spinner circolare SOLO se sta traducendo (e non scaricando)
+                            CircularProgressIndicator(
+                                modifier = Modifier.size(18.dp),
+                                strokeWidth = 2.dp
                             )
                         } else {
-                            translatedTopic = null
+                            // Altrimenti mostra l'icona di traduzione
+                            Icon(
+                                imageVector = Icons.Default.Translate,
+                                contentDescription = stringResource(R.string.translate),
+                                modifier = Modifier.size(18.dp)
+                            )
                         }
-                    },
-                    enabled = !isTranslating
-                ) {
-                    if (isTranslating) {
-                        CircularProgressIndicator(
-                            modifier = Modifier.size(18.dp),
-                            strokeWidth = 2.dp
-                        )
-                    } else {
-                        Icon(
-                            imageVector = Icons.Default.Translate,
-                            contentDescription = "Traduci topic",
-                            modifier = Modifier.size(18.dp)
-                        )
                     }
                 }
             }
+
         } else {
-            // Mostra un messaggio placeholder se non ci sono topic
+            // Messaggio placeholder se non ci sono topic (invariato)
             Text(
                 text = stringResource(R.string.no_topics_defined_placeholder),
                 style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant, // Colore più tenue
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
                 textAlign = TextAlign.Center,
                 modifier = Modifier
                     .fillMaxWidth()
@@ -274,16 +340,10 @@ fun ReadOnlyBioBox(
     placeholder: String = stringResource(id = R.string.bio_placeholder)
 ) {
     var translatedText by remember { mutableStateOf<String?>(null) }
-    var isTranslating by remember { mutableStateOf(false) }
-    var isDownloading by remember { mutableStateOf(false) }
+    var isTranslating by remember { mutableStateOf(false) } // Stato per indicatore circolare (traduzione)
+    var isDownloading by remember { mutableStateOf(false) } // Stato per indicatore lineare (download)
     val targetLanguageCode = Locale.getDefault().language
-
-    // Controlla se il modello della lingua target è già disponibile
-    LaunchedEffect(targetLanguageCode) {
-        isTranslationModelDownloaded(targetLanguageCode) { downloaded ->
-            isDownloading = !downloaded
-        }
-    }
+    val context = LocalContext.current // Per eventuali Toast
 
     Column(
         modifier = modifier
@@ -293,6 +353,7 @@ fun ReadOnlyBioBox(
             .padding(16.dp)
             .animateContentSize()
     ) {
+        // Titolo (invariato)
         Text(
             text = title.uppercase(),
             style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.Bold),
@@ -301,6 +362,7 @@ fun ReadOnlyBioBox(
         )
         Spacer(modifier = Modifier.height(8.dp))
 
+        // Testo Bio (invariato)
         val displayText = bioText.ifEmpty { placeholder }
         Text(
             text = displayText,
@@ -310,49 +372,89 @@ fun ReadOnlyBioBox(
         )
 
         Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.End
+            modifier = Modifier
+                .fillMaxWidth()
+                .heightIn(min = 24.dp),
+            horizontalArrangement = Arrangement.End,
+            verticalAlignment = Alignment.CenterVertically
         ) {
             if (isDownloading) {
-                // Mostra una barra di progresso lineare a tutta larghezza
-                LinearProgressIndicator(
-                    //TODO: replicare anche in TopicsBox?
+                Column(
+                    horizontalAlignment = Alignment.End,
                     modifier = Modifier
-                        .fillMaxWidth()
-                        .height(4.dp), // Altezza della barra
-                    color = MaterialTheme.colorScheme.primary
-                )
+                        .fillMaxWidth(0.7f)
+                        .padding(vertical = 8.dp, horizontal = 8.dp)
+                ) {
+                    LinearProgressIndicator(
+                        modifier = Modifier
+                            .height(4.dp)
+                    )
+                    Text(
+                        text = stringResource(R.string.downloading_language_model),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier.padding(top = 2.dp)
+                    )
+                }
             } else {
+                // Altrimenti mostra l'IconButton (se non sta scaricando)
                 IconButton(
                     onClick = {
                         if (translatedText == null) {
+                            // *** NUOVA LOGICA onClick ***
                             isTranslating = true
+                            isDownloading = false // Assicurati sia false all'inizio
+
+                            Log.d("ReadOnlyBioBox", "Translate clicked. Initial state: isTranslating=true, isDownloading=false")
+
                             TranslationHelper.translateTextWithDetection(
-                                text = bioText,
+                                text = bioText, // Usa bioText qui
                                 targetLanguageCode = targetLanguageCode,
                                 onSuccess = { result ->
+                                    Log.d("ReadOnlyBioBox", "onSuccess received.")
                                     translatedText = result
                                     isTranslating = false
+                                    isDownloading = false
                                 },
-                                onFailure = {
+                                onFailure = { exception ->
+                                    Log.d("ReadOnlyBioBox", "onFailure received.")
                                     isTranslating = false
+                                    isDownloading = false
+                                    Toast.makeText(context, context.getString(R.string.translation_failed), Toast.LENGTH_SHORT).show()
+                                    Log.e("ReadOnlyBioBox", "Translation/Download failed", exception)
+                                },
+                                onDownloadStarted = {
+                                    Log.d("ReadOnlyBioBox", "onDownloadStarted received.")
+                                    isDownloading = true
+                                    isTranslating = false
+                                },
+                                onDownloadCompleted = {
+                                    Log.d("ReadOnlyBioBox", "onDownloadCompleted received.")
+                                    isDownloading = false
+                                    isTranslating = true
                                 }
                             )
+                            // *** FINE NUOVA LOGICA onClick ***
                         } else {
-                            translatedText = null // Collassa la traduzione
+                            // Rimuovi traduzione (invariato)
+                            translatedText = null
+                            isTranslating = false
+                            isDownloading = false
                         }
                     },
-                    enabled = !isTranslating
+                    enabled = !isTranslating && !isDownloading // CORRETTO: Disabilita se sta facendo qualcosa
                 ) {
                     if (isTranslating) {
+                        // Mostra spinner circolare SOLO se sta traducendo (e non scaricando)
                         CircularProgressIndicator(
                             modifier = Modifier.size(18.dp),
                             strokeWidth = 2.dp
                         )
                     } else {
+                        // Altrimenti mostra l'icona di traduzione
                         Icon(
                             imageVector = Icons.Default.Translate,
-                            contentDescription = "Traduci bio",
+                            contentDescription = stringResource(R.string.translate),
                             modifier = Modifier.size(18.dp)
                         )
                     }
