@@ -45,8 +45,11 @@ As you read from the name of this repository, Gente Strana becomes the Italian v
      
 
 ### To do:
-- fix chatScreen when sending the first message in a chat
+- fix chatScreen when messages reach a certian quantity
+- fix images in UsersListScreen, PPScreen
+- fix linearprogress when downloading translate model
 - speacial theme for who has dyslexia
+- "reply to one bubble"
 - facebook registration and login
 
 ### Customizing the App (For Developers)
