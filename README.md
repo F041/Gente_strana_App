@@ -45,16 +45,14 @@ As you read from the name of this repository, Gente Strana becomes the Italian v
      
 
 ### To do:
-- fix chatScreen when messages reach a certian quantity
-- fix images in UsersListScreen, PPScreen
-- fix linearprogress when downloading translate model
+- fix images in UsersListScreen
 - speacial theme for who has dyslexia
 - "reply to one bubble"
 - facebook registration and login
 
 ### Customizing the App (For Developers)
 
-if you fork this, you'd need to edit some strings in ```res/values/strings``` and ```res/values-en/strings```, like the appname. And of course you'd need your own Firebase instance on google. Tham means also spitting blood with Firestore Database rules.
+if you fork this, you'd need to edit some strings in ```res/values/strings``` and ```res/values-en/strings```, like the appname. And of course you'd need your own Firebase instance on google, with extensions like Remote Config. Tham means also spitting blood with Firestore Database rules.
 This repo doesn't come with Firebase Functions, that help, for example, to manage notifications.
 
 
