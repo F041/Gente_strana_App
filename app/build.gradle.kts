@@ -77,7 +77,6 @@ dependencies {
     implementation(libs.androidx.activity.compose)
     implementation("androidx.compose.material:material-icons-extended")
 
-
     testImplementation(libs.junit)
     implementation(libs.androidx.ui.tooling.preview)
     androidTestImplementation(libs.androidx.junit)
@@ -106,6 +105,7 @@ dependencies {
 
     implementation(platform("com.google.firebase:firebase-bom:33.9.0"))
     implementation("com.google.firebase:firebase-firestore-ktx")
+    implementation("com.google.firebase:firebase-config-ktx")
     implementation("com.google.firebase:firebase-analytics")
     implementation("io.coil-kt:coil-compose:2.4.0")
     implementation("androidx.navigation:navigation-compose:2.7.5")
@@ -117,10 +117,4 @@ dependencies {
     testImplementation ("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.7.3") // Test per coroutine
     testImplementation("org.jetbrains.kotlin:kotlin-test:1.9.0")
     testImplementation ("org.robolectric:robolectric:4.5")
-
-
-
-
-
 }
-

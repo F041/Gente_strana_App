@@ -69,7 +69,7 @@ fun ChatListItem(chat: Chat, onClick: () -> Unit) {
             } else {
                 // Altrimenti, usa l'URL originale direttamente
                 imageUrlToLoad = originalPhotoUrl
-                Log.d("ChatListItem", "Utente ${chat.participantName}: URL originale: $originalPhotoUrl. Tento caricamento.") // Log opzionale
+//                Log.d("ChatListItem", "Utente ${chat.participantName}: URL originale: $originalPhotoUrl. Tento caricamento.") // Log opzionale
             }
             // Immagine profilo (dimensione mantenuta fissa, ma potrebbe essere resa dinamica se aggiungi una proprietà apposita)
             Image(

@@ -20,10 +20,50 @@ import com.gentestrana.ui.theme.LocalAppTheme
 import com.gentestrana.utils.forceTokenRefreshIfNeeded
 import com.google.firebase.auth.FirebaseAuth
 import com.gentestrana.utils.updateUserLastActive
+import com.google.firebase.ktx.Firebase
+import com.google.firebase.remoteconfig.ktx.remoteConfig
+import com.google.firebase.remoteconfig.ktx.remoteConfigSettings
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
+        val remoteConfig = Firebase.remoteConfig // Ottieni l'istanza di Remote Config
+        // Impostazioni per Remote Config (importante per lo sviluppo)
+        val configSettings = remoteConfigSettings {
+            // Intervallo minimo tra fetch successive.
+            // Imposta a un valore basso (es. 0 o pochi secondi) solo per DEBUG.
+            // In produzione, usa un valore più alto (es. 3600L per 1 ora).
+            minimumFetchIntervalInSeconds = if (BuildConfig.DEBUG) 10L else 3600L
+        }
+        remoteConfig.setConfigSettingsAsync(configSettings)
+
+        // Imposta i valori di default nel codice.
+        // Questi verranno usati se l'app non riesce a recuperare i valori dal cloud
+        // o se un parametro non è definito nel cloud.
+        val defaultMap = mapOf(
+            "daily_message_limit" to 300L, // Usa 'L' per Long, corrisponde a Number in Firebase
+            "message_rate_limit_window_seconds" to 50L,
+            "message_rate_limit_max_messages" to 4L,
+            "onboarding_autism_test_url" to "https://embrace-autism.com/asrs-v1-1/#test",
+            "onboarding_adhd_test_url" to "https://psychology-tools.com/test/adult-adhd-self-report-scale",
+            "registration_email_validation_regex" to "^[A-Za-z0-9._%+-]+@(?:gmail\\.com|outlook\\.com|yahoo\\.com|icloud\\.com|protonmail\\.com|live\\.com|hotmail\\.it|yahoo\\.it)$"
+        )
+        remoteConfig.setDefaultsAsync(defaultMap)
+
+        // Tenta di recuperare e attivare i valori più recenti dal cloud
+        remoteConfig.fetchAndActivate()
+            .addOnCompleteListener(this) { task ->
+                if (task.isSuccessful) {
+                    val updated = task.result
+                    Log.d("RemoteConfig", "Config params updated: $updated")
+                    // Qui potresti forzare un refresh della UI se necessario,
+                    // ma per i limiti che cambiano raramente, di solito basta
+                    // leggerli quando servono.
+                } else {
+                    Log.w("RemoteConfig", "Fetch failed")
+                }
+            }
 
         // Gestione Deep Link all'avvio
         val intent = intent // Intent che ha avviato MainActivity

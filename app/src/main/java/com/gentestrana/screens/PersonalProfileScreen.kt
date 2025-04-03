@@ -3,6 +3,7 @@
 package com.gentestrana.screens
 
 import android.content.Context
+import android.content.Intent
 import android.content.pm.PackageManager
 import android.net.Uri
 import android.util.Log
@@ -14,6 +15,7 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Logout
+import androidx.compose.material.icons.filled.QuestionMark
 import androidx.compose.material.icons.filled.RemoveRedEye
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -184,11 +186,25 @@ fun PersonalProfileScreen(
             TopAppBar(
                 title = { Text(stringResource(id = R.string.personal_profile)) },
                 actions = {
+
+                    IconButton(onClick = {
+                        val videoUrl = "https://youtube.com/shorts/hD9KP_bgxuE"
+                        // TikTok darebbe problemi in Italia, richiederebbe Login
+                        val intent = Intent(Intent.ACTION_VIEW, Uri.parse(videoUrl))
+                        context.startActivity(intent)
+                    }) {
+                        Icon(
+                            imageVector = Icons.Filled.QuestionMark,
+                            contentDescription = "Guida su come completare il profilo",
+                            tint = MaterialTheme.colorScheme.primary
+                        )
+                    }
+
+                    // Icona anteprima profilo
                     IconButton(onClick = {
                         val currentUserId = auth.currentUser?.uid
                         if (currentUserId != null) {
                             navController.navigate("userProfile/${currentUserId}")
-                        // Naviga a UserProfileScreen SBAGLIATO!
                         } else {
                             Toast.makeText(context, "Utente non loggato", Toast.LENGTH_SHORT).show()
                         }
@@ -196,10 +212,12 @@ fun PersonalProfileScreen(
                         Icon(
                             imageVector = Icons.Filled.RemoveRedEye,
                             contentDescription = "Profilo (anteprima)",
-                            tint = MaterialTheme.colorScheme.primary,
+                            tint = MaterialTheme.colorScheme.primary
                         )
                     }
+
                     Spacer(modifier = Modifier.width(4.dp))
+
                     // Pulsante di logout
                     IconButton(onClick = {
                         auth.signOut()
@@ -215,190 +233,190 @@ fun PersonalProfileScreen(
                     }
                 }
             )
-        }
-    ) { paddingValues ->
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(paddingValues)
+        },
+        content = { paddingValues ->
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(paddingValues)
 //                .padding(16.dp) fonte della discordia rispetto ProfileContent
-                .verticalScroll(rememberScrollState()),
-            horizontalAlignment = Alignment.CenterHorizontally
-        ) {
-
-            // Zona gallery immagini profilo
-            Box {
-                key(profilePicUrl) {
-                    ReorderableProfileImageGridWithAdd(
-                        images = profilePicUrl,
-                        maxImages = 3,
-                        isUploading = isUploading,
-                        onImageOrderChanged = { newOrder ->
-                            profileViewModel.setProfilePicOrder(newOrder)
-                        },
-                        onDeleteImage = { imageUrl ->
-                            coroutineScope.launch {
-                                profileViewModel.deleteProfileImage(imageUrl)
-                            }
-                        },
-                        onAddImage = {
-                            imagePickerLauncher.launch("image/*")
-                        }
-                    )
-                }
-            }
-
-            Spacer(modifier = Modifier.height(8.dp))
-
-            if (uploadLimitExceeded) {
-                Text(
-                    text = "⏰⏳",
-                    style = MaterialTheme.typography.bodyLarge,
-                    color = MaterialTheme.colorScheme.error,
-                    modifier = Modifier.padding(8.dp)
-                )
-            }
-
-            // Gli space si potrebbero reintrodurre per coerenza ed eliminarli in ProfileImageSection
-
-            // Campo per Username
-            ProfileTextField(
-                value = username,
-                onValueChange = { profileViewModel.setUsername(it) },
-                label = stringResource(id = R.string.first_name),
-                placeholder = stringResource(id = R.string.name_placeholder),
-                minLength = 2,
-                maxLength = 13,
-                errorMessage = "❌",
-                removeSpaces = true,
-            )
-            Spacer(modifier = Modifier.height(8.dp))
-
-            // Campo per Topics (ex description)
-            ProfileTopicsList(
-                title = stringResource(id = R.string.topics_title),
-                topics = topicsList,
-                placeholder = stringResource(id = R.string.topics_placeholder),
-                newTopicMaxLength = 200,
-                onValueChange = { updatedTopics ->
-                    profileViewModel.setTopics(updatedTopics.joinToString(", "))
-                },
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 16.dp) // Allinea al padding di ProfileContent
-            )
-
-            Spacer(modifier = Modifier.height(16.dp))
-
-            // Campo bio
-            ProfileBioBox(
-                initialContent = bio,
-                onValueChange = { updatedBio -> profileViewModel.setBio(updatedBio) },
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 16.dp)
-            )
-
-            Spacer(modifier = Modifier.height(8.dp))
-
-            DateOfBirthPicker(
-                context = LocalContext.current,
-                birthTimestamp = birthTimestamp ?: 0L, // Rimosso .value
-                onDateSelected = { newTimestamp ->
-                    profileViewModel.setBirthTimestamp(newTimestamp)
-                }
-            )
-
-            Spacer(modifier = Modifier.height(16.dp))
-
-            // Bottone "Ottieni Località" - getLocation CHIAMATA DOPO LA DICHIARAZIONE
-            Button(
-                onClick = {
-                    if (androidx.core.content.ContextCompat.checkSelfPermission(
-                            context,
-                            android.Manifest.permission.ACCESS_FINE_LOCATION
-                        ) == PackageManager.PERMISSION_GRANTED
-                    ) {
-                        getLocation(context)
-                    } else {
-                        locationPermissionLauncher.launch(android.Manifest.permission.ACCESS_FINE_LOCATION)
-                    }
-                },
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 16.dp)
+                    .verticalScroll(rememberScrollState()),
+                horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                Text(stringResource(R.string.get_location))
-            }
 
-            Spacer(modifier = Modifier.height(8.dp))
-
-
-            // SEZIONE ProgressIndicator
-            if (isLocationLoading) {
-                // Mostra ProgressIndicator SOLO se isLocationLoading è true
-                Column(
-                    horizontalAlignment = Alignment.CenterHorizontally, // Centra orizzontalmente
-                    modifier = Modifier.padding(vertical = 8.dp) // Padding verticale
-                ) {
-                    user?.let {
-                        PersonalProfilePreviewCard(
-                            user = it,
-                            modifier = Modifier.padding(bottom = 16.dp) // Spazio sotto l'anteprima
+                // Zona gallery immagini profilo
+                Box {
+                    key(profilePicUrl) {
+                        ReorderableProfileImageGridWithAdd(
+                            images = profilePicUrl,
+                            maxImages = 3,
+                            isUploading = isUploading,
+                            onImageOrderChanged = { newOrder ->
+                                profileViewModel.setProfilePicOrder(newOrder)
+                            },
+                            onDeleteImage = { imageUrl ->
+                                coroutineScope.launch {
+                                    profileViewModel.deleteProfileImage(imageUrl)
+                                }
+                            },
+                            onAddImage = {
+                                imagePickerLauncher.launch("image/*")
+                            }
                         )
                     }
+                }
 
-                    GenericLoadingScreen(modifier = Modifier.size(24.dp)) // ProgressIndicator
-                    Spacer(modifier = Modifier.height(4.dp))
+                Spacer(modifier = Modifier.height(8.dp))
+
+                if (uploadLimitExceeded) {
                     Text(
-                        text = "\uD83D\uDD0D \uD83D\uDCCD...", // stringabile
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f) // Stile testo di stato
+                        text = "⏰⏳",
+                        style = MaterialTheme.typography.bodyLarge,
+                        color = MaterialTheme.colorScheme.error,
+                        modifier = Modifier.padding(8.dp)
                     )
                 }
-            }
 
-            // Mostra posizione
-            ProfileLocationDisplay(locationName = currentLocation)
+                // Gli space si potrebbero reintrodurre per coerenza ed eliminarli in ProfileImageSection
 
-            Spacer(modifier = Modifier.height(16.dp))
+                // Campo per Username
+                ProfileTextField(
+                    value = username,
+                    onValueChange = { profileViewModel.setUsername(it) },
+                    label = stringResource(id = R.string.first_name),
+                    placeholder = stringResource(id = R.string.name_placeholder),
+                    minLength = 2,
+                    maxLength = 13,
+                    errorMessage = "❌",
+                    removeSpaces = true,
+                )
+                Spacer(modifier = Modifier.height(8.dp))
 
-            ProfileLanguagesField(
-                selectedLanguages = spokenLanguages,
-                onLanguagesChanged = { newLanguages ->
-                    profileViewModel.setSpokenLanguages(newLanguages)
-                },
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 16.dp)
-            )
+                // Campo per Topics (ex description)
+                ProfileTopicsList(
+                    title = stringResource(id = R.string.topics_title),
+                    topics = topicsList,
+                    placeholder = stringResource(id = R.string.topics_placeholder),
+                    newTopicMaxLength = 200,
+                    onValueChange = { updatedTopics ->
+                        profileViewModel.setTopics(updatedTopics.joinToString(", "))
+                    },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 16.dp) // Allinea al padding di ProfileContent
+                )
 
-            Spacer(modifier = Modifier.height(16.dp))
+                Spacer(modifier = Modifier.height(16.dp))
 
-            // Bottone per salvare gli aggiornamenti del profilo
-            Button(
-                onClick = {
-                    profileViewModel.updateProfile(
-                        updatedUsername = username,
-                        updatedBio = bio,
-                        updatedTopics = topicsText,
-                        updatedProfilePicUrl = profilePicUrl,
-                        updatedBirthTimestamp = birthTimestamp,
-                        onSuccess = {
-                            Toast.makeText(context, "✅", Toast.LENGTH_SHORT).show()
-                        },
-                        onFailure = { error ->
-                            Toast.makeText(context, "⛔: $error", Toast.LENGTH_SHORT).show()
+                // Campo bio
+                ProfileBioBox(
+                    initialContent = bio,
+                    onValueChange = { updatedBio -> profileViewModel.setBio(updatedBio) },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 16.dp)
+                )
+
+                Spacer(modifier = Modifier.height(8.dp))
+
+                DateOfBirthPicker(
+                    context = LocalContext.current,
+                    birthTimestamp = birthTimestamp ?: 0L, // Rimosso .value
+                    onDateSelected = { newTimestamp ->
+                        profileViewModel.setBirthTimestamp(newTimestamp)
+                    }
+                )
+
+                Spacer(modifier = Modifier.height(16.dp))
+
+                // Bottone "Ottieni Località" - getLocation CHIAMATA DOPO LA DICHIARAZIONE
+                Button(
+                    onClick = {
+                        if (androidx.core.content.ContextCompat.checkSelfPermission(
+                                context,
+                                android.Manifest.permission.ACCESS_FINE_LOCATION
+                            ) == PackageManager.PERMISSION_GRANTED
+                        ) {
+                            getLocation(context)
+                        } else {
+                            locationPermissionLauncher.launch(android.Manifest.permission.ACCESS_FINE_LOCATION)
                         }
-                    )
-                },
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 16.dp)
-            )
-            {
-                Text(text = stringResource(R.string.save_profile))
+                    },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 16.dp)
+                ) {
+                    Text(stringResource(R.string.get_location))
+                }
+
+                Spacer(modifier = Modifier.height(8.dp))
+
+
+                // SEZIONE ProgressIndicator
+                if (isLocationLoading) {
+                    // Mostra ProgressIndicator SOLO se isLocationLoading è true
+                    Column(
+                        horizontalAlignment = Alignment.CenterHorizontally, // Centra orizzontalmente
+                        modifier = Modifier.padding(vertical = 8.dp) // Padding verticale
+                    ) {
+                        user?.let {
+                            PersonalProfilePreviewCard(
+                                user = it,
+                                modifier = Modifier.padding(bottom = 16.dp) // Spazio sotto l'anteprima
+                            )
+                        }
+
+                        GenericLoadingScreen(modifier = Modifier.size(24.dp)) // ProgressIndicator
+                        Spacer(modifier = Modifier.height(4.dp))
+                        Text(
+                            text = "\uD83D\uDD0D \uD83D\uDCCD...", // stringabile
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f) // Stile testo di stato
+                        )
+                    }
+                }
+
+                // Mostra posizione
+                ProfileLocationDisplay(locationName = currentLocation)
+
+                Spacer(modifier = Modifier.height(16.dp))
+
+                ProfileLanguagesField(
+                    selectedLanguages = spokenLanguages,
+                    onLanguagesChanged = { newLanguages ->
+                        profileViewModel.setSpokenLanguages(newLanguages)
+                    },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 16.dp)
+                )
+
+                Spacer(modifier = Modifier.height(16.dp))
+
+                // Bottone per salvare gli aggiornamenti del profilo
+                Button(
+                    onClick = {
+                        profileViewModel.updateProfile(
+                            updatedUsername = username,
+                            updatedBio = bio,
+                            updatedTopics = topicsText,
+                            updatedProfilePicUrl = profilePicUrl,
+                            updatedBirthTimestamp = birthTimestamp,
+                            onSuccess = {
+                                Toast.makeText(context, "✅", Toast.LENGTH_SHORT).show()
+                            },
+                            onFailure = { error ->
+                                Toast.makeText(context, "⛔: $error", Toast.LENGTH_SHORT).show()
+                            }
+                        )
+                    },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 16.dp)
+                )
+                {
+                    Text(text = stringResource(R.string.save_profile))
+                }
             }
-        }
-    }
+        })
 }

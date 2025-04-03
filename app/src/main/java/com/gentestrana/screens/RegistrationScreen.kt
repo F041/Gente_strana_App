@@ -25,9 +25,15 @@ import com.gentestrana.R
 import com.gentestrana.users.UserRepository
 import androidx.compose.foundation.shape.RoundedCornerShape
 import com.gentestrana.components.GenericLoadingScreen
+import com.google.firebase.ktx.Firebase
+import com.google.firebase.remoteconfig.ktx.remoteConfig
 
 val userRepository = UserRepository()
-const val emailRegex = "^[A-Za-z0-9._%+-]+@(?:gmail\\.com|outlook\\.com|yahoo\\.com|icloud\\.com|protonmail\\.com|live\\.com|hotmail\\.it|yahoo\\.it)$"
+
+// Chiave per Remote Config
+private const val REMOTE_CONFIG_EMAIL_REGEX_KEY = "registration_email_validation_regex"
+// Valore di default DA USARE nel codice se Remote Config fallisce
+private const val DEFAULT_EMAIL_REGEX = "^[A-Za-z0-9._%+-]+@(?:gmail\\.com|outlook\\.com|yahoo\\.com|icloud\\.com|protonmail\\.com|live\\.com|hotmail\\.it|yahoo\\.it)$"
 
 @Composable
 fun RegistrationScreen(
@@ -53,6 +59,13 @@ fun RegistrationScreen(
         selectedImageUri = uri
     }
 
+    val remoteConfig = Firebase.remoteConfig
+    val emailValidationRegexString = remoteConfig.getString(REMOTE_CONFIG_EMAIL_REGEX_KEY)
+    // Usa la regex di default se quella da Remote Config è vuota
+    val actualEmailRegexString = emailValidationRegexString.ifBlank { DEFAULT_EMAIL_REGEX }
+    // Compila la regex una sola volta per efficienza
+    val emailRegexPattern = remember(actualEmailRegexString) { actualEmailRegexString.toRegex() }
+
     // Mostra lo snackbar quando errorMessage viene impostato
     LaunchedEffect(errorMessage) {
         errorMessage?.let { message ->
@@ -74,7 +87,7 @@ fun RegistrationScreen(
                 value = email,
                 onValueChange = {
                     email = it
-                    isEmailError = !it.matches(emailRegex.toRegex())
+                    isEmailError = !it.matches(emailRegexPattern)
                 },
                 label = { Text(stringResource(R.string.registration_email_label)) },
                 modifier = Modifier.fillMaxWidth(),
@@ -202,6 +215,15 @@ fun RegistrationScreen(
 
             Button(
                 onClick = {
+                    if (isEmailError || email.isBlank() || password.isBlank() || username.isBlank()) {
+                        // Mostra un messaggio o impedisci la registrazione se l'email non è valida o altri campi sono vuoti
+                        errorMessage = context.getString(R.string.login_fill_fields)
+                        // Riutilizziamo questa stringa
+                        if(isEmailError) errorMessage = context.getString(R.string.registration_email_error_message)
+                        // Messaggio specifico per email
+                        return@Button
+                    // Interrompi l'onClick
+                    }
                     isLoading = true
                     userRepository.registerUserAndUploadImage(
                         email = email,

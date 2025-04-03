@@ -27,6 +27,8 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.ui.text.input.KeyboardType
+import com.google.firebase.ktx.Firebase
+import com.google.firebase.remoteconfig.ktx.remoteConfig
 
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
@@ -43,15 +45,19 @@ fun OnboardingAssessmentPageContent(
     var autismScoreText by remember { mutableStateOf("") }
     var adhdScoreText by remember { mutableStateOf("") }
     var hasDiagnosis by remember { mutableStateOf(false) }
-    val autismTestLink = stringResource(R.string.onboarding_screen3_autism_test_link)
-    val adhdTestLink = stringResource(R.string.onboarding_screen3_adhd_test_link)
+    val remoteConfig = Firebase.remoteConfig
+    // getString restituisce il valore condizionale (italiano) se la condizione è soddisfatta,
+    // altrimenti il valore di default definito nella console Firebase,
+    // altrimenti il valore di default definito in setDefaultsAsync nel codice,
+    // altrimenti una stringa vuota.
+    val autismTestLink = remoteConfig.getString("onboarding_autism_test_url")
+    val adhdTestLink = remoteConfig.getString("onboarding_adhd_test_url")
     val scoreErrorKey = "score_error_occurred"
     var isScoreError by remember {
         mutableStateOf(sharedPreferences.getBoolean(scoreErrorKey, false))
     }
     val scrollState = rememberScrollState()
     var showADHDError by remember { mutableStateOf(false) }
-
 
     Column(
         modifier = Modifier
