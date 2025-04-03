@@ -12,6 +12,8 @@ import com.gentestrana.utils.uploadMainProfileImage
 import kotlinx.coroutines.tasks.await
 import com.google.firebase.Timestamp
 import com.google.firebase.auth.UserProfileChangeRequest
+import com.google.firebase.firestore.FirebaseFirestore
+import com.google.firebase.messaging.FirebaseMessaging
 
 /**
  * 1. Controllare lo stato di verifica email all'avvio dell'app e/o al login.
@@ -21,10 +23,11 @@ import com.google.firebase.auth.UserProfileChangeRequest
  */
 
 class UserRepository(
-    private val auth: FirebaseAuth = FirebaseAuth.getInstance()
-// Parametro iniettato con valore di default
+    private val auth: FirebaseAuth = FirebaseAuth.getInstance(),
+    private val firestore: FirebaseFirestore = FirebaseFirestore.getInstance(),
+    private val messaging: FirebaseMessaging = FirebaseMessaging.getInstance()
+
 ) {
-    private val firestore = Firebase.firestore
 
     /**
      * Registers a new user with email and password, and uploads a profile image if provided.
@@ -59,15 +62,22 @@ class UserRepository(
                     "username" to username,
                     "bio" to bio,
                     "profilePicUrl" to emptyList<String>(),
-                    "age" to 0,
                     "sex" to sex,
+                    "topics" to emptyList<String>(),
+                    "rawBirthTimestamp" to null,
+                    "docId" to uid,
+                    "fcmToken" to "",
+                    "spokenLanguages" to emptyList<String>(),
+                    "location" to "",
+                    "isAdmin" to false,
                     "registrationDate" to registrationTimestamp,
                     "registrationType" to registrationType,
-                    "lastActive" to Timestamp.now()
+                    "lastActive" to registrationTimestamp
                 )
                 firestore.collection("users").document(uid)
                     .set(userData)
                     .addOnSuccessListener {
+                        retrieveAndSaveFcmToken(uid)
                         if (selectedImageUri != null) {
                             // Use centralized function to upload the image
                               uploadMainProfileImage(context, uid, selectedImageUri
@@ -164,6 +174,7 @@ class UserRepository(
 
     /**
      * Authenticates the user on Firebase using a Google ID token.
+     * **UPDATED:** Checks if the user document exists in Firestore and creates it if it's the first login.
      */
     fun signInWithGoogle(
         idToken: String,
@@ -174,9 +185,75 @@ class UserRepository(
         auth.signInWithCredential(credential)
             .addOnCompleteListener { task ->
                 if (task.isSuccessful) {
-                    // Here, you could synchronize the user document on Firestore if needed
-                    onSuccess()
+                    // --- INIZIO NUOVA LOGICA ---
+                    val firebaseUser = task.result?.user // Ottieni l'utente Firebase appena autenticato
+                    if (firebaseUser != null) {
+                        val uid = firebaseUser.uid
+                        val userDocRef = firestore.collection("users").document(uid)
+
+                        // Controlla se il documento utente esiste già in Firestore
+                        userDocRef.get().addOnSuccessListener { documentSnapshot ->
+                            if (!documentSnapshot.exists()) {
+                                // 1. L'UTENTE NON ESISTE IN FIRESTORE (Primo login con Google)
+                                Log.d("UserRepository", "Primo login con Google per l'utente $uid. Creo documento Firestore.")
+
+                                // Prepara i dati utente di default (PUOI PERSONALIZZARLI)
+                                val registrationTimestamp = Timestamp.now()
+                                val googleUserData = mapOf(
+                                    // Prendi username ed email da FirebaseAuth (se disponibili)
+                                    "username" to (firebaseUser.displayName ?: "User"),
+                                    "bio" to "", // Bio vuota di default
+                                    "topics" to emptyList<String>(), // Topics vuoti
+                                    // Usa l'URL della foto profilo da Google Auth (se c'è), altrimenti lista vuota
+                                    "profilePicUrl" to (firebaseUser.photoUrl?.let { listOf(it.toString()) } ?: emptyList()),
+                                    "rawBirthTimestamp" to null, // Data di nascita non impostata
+                                    "sex" to "Undefined", // Sesso non definito
+                                    "docId" to uid, // Importante salvare l'UID anche nel documento
+                                    "fcmToken" to "", // Token FCM vuoto inizialmente
+                                    "spokenLanguages" to emptyList<String>(), // Lingue vuote
+                                    "location" to "", // Località vuota
+                                    "isAdmin" to false, // Non admin di default
+                                    "registrationDate" to registrationTimestamp, // Data registrazione
+                                    "lastActive" to registrationTimestamp // Ultimo accesso = registrazione
+                                    // Aggiungi altri campi di default se necessario
+                                )
+
+                                // Crea il documento utente in Firestore
+                                userDocRef.set(googleUserData)
+                                    .addOnSuccessListener {
+                                        Log.d("UserRepository", "Documento Firestore creato con successo per l'utente $uid.")
+                                        retrieveAndSaveFcmToken(uid) // Chiama la funzione helper
+                                        // --- FINE NUOVA LOGICA PER FCM TOKEN ---
+                                        onSuccess() // Chiama onSuccess SOLO DOPO aver creato il documento
+                                    }
+                                    .addOnFailureListener { e ->
+                                        Log.e("UserRepository", "Errore nella creazione del documento Firestore per l'utente $uid", e)
+                                        onFailure("Errore nella creazione dei dati utente: ${e.localizedMessage}")
+                                    }
+                            } else {
+                                // 2. L'UTENTE ESISTE GIA' IN FIRESTORE (Login successivo)
+                                Log.d("UserRepository", "Login Google successivo per l'utente $uid. Documento Firestore già esistente.")
+                                retrieveAndSaveFcmToken(uid)
+                                // Aggiorniamo solo 'lastActive'
+                                userDocRef.update("lastActive", Timestamp.now())
+                                    .addOnSuccessListener { Log.d("UserRepository", "Aggiornato lastActive per $uid") }
+                                    .addOnFailureListener { e -> Log.w("UserRepository", "Errore aggiornamento lastActive per $uid: ${e.message}") }
+                                onSuccess() // Chiama onSuccess perché l'utente esiste
+                            }
+                        }.addOnFailureListener { e ->
+                            // Errore durante il controllo dell'esistenza del documento
+                            Log.e("UserRepository", "Errore nel controllo esistenza documento per $uid", e)
+                            onFailure("Errore accesso ai dati utente: ${e.localizedMessage}")
+                        }
+                    } else {
+                        // Errore: utente Firebase null dopo login riuscito (molto raro)
+                        Log.e("UserRepository", "Utente Firebase null dopo signInWithCredential riuscito.")
+                        onFailure("Errore interno: Utente non trovato dopo il login.")
+                    }
+
                 } else {
+                    // Errore durante l'autenticazione con le credenziali Google
+                    Log.e("UserRepository", "signInWithCredential fallito", task.exception)
                     onFailure(task.exception?.localizedMessage ?: "Authentication failed.")
                 }
             }
@@ -319,4 +396,30 @@ class UserRepository(
             onFailure("Errore: ${e.message}")
         }
     }
+
+    private fun retrieveAndSaveFcmToken(userId: String) {
+        // Import necessario qui dentro o all'inizio del file
+        // import com.google.firebase.messaging.FirebaseMessaging
+        com.google.firebase.messaging.FirebaseMessaging.getInstance().token
+            .addOnSuccessListener { fcmToken ->
+                if (fcmToken != null) {
+                    Log.d("UserRepository", "Token FCM recuperato per $userId: $fcmToken")
+                    // Aggiorna il token in Firestore
+                    firestore.collection("users").document(userId)
+                        .update("fcmToken", fcmToken)
+                        .addOnSuccessListener {
+                            Log.d("UserRepository", "Token FCM salvato con successo in Firestore per $userId.")
+                        }
+                        .addOnFailureListener { e ->
+                            Log.e("UserRepository", "Errore nel salvataggio del token FCM in Firestore per $userId", e)
+                        }
+                } else {
+                    Log.w("UserRepository", "Token FCM recuperato è null per $userId.")
+                }
+            }
+            .addOnFailureListener { e ->
+                Log.e("UserRepository", "Errore nel recupero del token FCM per $userId", e)
+            }
+    }
+
 }

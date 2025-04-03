@@ -24,6 +24,8 @@ import com.google.firebase.auth.FirebaseAuth
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import com.gentestrana.BuildConfig
+
 
 enum class AppTheme { SYSTEM, LIGHT, DARK, /*SPECIAL*/ }
 // SPECIAL servirà per dislessia probabilmente
@@ -230,7 +232,9 @@ fun SettingsScreen(
 
             ListItem(
                 headlineContent = { Text(stringResource(R.string.app_version)) },
-                trailingContent = { Text("1.0") }
+                trailingContent = {
+                    Text("Versione: ${BuildConfig.VERSION_NAME} (Code: ${BuildConfig.VERSION_CODE})")
+                }
             )
         }
         if (showDeleteConfirmationDialog) {
