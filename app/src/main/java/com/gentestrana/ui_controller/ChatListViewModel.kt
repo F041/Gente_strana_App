@@ -1,5 +1,6 @@
 package com.gentestrana.ui_controller
 
+import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.gentestrana.chat.Chat
@@ -61,9 +62,23 @@ class ChatListViewModel(
         chatsList.forEach { chat ->
             if (chat.id !in messageListeners) {
                 val listener = repository.listenForMessageStatusUpdates(chat.id) { newStatus ->
-                    // Qui puoi aggiornare lo stato della chat se necessario
-                    // (ad esempio, notificare il ViewModel di un cambiamento)
-                    loadChats() // oppure aggiorna in modo più fine
+                    viewModelScope.launch { // Usa la coroutine scope del ViewModel
+                        val currentChats = _chats.value.toMutableList()
+                        val chatIndex = currentChats.indexOfFirst { it.id == chat.id }
+                        if (chatIndex != -1) {
+                            // Crea una copia aggiornata della chat specifica
+                            val updatedChat = currentChats[chatIndex].copy(lastMessageStatus = newStatus)
+                            // Sostituisci l'elemento nella lista mutabile
+                            currentChats[chatIndex] = updatedChat
+                            // Aggiorna lo StateFlow con la lista modificata (e riordinata se serve)
+                            _chats.value = currentChats.sortedByDescending { it.timestamp }
+//                            Log.d("ChatListVM_Status", "Updated status for chat ${chat.id} to $newStatus")
+                        } else {
+//                            Log.w("ChatListVM_Status", "Chat ${chat.id} not found in current state for status update.")
+                            // Potrebbe valere la pena ricaricare tutto in questo caso raro?
+                            // loadChats() // Opzionale: fallback se la chat non viene trovata
+                        }
+                    }
                 }
                 messageListeners[chat.id] = listener
             }

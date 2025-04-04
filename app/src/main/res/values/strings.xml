@@ -195,6 +195,7 @@
     <string name="all_users">All</string>
     <string name="language">Language</string>
     <string name="location">Position</string>
+    <string name="similarity">Similarity</string>
     <string name="translate">translate</string>
     <string name="translation_failed">translation failed</string>
     <string name="reset">reset</string>
@@ -207,7 +208,8 @@
     <string name="no_topics_defined_placeholder">No topics defined yet
         </string>
     <string name="downloading_language_model">Downloading language model...</string>
-
+    <string name="connection_error">Connection error. Please try again.</string>
+    <string name="retry_button">Retry</string>
 
 
 

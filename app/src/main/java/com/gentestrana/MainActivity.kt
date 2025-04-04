@@ -150,10 +150,12 @@ class MainActivity : ComponentActivity() {
         forceTokenRefreshIfNeeded(this)
     }
 
-    override fun onUserInteraction() {
-        super.onUserInteraction()
+    override fun onResume() {
+        super.onResume()
         updateUserLastActive()
+        // forceTokenRefreshIfNeeded(this) // Puoi tenere/spostare qui anche questo se preferisci
     }
+
 
     private fun isOnboardingCompleted(): Boolean {
         val sharedPreferences = getSharedPreferences("settings_prefs", Context.MODE_PRIVATE)

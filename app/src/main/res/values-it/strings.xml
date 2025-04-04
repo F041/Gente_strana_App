@@ -203,6 +203,7 @@
     <string name="all_users">tutti</string>
     <string name="language">lingua</string>
     <string name="location">posizione</string>
+    <string name="similarity">similarità</string>
     <string name="translate">traduci</string>
     <string name="translation_failed">traduzione fallita</string>
     <string name="reset">resetta</string>
@@ -214,6 +215,8 @@
     <string name="default_notification_body">Hai ricevuto una nuova notifica</string>
     <string name="no_topics_defined_placeholder">Nessun argomento definito dall\'utente.</string>
     <string name="downloading_language_model">Scaricamento modello lingua...</string>
+    <string name="connection_error">Errore di connessione. Riprova.</string>
+    <string name="retry_button">Riprova</string>
 
     // Zona impostazioni
     <string name="delete_account_confirmation_title">conferma eliminazione account</string>

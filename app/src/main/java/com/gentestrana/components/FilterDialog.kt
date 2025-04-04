@@ -58,7 +58,7 @@ fun FilterDialog(
 
                 // Scelta del filtro (ALL, LANGUAGE, LOCATION)
                 FilterType.entries
-                    .filter { it != FilterType.FUTURE_ONE && it != FilterType.FUTURE_TWO }
+                    .filter { it != FilterType.FUTURE_TWO }
                     .forEach { filter ->
                         Row(
                             modifier = Modifier
@@ -78,6 +78,7 @@ fun FilterDialog(
                                     FilterType.ALL -> stringResource(R.string.all_users).uppercase()
                                     FilterType.LANGUAGE -> stringResource(R.string.language).uppercase()
                                     FilterType.LOCATION -> stringResource(R.string.location).uppercase()
+                                    FilterType.SIMILARITY -> stringResource(R.string.similarity).uppercase()
                                     else -> ""
                                 },
                                 modifier = Modifier.padding(start = 16.dp)

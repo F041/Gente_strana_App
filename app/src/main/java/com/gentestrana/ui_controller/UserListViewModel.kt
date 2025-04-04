@@ -1,8 +1,11 @@
 package com.gentestrana.ui_controller
 
+import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.gentestrana.users.User
+import com.gentestrana.users.UserRepository
+import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.DocumentSnapshot
 import com.google.firebase.firestore.ktx.firestore
 import com.google.firebase.ktx.Firebase
@@ -29,6 +32,18 @@ class UserListViewModel : ViewModel() {
     val hasMoreData: StateFlow<Boolean> get() = _hasMoreData
 
     private val pageSize = 10
+
+    private val _currentUserProfile = MutableStateFlow<User?>(null)
+    val currentUserProfile: StateFlow<User?> get() = _currentUserProfile
+
+    private val userRepository = UserRepository() // Aggiungiamo un'istanza del repository
+    private val currentUserId = FirebaseAuth.getInstance().currentUser?.uid
+
+
+    init {
+        loadUsers()
+        loadCurrentUserProfile()
+    }
 
     // Funzione per caricare gli utenti
     fun loadUsers() {
@@ -62,6 +77,31 @@ class UserListViewModel : ViewModel() {
                 _hasError.value = true
             } finally {
                 _isLoading.value = false
+            }
+        }
+    }
+    private fun loadCurrentUserProfile() {
+        if (currentUserId == null) {
+            Log.w("UserListViewModel", "Impossibile caricare il profilo: Utente non loggato.")
+            _currentUserProfile.value = null // Assicurati sia null se non c'è utente
+            return
+        }
+        viewModelScope.launch {
+            try {
+                userRepository.getUser(
+                    docId = currentUserId,
+                    onSuccess = { user ->
+                        _currentUserProfile.value = user
+                        Log.d("UserListViewModel", "Profilo utente corrente caricato: ${user.username}")
+                    },
+                    onFailure = { error ->
+                        Log.e("UserListViewModel", "Errore caricamento profilo utente corrente", error)
+                        _currentUserProfile.value = null // Imposta a null in caso di errore
+                    }
+                )
+            } catch (e: Exception) {
+                Log.e("UserListViewModel", "Eccezione durante il caricamento del profilo utente corrente", e)
+                _currentUserProfile.value = null
             }
         }
     }

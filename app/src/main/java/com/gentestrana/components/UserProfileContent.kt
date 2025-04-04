@@ -1,6 +1,5 @@
 package com.gentestrana.components
 
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -19,7 +18,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
-import coil.compose.rememberAsyncImagePainter
+import coil.compose.AsyncImage
 import com.gentestrana.R
 import com.gentestrana.users.User
 import com.gentestrana.utils.computeAgeFromTimestamp
@@ -85,15 +84,13 @@ fun ProfileContent(
                 user.profilePicUrl.first()
             }
 
-            Image(
-                painter = rememberAsyncImagePainter(
-                    ImageRequest.Builder(context)
-                        .data(imageUrlToLoad)
-                        .placeholder(R.drawable.random_user)
-                        .error(R.drawable.random_user)
-                        .crossfade(true)
-                        .build()
-                ),
+            AsyncImage(
+                model = ImageRequest.Builder(context)
+                    .data(imageUrlToLoad)
+                    .placeholder(R.drawable.random_user)
+                    .error(R.drawable.random_user)
+                    .crossfade(true)
+                    .build(),
                 contentDescription = "Profile Picture",
                 modifier = Modifier.fillMaxSize(),
                 contentScale = ContentScale.Crop

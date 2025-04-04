@@ -11,6 +11,6 @@ enum class FilterType {
     ALL,
     LANGUAGE,
     LOCATION,
-    FUTURE_ONE,
+    SIMILARITY,
     FUTURE_TWO
 }

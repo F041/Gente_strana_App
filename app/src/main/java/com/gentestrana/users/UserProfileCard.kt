@@ -2,7 +2,6 @@ package com.gentestrana.users
 
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
@@ -14,7 +13,6 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
-import coil.compose.rememberAsyncImagePainter
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.platform.LocalConfiguration
 import com.gentestrana.utils.computeAgeFromTimestamp
@@ -22,6 +20,7 @@ import androidx.compose.ui.res.stringResource
 import com.gentestrana.R
 import com.gentestrana.utils.getFlagEmoji
 import androidx.compose.ui.platform.LocalContext
+import coil.compose.AsyncImage
 import coil.request.ImageRequest
 
 private const val DEFAULT_PROFILE_IMAGE_URL = "https://icons.veryicon.com/png/o/system/ali-mom-icon-library/random-user.png"
@@ -62,16 +61,14 @@ fun UserProfileCard(
                 user.profilePicUrl.first()
             }
 
-            Image(
-                // Usa rememberAsyncImagePainter con placeholder e error
-                painter = rememberAsyncImagePainter(
-                    ImageRequest.Builder(context)
-                        .data(imageUrlToLoad)
-                        .placeholder(R.drawable.random_user)
-                        .error(R.drawable.random_user)
-                        .crossfade(true)
-                        .build()
-                ),
+            AsyncImage( // <-- Sostituisci Image con AsyncImage
+                model = ImageRequest.Builder(context)
+                    // Passa direttamente l'ImageRequest al parametro 'model'
+                    .data(imageUrlToLoad)
+                    .placeholder(R.drawable.random_user)
+                    .error(R.drawable.random_user)
+                    .crossfade(true)
+                    .build(),
                 contentDescription = "Profile",
                 modifier = Modifier
                     .size(imageSize)

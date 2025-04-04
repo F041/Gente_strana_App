@@ -12,17 +12,16 @@ import com.google.firebase.auth.ktx.auth
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.ListenerRegistration
 import com.google.firebase.firestore.Query
-import com.google.firebase.firestore.ktx.firestore
 import com.google.firebase.ktx.Firebase
-import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.tasks.await
-import kotlinx.coroutines.delay
-// Aggiunto per il reset di isLoadingOlderMessages
+import com.google.firebase.firestore.DocumentChange
+
+
 
 sealed class SendMessageEvent {
     data object Success : SendMessageEvent()
@@ -133,30 +132,61 @@ class ChatViewModel(
                 }
 
                 if (snapshot != null) {
-                    val fetchedMessages = snapshot.documents.mapNotNull { doc ->
-                        try {
-                            doc.toObject(ChatMessage::class.java)?.copy(id = doc.id)
+                    Log.d("ChatVM_Listener", "Processing ${snapshot.documentChanges.size} changes.")
+                    var listChanged = false // Flag per sapere se la lista è cambiata
+
+                    snapshot.documentChanges.forEach { change ->
+                        val changedDoc = change.document
+                        val message = try {
+                            changedDoc.toObject(ChatMessage::class.java)?.copy(id = changedDoc.id)
                         } catch (parseError: Exception) {
-                            Log.e("ChatViewModel_Debug", "listenForMessages PARSE ERROR for doc ${doc.id}", parseError)
+                            Log.e("ChatVM_Listener", "PARSE ERROR for doc ${changedDoc.id}", parseError)
                             null
                         }
+
+                        if (message != null) {
+                            listChanged = true // Marco che almeno un cambiamento valido c'è stato
+                            when (change.type) {
+                                DocumentChange.Type.ADDED -> {
+                                    // Aggiungi il nuovo messaggio SE non è già presente (utile per la prima lettura)
+                                    if (_messages.value.none { it.id == message.id }) {
+                                        _messages.value = (_messages.value + message).sortedBy { it.timestamp }
+                                        Log.d("ChatVM_Listener", "ADDED: ${message.id}")
+                                    } else {
+                                        Log.d("ChatVM_Listener", "ADDED skipped (already exists?): ${message.id}")
+                                    }
+                                }
+                                DocumentChange.Type.MODIFIED -> {
+                                    // Aggiorna il messaggio esistente
+                                    _messages.value = _messages.value.map {
+                                        if (it.id == message.id) message else it
+                                    }
+                                    Log.d("ChatVM_Listener", "MODIFIED: ${message.id}")
+                                }
+                                DocumentChange.Type.REMOVED -> {
+                                    // Rimuovi il messaggio
+                                    _messages.value = _messages.value.filterNot { it.id == message.id }
+                                    Log.d("ChatVM_Listener", "REMOVED: ${message.id}")
+                                }
+                            }
+                        }
+                    } // Fine forEach
+
+                    // Aggiorna _hasMoreMessages SOLO se la lista è cambiata E se lo snapshot
+                    // originale (che contiene il set limitato corrente) ha raggiunto il limite.
+                    // Questo è un compromesso: _hasMoreMessages è meno preciso ora,
+                    // ma si aggiorna solo quando arrivano nuovi dati.
+                    if (listChanged) {
+                        _hasMoreMessages.value = snapshot.documents.size >= messagesLimit
+                        Log.d("ChatVM_Listener", "List changed. Updated _hasMoreMessages: ${_hasMoreMessages.value} (based on snapshot size: ${snapshot.documents.size} >= limit: $messagesLimit)")
                     }
-//                    Log.d("ChatViewModel_Debug", "listenForMessages Fetched messages count: ${fetchedMessages.size}")
-
-                    // Manteniamo l'ordine grezzo per ora, come da debug precedente
-                    _messages.value = fetchedMessages.reversed()
-//                    Log.d("ChatViewModel_Debug", "listenForMessages Updated _messages.value (raw order) - New size: ${_messages.value.size}")
-
-                    // Aggiorna hasMoreMessages
-                    _hasMoreMessages.value = fetchedMessages.size >= messagesLimit
-//                    Log.d("ChatViewModel_Debug", "listenForMessages Updated _hasMoreMessages: ${_hasMoreMessages.value}")
 
                 } else {
                     Log.w("ChatViewModel_Debug", "listenForMessages SNAPSHOT is NULL")
                     _messages.value = emptyList()
                     _hasMoreMessages.value = false
-                    // isListenerRunning e _isLoadingOlderMessages sono già false
                 }
+
             }
 //        Log.d("ChatViewModel_Debug", "listenForMessages Listener attached.")
     }

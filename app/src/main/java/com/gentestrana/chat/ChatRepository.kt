@@ -15,10 +15,10 @@ import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.ListenerRegistration
 import com.google.firebase.firestore.Query
 import kotlinx.coroutines.tasks.await
-import kotlinx.coroutines.channels.awaitClose
-import kotlinx.coroutines.flow.callbackFlow
-import kotlinx.coroutines.launch
 import com.google.firebase.Timestamp
+import kotlinx.coroutines.async
+import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.Dispatchers
 
 class ChatRepository(
     //  iniezione dipendenze
@@ -57,47 +57,63 @@ class ChatRepository(
     }
     suspend fun processChatDocument(doc: DocumentSnapshot, currentUserId: String): Chat? {
         return try {
-            val participants = doc.get("participants") as? List<String> ?: emptyList()
-            val otherUserId = participants.firstOrNull { it != currentUserId } ?: return null
+            coroutineScope {
+                val participants = doc.get("participants") as? List<String> ?: emptyList()
+                val otherUserId = participants.firstOrNull { it != currentUserId } ?: return@coroutineScope null
 
-            val otherUser = db.collection("users")
-                .document(otherUserId)
-                .get()
-                .await()
+                // --- LANCIA LA LETTURA UTENTE IN PARALLELO ---
+                val deferredOtherUser = async(Dispatchers.IO) { // Usa async con Dispatchers.IO
+                    db.collection("users")
+                        .document(otherUserId)
+                        .get()
+                        .await() // await qui dentro async
+                }
 
-            val userObj = otherUser.toObject(User::class.java)
-            val profilePicList = otherUser["profilePicUrl"] as? List<String> ?: emptyList()
-            val firstPhotoUrl = profilePicList.firstOrNull() ?: ""
+                // --- LANCIA LA LETTURA ULTIMO MESSAGGIO IN PARALLELO ---
+                val deferredLastMessageQuery = async(Dispatchers.IO) { // Usa async con Dispatchers.IO
+                    db.collection("chats")
+                        .document(doc.id)
+                        .collection("messages")
+                        .orderBy("timestamp", Query.Direction.DESCENDING)
+                        .limit(1)
+                        .get()
+                        .await() // await qui dentro async
+                }
 
-            val lastMessageQuery = db.collection("chats")
-                .document(doc.id)
-                .collection("messages")
-                .orderBy("timestamp", Query.Direction.DESCENDING)
-                .limit(1)
-                .get()
-                .await()
+                // --- ASPETTA I RISULTATI DI ENTRAMBE LE OPERAZIONI ---
+                val otherUserSnapshot = deferredOtherUser.await() // Aspetta il risultato della lettura utente
+                val lastMessageQuerySnapshot = deferredLastMessageQuery.await() // Aspetta il risultato della query messaggi
 
-            val lastMessageDoc = lastMessageQuery.documents.firstOrNull()
-            val lastMessageText = lastMessageDoc?.getString("message") ?: "No messages"
-            val timestamp = lastMessageDoc?.getTimestamp("timestamp") ?: Timestamp.now()
-            val lastMessageStatus = when (lastMessageDoc?.getString("status")) {
-                "DELIVERED" -> MessageStatus.DELIVERED
-                "READ" -> MessageStatus.READ
-                else -> MessageStatus.SENT
+                // --- ELABORA I RISULTATI (logica simile a prima) ---
+                val userObj = otherUserSnapshot.toObject(User::class.java)
+                val profilePicList = otherUserSnapshot["profilePicUrl"] as? List<String> ?: emptyList()
+                val firstPhotoUrl = profilePicList.firstOrNull() ?: ""
+
+                val lastMessageDoc = lastMessageQuerySnapshot.documents.firstOrNull()
+                val lastMessageText = lastMessageDoc?.getString("message") ?: "No messages" // Default se non ci sono messaggi
+                val timestamp = lastMessageDoc?.getTimestamp("timestamp") ?: doc.getTimestamp("createdAt") ?: Timestamp.now() // Usa createdAt della chat o now() come fallback timestamp
+                val lastMessageStatus = when (lastMessageDoc?.getString("status")) {
+                    "DELIVERED" -> MessageStatus.DELIVERED
+                    "READ" -> MessageStatus.READ
+                    else -> MessageStatus.SENT // Default a SENT
+                }
+
+                // --- CREA E RESTITUISCI L'OGGETTO CHAT ---
+                Chat(
+                    id = doc.id,
+                    participantId = otherUserId,
+                    participantName = userObj?.username ?: "Sconosciuto",
+                    lastMessage = lastMessageText,
+                    photoUrl = firstPhotoUrl,
+                    lastMessageStatus = lastMessageStatus,
+                    timestamp = timestamp,
+                    // isOnline non viene letto qui, verrà aggiornato nel ViewModel probabilmente
+                )
             }
 
-            Chat(
-                id = doc.id,
-                participantId = otherUserId,
-                participantName = userObj?.username ?: "Unknown",
-                lastMessage = lastMessageText,
-                photoUrl = firstPhotoUrl,
-                lastMessageStatus = lastMessageStatus,
-                timestamp = timestamp
-            )
         } catch (e: Exception) {
-            Log.e("ChatRepository", "Error processing document", e)
-            null
+            Log.e("ChatRepository", "Error processing document ${doc.id}", e)
+            null // Restituisce null in caso di errore
         }
     }
 
@@ -131,26 +147,7 @@ class ChatRepository(
             emptyList()
         }
     }
-    fun getChatsFlow(currentUserId: String) = callbackFlow {
-        val listenerRegistration = db.collection("chats")
-            .whereArrayContains("participants", currentUserId)
-            .addSnapshotListener { snapshot, error ->
-                if (error != null) {
-                    close(error)
-                    return@addSnapshotListener
-                }
-                if (snapshot != null) {
-                    // Usiamo launch per chiamare la funzione sospesa processChatDocument
-                    launch {
-                        val chats = snapshot.documents.mapNotNull { doc ->
-                            processChatDocument(doc, currentUserId)
-                        }
-                        trySend(chats).isSuccess
-                    }
-                }
-            }
-        awaitClose { listenerRegistration.remove() }
-    }
+
     fun listenForMessageStatusUpdates(
         chatId: String,
         onUpdate: (MessageStatus) -> Unit

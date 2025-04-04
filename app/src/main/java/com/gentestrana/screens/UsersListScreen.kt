@@ -22,6 +22,7 @@ import com.gentestrana.components.GenericLoadingScreen
 import com.gentestrana.ui.theme.LocalDimensions
 import com.gentestrana.ui_controller.UserListViewModel
 import com.gentestrana.users.UserProfileCard
+import com.gentestrana.utils.computeUserSimilarity
 import com.gentestrana.utils.getCountryIsoFromName
 import com.gentestrana.utils.getLanguageName
 import com.google.firebase.auth.FirebaseAuth
@@ -39,6 +40,8 @@ fun UsersListScreen(navController: NavHostController) {
     var showFilterDialog by remember { mutableStateOf(false) }
     val currentUserId = FirebaseAuth.getInstance().currentUser?.uid
     val dimensions = LocalDimensions.current
+    val currentUserProfile by viewModel.currentUserProfile.collectAsState()
+
 
     LaunchedEffect(Unit) {
         viewModel.loadUsers()
@@ -68,6 +71,8 @@ fun UsersListScreen(navController: NavHostController) {
                         filterState = when (newType) {
                             FilterType.LANGUAGE -> filterState.copy(filterType = newType, selectedLanguage = newValue, searchQuery = "")
                             FilterType.LOCATION -> filterState.copy(filterType = newType, selectedLocation = newValue, searchQuery = "")
+                            FilterType.SIMILARITY -> filterState.copy(filterType = newType, selectedLanguage = "", selectedLocation = "", searchQuery = "") // Resetta language, location e search
+                            FilterType.ALL -> filterState.copy(filterType = newType, selectedLanguage = "", selectedLocation = "", searchQuery = "") // Resetta tutto tranne il tipo
                             else -> filterState.copy(filterType = newType)
                         }
                         showFilterDialog = false
@@ -76,52 +81,109 @@ fun UsersListScreen(navController: NavHostController) {
                 )
             }
 
-            val filteredUsers by remember {
+            val filteredUsers by remember(users, filterState, currentUserProfile) {
                 derivedStateOf {
-                    users.filter { user ->
-                        // Condizione per escludere il profilo corrente
-                        if (currentUserId != null && user.docId == currentUserId) return@filter false
+                    // Usa il currentUserProfile raccolto dallo StateFlow
+                    val profileForSimilarity = currentUserProfile
 
-                        // Condizione 1: query di ricerca (se presente, almeno 2 caratteri)
-                        val searchMatches = if (filterState.searchQuery.length >= 2) {
-                            val query = filterState.searchQuery.lowercase()
-                            user.username.lowercase().contains(query) ||
-                                    user.topics.any { it.lowercase().contains(query) }
-                        } else true
+                    // Se il filtro è SIMILARITY ma il profilo non è ancora caricato,
+                    // temporaneamente non filtrare (o mostra una lista vuota/loading).
+                    // Qui scegliamo di non filtrare finché il profilo non è pronto.
+                    if (filterState.filterType == FilterType.SIMILARITY && profileForSimilarity == null) {
+                        Log.d("UserListScreen", "Filtro similarità attivo ma currentUserProfile è null. Lista vuota temporaneamente.")
+                        emptyList() // Restituisce lista vuota finché il profilo non è caricato
+                    } else {
+                        users.filter { user ->
+                            // Condizione per escludere il profilo corrente
+                            if (currentUserId != null && user.docId == currentUserId) return@filter false
 
-                        // Condizione 2: filtro avanzato per lingua/locazione
-                        val filterMatches = when (filterState.filterType) {
-                            FilterType.ALL -> true
-                            FilterType.LANGUAGE -> {
-                                // Se il filtro per lingua è impostato, verifica la condizione
-                                if (filterState.selectedLanguage.isBlank()) true
-                                else user.spokenLanguages.any { langCode ->
-                                    getLanguageName(context, langCode).trim().lowercase() ==
-                                            filterState.selectedLanguage.trim().lowercase()
+                            // Condizione 1: query di ricerca (se presente, almeno 2 caratteri)
+                            val searchMatches = if (filterState.searchQuery.length >= 2) {
+                                val query = filterState.searchQuery.lowercase()
+                                user.username.lowercase().contains(query) ||
+                                        user.topics.any { it.lowercase().contains(query) }
+                            } else true
+
+                            // Condizione 2: filtro avanzato
+                            val filterMatches = when (filterState.filterType) {
+                                FilterType.ALL -> true
+                                FilterType.LANGUAGE -> {
+                                    // Logica filtro lingua (invariata)
+                                    if (filterState.selectedLanguage.isBlank()) true
+                                    else user.spokenLanguages.any { langCode ->
+                                        getLanguageName(context, langCode).trim().lowercase() ==
+                                                filterState.selectedLanguage.trim().lowercase()
+                                    }
+                                }
+                                FilterType.LOCATION -> {
+                                    // 1. Ottieni l'ISO code del paese inserito nel filtro (invariato)
+                                    val filterCountryIso = getCountryIsoFromName(filterState.selectedLocation) ?: ""
+                                    // 2. Estrai il potenziale nome del paese dalla stringa location dell'utente
+                                    //    Prende la parte dopo l'ultima virgola (o tutta la stringa se non c'è virgola)
+                                    //    e rimuove spazi bianchi iniziali/finali.
+                                    val potentialUserCountryName = user.location.substringAfterLast(',', user.location).trim()
+                                    // 3. Ottieni l'ISO code del paese estratto dalla location dell'utente
+                                    val userCountryIso = getCountryIsoFromName(potentialUserCountryName) ?: ""
+                                    // 4. Confronta gli ISO code (assicurati che non siano vuoti)
+                                    userCountryIso.isNotBlank() && filterCountryIso.isNotBlank() && userCountryIso == filterCountryIso
+                                }
+                                FilterType.SIMILARITY -> {
+                                    // Logica filtro similarità (USA profileForSimilarity)
+                                    if (profileForSimilarity != null) {
+                                        val similarity = computeUserSimilarity(profileForSimilarity, user)
+                                        Log.d("SIMILARITY_FILTER", "User: ${user.username}, Similarity with ${profileForSimilarity.username}: $similarity")
+                                        similarity >= 0.3
+                                    // TODO: Soglia di similarità per remote config
+                                    //  o configurabile internamente?
+                                    } else {
+                                        // Se il profilo corrente non è caricato, non applicare il filtro
+                                        // (questo caso è gestito all'inizio del derivedStateOf,
+                                        // ma lo teniamo qui per sicurezza)
+                                        true
+                                    }
+                                }
+                                else -> true
+                            }
+
+                            // L'utente viene incluso se soddisfa entrambe le condizioni (AND)
+                            searchMatches && filterMatches
+
+                        }.let { filtered ->
+                            // Ordinamento finale (incluso quello per similarità)
+                            when (filterState.filterType) {
+                                FilterType.SIMILARITY -> {
+                                    if (profileForSimilarity != null) {
+                                        // Ordina per similarità decrescente
+                                        filtered.sortedByDescending { user ->
+                                            computeUserSimilarity(profileForSimilarity, user)
+                                        }
+                                    } else {
+                                        // Se il profilo non c'è, ordina per lastActive (fallback)
+                                        filtered.sortedByDescending { it.lastActive?.toDate()?.time ?: 0L }
+                                    }
+                                }
+                                else -> {
+                                    // Ordina per lastActive per gli altri filtri
+                                    filtered.sortedByDescending { it.lastActive?.toDate()?.time ?: 0L }
                                 }
                             }
-                            FilterType.LOCATION -> {
-                                // Supponendo di aver normalizzato come descritto, oppure usando direttamente il confronto
-                                val userCountryIso = getCountryIsoFromName(user.location) ?: ""
-                                val filterCountryIso = getCountryIsoFromName(filterState.selectedLocation) ?: ""
-                                userCountryIso == filterCountryIso
-                            }
-                            else -> true
                         }
-
-                        // L'utente viene incluso se soddisfa entrambe le condizioni (AND)
-                        searchMatches && filterMatches
-
-
-                }.sortedByDescending { it.lastActive?.toDate()?.time ?: 0L }
+                    }
                 }
             }
 
 
             // Contatore utenti trovati
             Text(
-                text = if (filterState.searchQuery.length in 1..1) "\uD83D\uDD0D2\uFE0F⃣"
-                else "${filteredUsers.size} ${stringResource(R.string.users_found)}",
+                text = if (filterState.filterType == FilterType.SIMILARITY && currentUserProfile == null) {
+                    stringResource(R.string.loading_default)
+                // Messaggio mentre carica il profilo per similarità
+                } else if (filterState.searchQuery.length == 1) {
+                    "\uD83D\uDD0D️2\uFE0F⃣"
+                // Icona se la ricerca è di un solo carattere
+                } else {
+                    "${filteredUsers.size} ${stringResource(R.string.users_found)}" // Conteggio normale
+                },
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 modifier = Modifier.padding(start = 8.dp, bottom = 8.dp)
@@ -136,11 +198,16 @@ fun UsersListScreen(navController: NavHostController) {
                     )
                     HorizontalDivider(thickness = 1.dp, color = MaterialTheme.colorScheme.outlineVariant)
 
-                    if (index == filteredUsers.lastIndex && hasMoreData) {
-                        LaunchedEffect(index) { viewModel.loadUsers() }
+                    // Caricamento progressivo (invariato)
+                    if (index == filteredUsers.lastIndex && hasMoreData && !isLoading) {
+                        LaunchedEffect(Unit) {
+                            Log.d("UserListScreen", "Caricamento prossima pagina...") // Log per debug
+                            viewModel.loadUsers()
+                        }
                     }
                 }
 
+                // Indicatore di caricamento e errore (invariati)
                 if (isLoading) {
                     item {
                         Box(
@@ -155,13 +222,13 @@ fun UsersListScreen(navController: NavHostController) {
                 if (hasError) {
                     item {
                         Column(
-                            modifier = Modifier.fillMaxWidth(),
+                            modifier = Modifier.fillMaxWidth().padding(vertical=16.dp), // Aggiunto padding
                             horizontalAlignment = Alignment.CenterHorizontally
                         ) {
-                            Text("Connection error. Please try again.")
+                            Text(stringResource(R.string.connection_error)) // Usa string resource
                             Spacer(modifier = Modifier.height(8.dp))
                             Button(onClick = { viewModel.loadUsers() }) {
-                                Text("Riprova")
+                                Text(stringResource(R.string.retry_button)) // Usa string resource
                             }
                         }
                     }
@@ -170,5 +237,3 @@ fun UsersListScreen(navController: NavHostController) {
         }
     }
 }
-
-
