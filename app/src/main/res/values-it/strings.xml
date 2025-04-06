@@ -133,6 +133,10 @@
 
     <string name="write_message">scrivi un messaggio...</string>
     <string name="send_message">invia messaggio</string>
+    <string name="delete_message">Cancella messaggio</string>
+    <string name="delete_message_confirm">
+        Vuoi eliminare definitivamente questo messaggio?
+    </string>
 
 
     // Zona Utente

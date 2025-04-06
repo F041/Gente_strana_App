@@ -125,6 +125,10 @@
     <string name="chat_with_user">chat with %s</string>
     <string name="write_message">write a message...</string>
     <string name="send_message">send message</string>
+    <string name="delete_message">Delete message</string>
+    <string name="delete_message_confirm">
+        Do you feel sure you want to delete this message?
+    </string>
 
     // Zona Utente
     <string name="photos">photos</string>

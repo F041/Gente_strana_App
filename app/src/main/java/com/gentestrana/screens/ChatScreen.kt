@@ -346,8 +346,8 @@ fun ChatScreen(docId: String, navController: NavController) {
                         showDeleteDialog = false
                         messageToDelete = null
                     },
-                    title = { Text("Elimina messaggio") },
-                    text = { Text("Vuoi eliminare definitivamente questo messaggio?") },
+                    title = { Text(stringResource(id = R.string.delete_message)) },
+                    text = { Text(stringResource(id = R.string.delete_message_confirm)) },
                     confirmButton = {
                         TextButton(
                             onClick = {
@@ -358,7 +358,7 @@ fun ChatScreen(docId: String, navController: NavController) {
                                 messageToDelete = null
                             }
                         ) {
-                            Text(text = stringResource(id = R.string.confirm))
+                            Text(text = stringResource(id = R.string.confirm).uppercase())
                         }
                     },
                     dismissButton = {
@@ -368,7 +368,7 @@ fun ChatScreen(docId: String, navController: NavController) {
                                 messageToDelete = null
                             }
                         ) {
-                            Text(text = stringResource(id = R.string.cancel))
+                            Text(text = stringResource(id = R.string.cancel).uppercase())
                         }
                     }
                 )
