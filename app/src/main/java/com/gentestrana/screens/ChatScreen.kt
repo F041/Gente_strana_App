@@ -42,6 +42,10 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.collectLatest
 import com.gentestrana.ui_controller.SendMessageEvent
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.ime
+import androidx.compose.ui.platform.LocalDensity
+
 
 /*
 ChatScreen fa varie cose:
@@ -88,7 +92,16 @@ fun ChatScreen(docId: String, navController: NavController) {
     val focusRequester = remember { FocusRequester() }
     val scope = rememberCoroutineScope() // Mantenuto per l'eliminazione
     val initialScrollDone = remember { mutableStateOf(false) }
+    val textFieldIsFocused = remember { mutableStateOf(false) }
+    val imeInsets = WindowInsets.ime
+    val isKeyboardVisible = imeInsets.getBottom(LocalDensity.current) > 0
 
+    LaunchedEffect(isKeyboardVisible) {
+        if (!isKeyboardVisible && messages.isNotEmpty()) {
+            listState.animateScrollToItem(messages.size - 1)
+            Log.d("ChatScreen_Scroll", "Scrolled to last message because keyboard is closed.")
+        }
+    }
 
     // Gestione Eventi di Invio dal ViewModel
     LaunchedEffect(key1 = Unit) {
@@ -96,7 +109,12 @@ fun ChatScreen(docId: String, navController: NavController) {
             when (event) {
                 is SendMessageEvent.Success -> {
                     Log.d("ChatScreen", "Message sent successfully (event received).")
-                    // Scroll automatico gestito da LaunchedEffect(messages.size)
+                    // Aggiungiamo un breve delay per permettere l'aggiornamento della lista dei messaggi
+                    delay(200) // da 500 versione non elegante
+                    if (messages.isNotEmpty()) {
+                        listState.animateScrollToItem(messages.size - 1)
+                        Log.d("ChatScreen_Scroll", "Forced scroll to last message after sending message.")
+                    }
                 }
                 is SendMessageEvent.Error -> {
                     val errorMessage = event.message
@@ -112,9 +130,6 @@ fun ChatScreen(docId: String, navController: NavController) {
         }
     }
 
-    // Effetto per scrollare in fondo quando arrivano nuovi messaggi
-    // File: ChatScreen.kt
-
 // Effetto per scrollare in fondo quando arrivano nuovi messaggi o all'apertura
     LaunchedEffect(messages.size) {
         if (messages.isNotEmpty()) {
@@ -122,14 +137,17 @@ fun ChatScreen(docId: String, navController: NavController) {
             if (!initialScrollDone.value) {
                 // PRIMO SCROLL: Vai subito in fondo senza animazione
                 listState.scrollToItem(lastIndex)
-                initialScrollDone.value = true // Marca lo scroll iniziale come fatto
-                Log.d("ChatScreenScroll", "Initial scroll to index: $lastIndex")
+                initialScrollDone.value = true
+                Log.d("ChatScreen_Scroll", "Initial scroll to index: $lastIndex, message size: ${messages.size}")
             } else {
-                // SCROLL SUCCESSIVI (nuovi messaggi mentre la chat è aperta)
                 val lastMessage = messages.lastOrNull()
-                // Condizione originale: scrolla solo se l'ultimo è mio o se ero già vicino al fondo
-                if (lastMessage?.sender == currentUserId || listState.firstVisibleItemIndex > lastIndex - 5) {
-                    // Usa animateScroll per gli aggiornamenti successivi
+                // Ora scrolla se:
+                // - L'ultimo messaggio è inviato da me
+                // - Oppure il campo di input è focalizzato
+                // - Oppure l'utente è già vicino al fondo
+                if (lastMessage?.sender == currentUserId ||
+                    textFieldIsFocused.value ||
+                    listState.firstVisibleItemIndex > lastIndex - 5) {
                     listState.animateScrollToItem(lastIndex)
                     Log.d("ChatScreenScroll", "Animated scroll to index: $lastIndex")
                 } else {
@@ -139,7 +157,12 @@ fun ChatScreen(docId: String, navController: NavController) {
         }
     }
 
-
+    LaunchedEffect(textFieldIsFocused.value) {
+        if (textFieldIsFocused.value && messages.isNotEmpty()) {
+            listState.animateScrollToItem(messages.size - 1)
+            Log.d("ChatScreen_Scroll", "Scrolled to last message due to input focus.")
+        }
+    }
 
     // Effetto per caricare messaggi più vecchi quando si raggiunge l'inizio della lista
     LaunchedEffect(listState) {
@@ -277,8 +300,9 @@ fun ChatScreen(docId: String, navController: NavController) {
                             .weight(1f)
                             .focusRequester(focusRequester)
                             .onFocusChanged { state ->
+                                // Aggiornamento dello stato del focus
+                                textFieldIsFocused.value = state.isFocused
                                 if (state.isFocused) {
-                                    // Scrolla in fondo quando il campo prende il focus
                                     scope.launch {
                                         delay(200)
                                         if (messages.isNotEmpty()) {

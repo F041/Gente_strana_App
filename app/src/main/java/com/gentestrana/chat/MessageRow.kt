@@ -68,14 +68,14 @@ fun MessageRow(
 
                 // Se la lista è nulla o vuota, l'URL originale è ""
                 val originalUrl = picList?.firstOrNull() ?: ""
-                Log.d("MessageRow_Debug", "Firestore recuperato per $senderId: originalUrl = '$originalUrl'")
+//                Log.d("MessageRow_Debug", "Firestore recuperato per $senderId: originalUrl = '$originalUrl'")
 
                 // Salva nella cache (anche la stringa vuota)
                 profilePicCache[senderId] = originalUrl
                 urlToLoad = originalUrl
 
             } catch (e: Exception) {
-                Log.e("MessageRow_Debug", "Errore recupero Firestore per $senderId: ${e.message}")
+//                Log.e("MessageRow_Debug", "Errore recupero Firestore per $senderId: ${e.message}")
                 // In caso di errore, salva "" nella cache e usa ""
                 profilePicCache[senderId] = ""
                 urlToLoad = ""
@@ -86,11 +86,11 @@ fun MessageRow(
         if (urlToLoad.isNullOrEmpty()) {
             // Se l'URL finale è nullo o vuoto, usa la risorsa drawable
             avatarDataState.value = R.drawable.random_user
-            Log.d("MessageRow_Debug", "Impostato stato per $senderId a R.drawable.random_user")
+//            Log.d("MessageRow_Debug", "Impostato stato per $senderId a R.drawable.random_user")
         } else {
             // Altrimenti, usa l'URL originale
             avatarDataState.value = urlToLoad
-            Log.d("MessageRow_Debug", "Impostato stato per $senderId a URL: $urlToLoad")
+//            Log.d("MessageRow_Debug", "Impostato stato per $senderId a URL: $urlToLoad")
         }
     }
 
@@ -111,7 +111,7 @@ fun MessageRow(
                         .error(R.drawable.random_user)       // Fallback ESSENZIALE
                         .crossfade(true)
                         .listener(onError = { _, result -> // Log opzionale per Coil
-                            Log.e("MessageRow_CoilError", "Errore caricando ${avatarDataState.value} per ${chatMessage.sender}: ${result.throwable}")
+//                            Log.e("MessageRow_CoilError", "Errore caricando ${avatarDataState.value} per ${chatMessage.sender}: ${result.throwable}")
                         })
                         .build(),
                     contentDescription = "User Avatar",
