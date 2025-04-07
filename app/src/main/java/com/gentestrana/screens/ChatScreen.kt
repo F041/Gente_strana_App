@@ -82,6 +82,7 @@ fun ChatScreen(docId: String, navController: NavController) {
     val isLoadingOlderMessages by viewModel.isLoadingOlderMessages.collectAsState() // Stato caricamento dal ViewModel
     val hasMoreMessages by viewModel.hasMoreMessages.collectAsState() // Stato "ci sono altri messaggi?"
 
+
     // Stati locali per UI
     var showDeleteDialog by remember { mutableStateOf(false) }
     var messageToDelete by remember { mutableStateOf<String?>(null) }

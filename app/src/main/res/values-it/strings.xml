@@ -150,9 +150,13 @@
     <string name="report_reason_other">altro</string>
     <string name="report_reason_other_comments_label">commenti aggiuntivi</string>
     <string name="report_user_dialog_report_button">segnala</string>
-    <string name="block_user_dialog_title">blocca Utente</string>
+    <string name="block_user_dialog_title">blocca utente</string>
     <string name="block_user_dialog_text">sei sicuro di voler bloccare questo utente?</string>
     <string name="block_user_dialog_block_button">blocca</string>
+    <string name="blocked_users_title">utenti bloccati</string>
+    <string name="no_blocked_users">Non hai bloccato nessun utente.</string>
+    <string name="unblock_user_icon_description">Sblocca utente</string>
+    <string name="unblock_button">Sblocca</string>
 
 
     // Zona settings
@@ -165,7 +169,13 @@
 
 
     <string name="account_section">account</string>
+    <string name="blocked_users_navigation_title">utenti bloccati</string>
     <string name="delete_account">elimina account</string>
+    <string name="delete_account_dialog_title">Conferma eliminazione account</string>
+    <string name="delete_account_dialog_message">
+        Sei sicuro/a di voler eliminare definitivamente il tuo account? Questa azione non può essere annullata e tutti i tuoi dati verranno cancellati.
+    </string>
+    <string name="delete_account_dialog_confirm_button">ELIMINA ACCOUNT</string>
     <string name="notifications_section">notifiche</string>
     <string name="push_notifications">notifiche push</string>
     <string name="theme_section">tema</string>

@@ -12,6 +12,7 @@ import com.gentestrana.utils.uploadMainProfileImage
 import kotlinx.coroutines.tasks.await
 import com.google.firebase.Timestamp
 import com.google.firebase.auth.UserProfileChangeRequest
+import com.google.firebase.firestore.FieldValue
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.messaging.FirebaseMessaging
 
@@ -403,23 +404,135 @@ class UserRepository(
         com.google.firebase.messaging.FirebaseMessaging.getInstance().token
             .addOnSuccessListener { fcmToken ->
                 if (fcmToken != null) {
-                    Log.d("UserRepository", "Token FCM recuperato per $userId: $fcmToken")
+//                    Log.d("UserRepository", "Token FCM recuperato per $userId: $fcmToken")
                     // Aggiorna il token in Firestore
                     firestore.collection("users").document(userId)
                         .update("fcmToken", fcmToken)
                         .addOnSuccessListener {
-                            Log.d("UserRepository", "Token FCM salvato con successo in Firestore per $userId.")
+//                            Log.d("UserRepository", "Token FCM salvato con successo in Firestore per $userId.")
                         }
                         .addOnFailureListener { e ->
-                            Log.e("UserRepository", "Errore nel salvataggio del token FCM in Firestore per $userId", e)
+//                            Log.e("UserRepository", "Errore nel salvataggio del token FCM in Firestore per $userId", e)
                         }
                 } else {
-                    Log.w("UserRepository", "Token FCM recuperato è null per $userId.")
+//                    Log.w("UserRepository", "Token FCM recuperato è null per $userId.")
                 }
             }
             .addOnFailureListener { e ->
                 Log.e("UserRepository", "Errore nel recupero del token FCM per $userId", e)
             }
     }
+
+    /**
+     * Blocca un utente. Aggiunge l'ID dell'utente bloccato alla lista 'blockedUsers' dell'utente corrente.
+     */
+    suspend fun blockUser(
+        blockedUserId: String,
+        onSuccess: () -> Unit,
+        onFailure: (String?) -> Unit
+    ) {
+        val currentUserId = auth.currentUser?.uid ?: run {
+            onFailure("Utente non autenticato")
+            return
+        }
+
+        try {
+            firestore.collection("users").document(currentUserId)
+                .update("blockedUsers", FieldValue.arrayUnion(blockedUserId)) // Usa arrayUnion per aggiungere, se non presente
+                .await()
+            onSuccess()
+            Log.d("UserRepository", "Utente $blockedUserId bloccato con successo da $currentUserId.")
+        } catch (e: Exception) {
+            Log.e("UserRepository", "Errore bloccando utente $blockedUserId da $currentUserId: ${e.message}")
+            onFailure(e.message)
+        }
+    }
+
+    /**
+     * Sblocca un utente. Rimuove l'ID dell'utente sbloccato dalla lista 'blockedUsers' dell'utente corrente.
+     */
+    suspend fun unblockUser(
+        unblockedUserId: String,
+        onSuccess: () -> Unit,
+        onFailure: (String?) -> Unit
+    ) {
+        val currentUserId = auth.currentUser?.uid ?: run {
+            onFailure("Utente non autenticato")
+            return
+        }
+
+        try {
+            firestore.collection("users").document(currentUserId)
+                .update("blockedUsers", FieldValue.arrayRemove(unblockedUserId)) // Usa arrayRemove per rimuovere, se presente
+                .await()
+            onSuccess()
+            Log.d("UserRepository", "Utente $unblockedUserId sbloccato con successo da $currentUserId.")
+        } catch (e: Exception) {
+            Log.e("UserRepository", "Errore sbloccando utente $unblockedUserId da $currentUserId: ${e.message}")
+            onFailure(e.message)
+        }
+    }
+
+    /**
+     * Verifica se un utente è bloccato dall'utente corrente.
+     */
+    suspend fun isUserBlocked(
+        userIdToCheck: String,
+        onResult: (Boolean) -> Unit
+    ) {
+        val currentUserId = auth.currentUser?.uid ?: run {
+            onResult(false) // Se non c'è utente loggato, non è bloccato
+            return
+        }
+
+        try {
+            val userDocument = firestore.collection("users").document(currentUserId).get().await()
+            val blockedList = userDocument.get("blockedUsers") as? List<String> ?: emptyList()
+            onResult(blockedList.contains(userIdToCheck))
+        } catch (e: Exception) {
+            Log.e("UserRepository", "Errore controllando se l'utente $userIdToCheck è bloccato: ${e.message}")
+            onResult(false) // In caso di errore, considera non bloccato per sicurezza
+        }
+    }
+
+    /**
+     * Ottieni la lista degli utenti bloccati dall'utente corrente.
+     */
+    suspend fun getBlockedUsers(
+        onSuccess: (List<User>) -> Unit,
+        onFailure: (String?) -> Unit
+    ) {
+        val currentUserId = auth.currentUser?.uid ?: run {
+            onFailure("Utente non autenticato")
+            return
+        }
+
+        try {
+            val userDocument = firestore.collection("users").document(currentUserId).get().await()
+            val blockedUserIds = userDocument.get("blockedUsers") as? List<String> ?: emptyList()
+
+            // Se la lista è vuota, restituisci subito una lista vuota di User
+            if (blockedUserIds.isEmpty()) {
+                onSuccess(emptyList())
+                return
+            }
+
+            // Recupera i documenti utente per ogni ID bloccato
+            val users = mutableListOf<User>()
+            blockedUserIds.forEach { blockedUserId ->
+                val userDoc = firestore.collection("users").document(blockedUserId).get().await()
+                userDoc.toObject(User::class.java)?.let { user ->
+                    users.add(user.copy(docId = userDoc.id)) // copia e imposta docId
+                }
+            }
+            onSuccess(users)
+            Log.d("UserRepository", "Recuperata lista di ${users.size} utenti bloccati per $currentUserId.")
+
+        } catch (e: Exception) {
+            Log.e("UserRepository", "Errore recuperando lista utenti bloccati per $currentUserId: ${e.message}")
+            onFailure(e.message)
+        }
+    }
+
 
 }

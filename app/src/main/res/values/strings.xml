@@ -120,7 +120,6 @@
     <string name="discard_changes">cancel edits</string>
 
 
-
     // Zona chat
     <string name="chat_with_user">chat with %s</string>
     <string name="write_message">write a message...</string>
@@ -144,6 +143,10 @@
     <string name="block_user_dialog_title">block user</string>
     <string name="block_user_dialog_text">are you sure you want to block this user?</string>
     <string name="block_user_dialog_block_button">block</string>
+    <string name="blocked_users_title">blocked users</string>
+    <string name="no_blocked_users">You haven\'t blocked any users.</string>
+    <string name="unblock_user_icon_description">Unblock user</string>
+    <string name="unblock_button">Unblock</string>
 
     // Zona settings
     <string name="change_password">change Password</string>
@@ -155,7 +158,11 @@
 
 
     <string name="account_section">account</string>
+    <string name="blocked_users_navigation_title">blocked users</string>
     <string name="delete_account">delete account</string>
+    <string name="delete_account_dialog_title">Confirm account deletion</string>
+    <string name="delete_account_dialog_message">Are you sure you want to permanently delete your account? This action cannot be undone and all your data will be erased.</string>
+    <string name="delete_account_dialog_confirm_button">DELETE ACCOUNT</string>
     <string name="notifications_section">notifications</string>
     <string name="push_notifications">push notifications</string>
     <string name="theme_section">theme</string>

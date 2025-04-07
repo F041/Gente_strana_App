@@ -48,7 +48,8 @@ data class User(
     @PropertyName("registrationType")
     val registrationType: String? = null,
      @PropertyName("lastActive")
-    val lastActive: Timestamp? = null
+    val lastActive: Timestamp? = null,
+     val blockedUsers: List<String> = emptyList()
 ) {
 
     // Proprietà calcolata per ottenere il timestamp in millisecondi

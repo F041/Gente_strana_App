@@ -136,6 +136,11 @@ fun MainTabsScreen(navController: NavHostController,
                     onThemeChange = onThemeChange)
             }
 
+            composable("blockedUsers") {
+                // Usa tabsNavController perché è accessibile dalle Impostazioni
+                BlockedUsersScreen(navController = tabsNavController)
+            }
+
             composable("changePassword") {
                 ChangePasswordScreen(navController = navController)
             }
@@ -147,6 +152,7 @@ fun MainTabsScreen(navController: NavHostController,
             composable("termsOfService") {
                 TermsOfServiceScreen(navController = navController)
             }
+
         }
     }
 }

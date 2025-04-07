@@ -18,6 +18,7 @@ import androidx.navigation.NavController
 import com.gentestrana.R
 import androidx.compose.foundation.border
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
 import androidx.compose.ui.draw.clip
 import com.gentestrana.users.UserRepository
 import com.google.firebase.auth.FirebaseAuth
@@ -25,6 +26,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import com.gentestrana.BuildConfig
+
 
 
 enum class AppTheme { SYSTEM, LIGHT, DARK, /*SPECIAL*/ }
@@ -93,6 +95,16 @@ fun SettingsScreen(
                 headlineContent = { Text(stringResource(R.string.change_password)) }, // Usa string resource
                 modifier = Modifier.clickable { navController.navigate("changePassword") }
             )
+
+            // subito prima di delete? forse un po' pericolosa come posizione?
+            ListItem(
+                headlineContent = { Text(stringResource(R.string.blocked_users_navigation_title)) },
+                modifier = Modifier.clickable {
+                    navController.navigate("blockedUsers") // Naviga alla nuova route usando navController (tabsNavController)
+                }
+            )
+
+
             ListItem(
                 headlineContent = { Text(stringResource(R.string.delete_account)) },
                 colors = ListItemDefaults.colors(headlineColor = MaterialTheme.colorScheme.error),
@@ -246,11 +258,11 @@ fun SettingsScreen(
                 onDismissRequest = { showDeleteConfirmationDialog = false },
                 title = {
                     Text(
-                        text = stringResource(R.string.delete_account_confirmation_title),
+                        text = stringResource(R.string.delete_account_dialog_title),
                         color = MaterialTheme.colorScheme.error // Titolo in rosso
                     )
                 },
-                text = { Text(stringResource(R.string.delete_account_confirmation_message)) },
+                text = { Text(stringResource(R.string.delete_account_dialog_message)) },
                 confirmButton = {
                     Button(
                         onClick = {
@@ -300,7 +312,7 @@ fun SettingsScreen(
                             containerColor = MaterialTheme.colorScheme.error
                         )
                     ) {
-                        Text(stringResource(R.string.delete_account_confirm_button))
+                        Text(stringResource(R.string.delete_account_dialog_confirm_button))
                     }
                 },
                 dismissButton = {
