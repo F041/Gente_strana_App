@@ -217,23 +217,27 @@ class ChatRepository(
             .await()
 
         // Controllo aggiuntivo
-        val validDocs = query.documents.filter { doc ->
-            val participants = db.collection("chats").document(chatId).get().await()
-                .get("participants") as? List<String> ?: emptyList()
-            participants.contains(currentUserId)
-        }
+//        val validDocs = query.documents.filter { doc ->
+//            val participants = db.collection("chats").document(chatId).get().await()
+//                .get("participants") as? List<String> ?: emptyList()
+//            participants.contains(currentUserId)
+//        }
 
         val batch = db.batch()
-        validDocs.forEach { doc ->
+        // ---> Usiamo direttamente i documenti della query originale <---
+        query.documents.forEach { doc ->
             batch.update(doc.reference, "status", "DELIVERED")
         }
         batch.commit().await()
         Log.d("Repo", "${query.documents.size} messaggi marcati come DELIVERED")
     }
 
-    suspend fun sendMessage(chatId: String,
-                            sender: String, message: String
-                            ,context: Context
+    suspend fun sendMessage(
+        chatId: String,
+        sender: String,
+        message: String,
+        context: Context,
+        replyingTo: ChatMessage?
     ) {
         if (!MessageRateLimiter.canSendMessage(sender)) {
             throw Exception("Rate limit exceeded. Attendi qualche secondo prima di inviare altri messaggi.")
@@ -242,41 +246,48 @@ class ChatRepository(
             throw Exception("Daily message limit exceeded. Please try again tomorrow.")
         }
         try {
-            // 1. Riferimento al documento chat principale
             val chatDocRef = db.collection("chats").document(chatId)
 
-            // 2. Controlla e aggiorna il flag (se necessario)
-            //    Usiamo una transazione per sicurezza, anche se un semplice get+update
-            //    potrebbe bastare data la logica (lo impostiamo solo da false a true).
-            //    Un get+update è più semplice:
             val chatDocSnapshot = chatDocRef.get().await()
-            val currentlyHasMessages = chatDocSnapshot.getBoolean("hasMessages") ?: false // Default a false se non esiste
+            val currentlyHasMessages = chatDocSnapshot.getBoolean("hasMessages") ?: false
 
             if (!currentlyHasMessages) {
-                // Se hasMessages è false, aggiornalo a true
                 chatDocRef.update("hasMessages", true).await()
                 Log.d("ChatRepository", "Flag 'hasMessages' impostato a true per chat $chatId")
             }
 
-            // 3. Procedi con l'invio del messaggio (codice esistente)
             val sanitizedMessage = sanitizeInput(removeSpaces(message))
             Log.d("ChatRepository", "Invio messaggio: '$sanitizedMessage'")
-            val messageData = hashMapOf(
+
+            // ---> INIZIO MODIFICA FONDAMENTALE <---
+            // 1. Crea una mappa MUTABILE con i campi base obbligatori
+            val messageData = mutableMapOf<String, Any>(
                 "sender" to sender,
                 "message" to sanitizedMessage,
                 "timestamp" to Timestamp.now(),
                 "status" to "SENT"
             )
+
+            // 2. Aggiungi i campi della risposta SOLO SE replyingTo non è nullo
+            if (replyingTo != null) {
+                messageData["isReply"] = true
+                messageData["replyToMessageText"] = replyingTo.message
+                messageData["replyToMessageSender"] = replyingTo.sender
+            }
+
+            Log.d("REPLY_DEBUG", "Dati inviati a Firestore: $messageData")
+
             chatDocRef.collection("messages")
-                .add(messageData)
+                .add(messageData) // Invia la mappa, che ora ha 4 o 7 campi a seconda del caso
                 .await()
 
             MessageDailyLimitManager.incrementCount(context, sender)
         } catch (e: Exception) {
             Log.e("ChatRepository", "Errore durante l'invio del messaggio o aggiornamento flag", e)
-            throw e // Rilancia l'eccezione
+            throw e
         }
     }
+
 
 
     suspend fun deleteMessage(chatId: String, messageId: String) {

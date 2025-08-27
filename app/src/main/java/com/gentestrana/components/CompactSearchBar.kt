@@ -2,7 +2,6 @@ package com.gentestrana.components
 
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -20,7 +19,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.gentestrana.R
@@ -33,15 +31,13 @@ fun CompactSearchBar(
     onQueryChanged: (String) -> Unit,
     onFilterClicked: () -> Unit
 ) {
-    // 1) Ottenere dimensioni schermo
-    val configuration = LocalConfiguration.current
-    val screenHeight = configuration.screenHeightDp.dp
-    val desiredHeight = screenHeight * 0.07f
 
-    // Recupera le dimensioni dinamiche dal tema
+    // 1. Rimosso il calcolo dell'altezza basato sullo schermo.
+
+    // 2. Recupera solo le dimensioni dinamiche dal tema, come già facevi.
     val dimensions = LocalDimensions.current
 
-    // 2) Definire un shape unico (bordo e contenitore)
+    // 3. Il resto rimane quasi identico.
     val roundedShape = RoundedCornerShape(8.dp)
 
     TextField(
@@ -49,12 +45,11 @@ fun CompactSearchBar(
         onValueChange = onQueryChanged,
         singleLine = true,
         maxLines = 1,
-
         leadingIcon = {
             Icon(
                 imageVector = Icons.Default.Search,
                 contentDescription = null,
-                modifier = Modifier.size(20.dp),
+                modifier = Modifier.size(20.dp), // Lasciamo questa misura fissa per ora, va bene per le icone
                 tint = MaterialTheme.colorScheme.onSurfaceVariant
             )
         },
@@ -75,11 +70,13 @@ fun CompactSearchBar(
             )
         },
         textStyle = MaterialTheme.typography.bodySmall,
+        // 4. La modifica chiave è qui, nel Modifier.
         modifier = Modifier
             .fillMaxWidth()
-            // Utilizza le dimensioni dinamiche per il padding
+            // Utilizziamo le dimensioni dinamiche per il padding, come già facevi.
             .padding(horizontal = dimensions.mediumPadding, vertical = dimensions.smallPadding)
-            .height(desiredHeight)
+            // RIMOSSA la riga .height(desiredHeight).
+            // Ora l'altezza si adatterà automaticamente al contenuto (testo e icone).
             .clip(roundedShape)
             .border(1.dp, MaterialTheme.colorScheme.outlineVariant, roundedShape),
         colors = TextFieldDefaults.textFieldColors(
@@ -89,4 +86,5 @@ fun CompactSearchBar(
         ),
         shape = roundedShape
     )
+
 }

@@ -10,6 +10,7 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -25,6 +26,9 @@ import com.gentestrana.utils.computeAgeFromTimestamp
 import com.gentestrana.utils.getFlagEmoji
 import com.gentestrana.utils.getLanguageName
 import coil.request.ImageRequest
+import com.gentestrana.utils.incrementProfileView
+import com.google.firebase.auth.FirebaseAuth
+
 
 private const val DEFAULT_PROFILE_IMAGE_URL = "https://icons.veryicon.com/png/o/system/ali-mom-icon-library/random-user.png"
 
@@ -37,7 +41,15 @@ fun ProfileContent(
     // se lo tolgo ho problemi in UserProfileScreen
     onStartChat: () -> Unit,
     showChatButton: Boolean
-) {
+)
+{
+    val currentUser = FirebaseAuth.getInstance().currentUser
+    LaunchedEffect(user.docId) {
+        if (currentUser?.uid != user.docId) {
+            incrementProfileView(user.docId)
+        }
+    }
+
     val context = LocalContext.current
     Column(
         modifier = Modifier

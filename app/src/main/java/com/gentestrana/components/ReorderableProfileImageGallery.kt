@@ -6,16 +6,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectDragGestures
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.aspectRatio
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.offset
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material3.Icon
@@ -29,38 +20,23 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
-import com.gentestrana.R
-import kotlin.math.roundToInt
-import coil.request.ImageRequest
-import androidx.compose.ui.platform.LocalContext
 import coil.compose.AsyncImage
+import coil.request.ImageRequest
+import com.gentestrana.R
+import com.gentestrana.ui.theme.LocalDimensions
+import kotlin.math.roundToInt
 
-private const val DEFAULT_PROFILE_IMAGE_URL = "https://icons.veryicon.com/png/o/system/ali-mom-icon-library/random-user.png"
+// Rimosso DEFAULT_PROFILE_IMAGE_URL perché usiamo il drawable di fallback direttamente in AsyncImage
 
-
-/**
- * Raggruppa una lista in righe da [count] elementi.
- */
 private fun <T> List<T>.chunkedBy(count: Int): List<List<T>> = this.chunked(count)
 
-/**
- * Griglia di immagini di profilo con:
- * - Drag & drop manuale per riordinare (invece delle frecce).
- * - Cella "ADD" per aggiungere nuove immagini se non si raggiunge il limite.
- * - Le immagini vengono mostrate con crop.
- * - Nella cella "ADD", se isUploading è true, viene mostrato GenericLoadingScreen.
- *
- * @param images Lista di URL delle immagini.
- * @param maxImages Numero massimo di immagini consentite (default 3).
- * @param isUploading Stato di caricamento: se true, nella cella "ADD" viene mostrato l’indicatore.
- * @param onImageOrderChanged Callback per aggiornare l’ordine delle immagini.
- * @param onDeleteImage Callback per eliminare un’immagine (passa l’URL dell’immagine eliminata).
- * @param onAddImage Callback chiamata quando l’utente clicca sul box “+” per aggiungere una nuova immagine.
- */
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
 fun ReorderableProfileImageGridWithAdd(
     images: List<String>,
@@ -70,88 +46,72 @@ fun ReorderableProfileImageGridWithAdd(
     onDeleteImage: (String) -> Unit,
     onAddImage: () -> Unit
 ) {
-    // Mantieni una copia mutabile delle immagini
     var imageList by remember { mutableStateOf(images.toMutableList()) }
     val context = LocalContext.current
+    val dimensions = LocalDimensions.current
 
-    // Aggiorna imageList quando "images" cambia da fuori
     LaunchedEffect(images) {
         imageList = images.toMutableList()
     }
 
-    // Se il numero di immagini è inferiore al massimo, aggiungi un marker "ADD_CELL"
     val displayList = remember(imageList) {
         val listCopy = imageList.toMutableList()
         if (listCopy.size < maxImages) listCopy.add("ADD_CELL")
         listCopy
     }
 
-    // Raggruppa la lista in righe da 3 elementi
-    val rows = displayList.chunkedBy(3)
+    // Non raggruppiamo più in righe, useremo una griglia flessibile.
+    // val rows = displayList.chunkedBy(3) // <-- RIMOSSO
 
-    // Calcola l'altezza della griglia in base al numero di righe
-    val cellSize = 100.dp
-    val verticalSpacing = 16.dp
-//    val extraPadding = 32.dp
-//    val rowCount = if (displayList.size % 3 == 0) displayList.size / 3 else (displayList.size / 3 + 1)
-//    val gridHeight = (cellSize * rowCount) +
-//            (if (rowCount > 0) verticalSpacing * (rowCount - 1) else 0.dp) +
-//            extraPadding
-
-    // Drag & drop states
     var draggingIndex by remember { mutableStateOf<Int?>(null) }
     var dragOffset by remember { mutableStateOf(Offset.Zero) }
-
-    // Calcolo dimensioni in px per interpretare l’offset
     val density = LocalDensity.current
-    val cellSizePx = with(density) { cellSize.toPx() }
-    val spacingPx = with(density) { 16.dp.toPx() }  // lo spacing orizzontale/verticale tra le celle
-    val cellTotalPx = cellSizePx + spacingPx
 
-    // Funzione per calcolare il nuovo indice in base all'offset
-    fun calculateNewIndex(originalIndex: Int, offset: Offset): Int {
-        val originalRow = originalIndex / 3
-        val originalCol = originalIndex % 3
+    // Usiamo BoxWithConstraints per ottenere la larghezza totale disponibile per la griglia
+    BoxWithConstraints(modifier = Modifier.fillMaxWidth().padding(dimensions.largePadding)) {
+        val gridWidthPx = with(density) { maxWidth.toPx() }
+        val spacingPx = with(density) { dimensions.mediumPadding.toPx() }
+        // La larghezza di ogni cella è (larghezza totale - 2 spazi) / 3
+        val cellWidthPx = (gridWidthPx - (2 * spacingPx)) / 3f
 
-        // Coordinate originali in pixel
-        val originalX = originalCol * cellTotalPx
-        val originalY = originalRow * cellTotalPx
+        fun calculateNewIndex(originalIndex: Int, offset: Offset): Int {
+            val originalCol = originalIndex % 3
+            val originalRow = originalIndex / 3
 
-        // Nuove coordinate considerando l'offset
-        val newX = originalX + offset.x
-        val newY = originalY + offset.y
+            val originalX = originalCol * (cellWidthPx + spacingPx)
+            val originalY = originalRow * (cellWidthPx + spacingPx)
 
-        // Calcola nuova colonna e riga (arrotondando)
-        val newCol = (newX / cellTotalPx).roundToInt().coerceIn(0, 2)
-        val newRow = (newY / cellTotalPx).roundToInt().coerceAtLeast(0)
+            val newX = originalX + offset.x
+            val newY = originalY + offset.y
 
-        // Converte (row,col) in un indice di displayList
-        val newIndex = (newRow * 3) + newCol
-        return newIndex.coerceAtMost(imageList.size - 1)
-    }
+            val newCol = (newX / (cellWidthPx + spacingPx)).roundToInt().coerceIn(0, 2)
+            val newRow = (newY / (cellWidthPx + spacingPx)).roundToInt().coerceAtLeast(0)
 
-    // Layout a colonna statica con altezza pari a gridHeight
-    Column(
-        modifier = Modifier
-            .fillMaxWidth()
-//            .height(gridHeight)
-            // non mostrava text
-            .padding(16.dp),
-        verticalArrangement = Arrangement.spacedBy(verticalSpacing)
-    ) {
-        rows.forEachIndexed { rowIndex, rowItems ->
-            Row(
+            val newIndex = (newRow * 3) + newCol
+            return newIndex.coerceAtMost(imageList.size - 1)
+        }
+
+        Column(
+            modifier = Modifier.fillMaxWidth(),
+            verticalArrangement = Arrangement.spacedBy(dimensions.mediumPadding)
+        ) {
+            // Unica Row che si adatta e va a capo automaticamente
+            FlowRow(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(16.dp, Alignment.CenterHorizontally)
+                horizontalArrangement = Arrangement.spacedBy(dimensions.mediumPadding),
+                maxItemsInEachRow = 3 // Specifichiamo che vogliamo 3 elementi per riga
             ) {
-                rowItems.forEachIndexed { colIndex, item ->
-                    val flatIndex = rowIndex * 3 + colIndex
+                displayList.forEachIndexed { index, item ->
+
+                    // Modifier comune per tutte le celle, ora è dinamico
+                    val cellModifier = Modifier
+                        .weight(1f)
+                        .aspectRatio(1f) // Mantiene le celle quadrate
+                        .clip(MaterialTheme.shapes.medium)
+
                     if (item == "ADD_CELL") {
-                        // Box per aggiungere una nuova immagine
                         Box(
-                            modifier = Modifier
-                                .size(cellSize)
-                                .clip(MaterialTheme.shapes.medium)
+                            modifier = cellModifier
                                 .background(MaterialTheme.colorScheme.surfaceVariant)
                                 .clickable { onAddImage() },
                             contentAlignment = Alignment.Center
@@ -170,56 +130,30 @@ fun ReorderableProfileImageGridWithAdd(
                             }
                         }
                     } else {
-                        // Box per immagine esistente con drag & drop manuale
                         Box(
-                            modifier = Modifier
-                                .size(cellSize)
-                                // Se questo item è in drag, applichiamo l'offset
-                                .then(
-                                    if (draggingIndex == flatIndex)
-                                        Modifier.offset {
-                                            IntOffset(dragOffset.x.roundToInt(), dragOffset.y.roundToInt())
-                                        }
-                                    else Modifier
-                                )
-                                .clip(MaterialTheme.shapes.medium)
-                                // Aggiunge il bordo se flatIndex == 0 (come prima)
-                                .then(
-                                    if (flatIndex == 0)
-                                        Modifier.border(BorderStroke(2.dp, MaterialTheme.colorScheme.primary))
-                                    else Modifier
-                                )
-                                // Rilevamento gesture di drag
+                            modifier = cellModifier
+                                .then(if (draggingIndex == index) Modifier.offset { IntOffset(dragOffset.x.roundToInt(), dragOffset.y.roundToInt()) } else Modifier)
+                                .then(if (index == 0) Modifier.border(BorderStroke(2.dp, MaterialTheme.colorScheme.primary)) else Modifier)
                                 .pointerInput(Unit) {
                                     detectDragGestures(
-                                        onDragStart = {
-                                            // Se non c'è già un item in drag, imposta l'indice
-                                            if (draggingIndex == null) {
-                                                draggingIndex = flatIndex
-                                            }
-                                        },
+                                        onDragStart = { if (draggingIndex == null) { draggingIndex = index } },
                                         onDrag = { change, dragAmount ->
-                                            change.consume()
-                                            // Solo se stiamo effettivamente trascinando questo item
-                                            if (draggingIndex == flatIndex) {
+                                            if (draggingIndex == index) {
+                                                change.consume()
                                                 dragOffset += dragAmount
                                             }
                                         },
                                         onDragEnd = {
-                                            // Calcola la nuova posizione
                                             draggingIndex?.let { originalIndex ->
-                                                val targetIndex = calculateNewIndex(originalIndex, dragOffset)
-                                                    .coerceIn(0, imageList.size -1)
+                                                val targetIndex = calculateNewIndex(originalIndex, dragOffset).coerceIn(0, imageList.size -1)
                                                 if (targetIndex != originalIndex) {
                                                     val mutable = imageList.toMutableList()
                                                     val draggedItem = mutable.removeAt(originalIndex)
-                                                    val finalTargetIndex = targetIndex.coerceAtMost(mutable.size)
-                                                    mutable.add(finalTargetIndex, draggedItem)
+                                                    mutable.add(targetIndex.coerceAtMost(mutable.size), draggedItem)
                                                     imageList = mutable
                                                     onImageOrderChanged(mutable)
                                                 }
                                             }
-                                            // Reset
                                             draggingIndex = null
                                             dragOffset = Offset.Zero
                                         },
@@ -229,39 +163,30 @@ fun ReorderableProfileImageGridWithAdd(
                                         }
                                     )
                                 },
-                            contentAlignment = Alignment.TopCenter
+                            contentAlignment = Alignment.TopEnd
                         ) {
-                            // Immagine
                             AsyncImage(
                                 model = ImageRequest.Builder(context)
-                                    .data(item) // URL dell'immagine
-                                    .placeholder(R.drawable.random_user)
-                                    .error(R.drawable.random_user)
+                                    .data(item)
+                                    .placeholder(R.drawable.random_user) // Placeholder locale
+                                    .error(R.drawable.random_user) // Fallback locale
                                     .crossfade(true)
                                     .build(),
-                                contentDescription = "Profile Image $flatIndex",
-                                modifier = Modifier
-                                    .fillMaxSize() // AsyncImage riempie il Box
-                                    .aspectRatio(1f), // Mantiene le proporzioni quadrate
-                                contentScale = ContentScale.Crop // Applica il crop
+                                contentDescription = "Profile Image $index",
+                                modifier = Modifier.fillMaxSize(),
+                                contentScale = ContentScale.Crop
                             )
-                            // Pulsante di eliminazione
                             IconButton(
                                 onClick = {
-                                    val mutable = imageList.toMutableList()
-                                    Log.d("DeleteImage", "Elimina immagine CLICKED, flatIndex: $flatIndex, listSize: ${mutable.size}")
-                                    if(flatIndex >= 0 && flatIndex < mutable.size) { // Aggiungi controllo indice
-                                        val removedItem = mutable.removeAt(flatIndex) // Prendi l'item rimosso
-                                        imageList = mutable
-                                        onImageOrderChanged(mutable) // Notifica il nuovo ordine
-                                        onDeleteImage(removedItem) // Notifica l'URL cancellato
+                                    if (index >= 0 && index < imageList.size) {
+                                        val removedItem = imageList.removeAt(index)
+                                        onImageOrderChanged(imageList.toList()) // Notifica la nuova lista
+                                        onDeleteImage(removedItem)
                                     } else {
-                                        Log.e("DeleteImage", "Indice non valido per la cancellazione: $flatIndex, size: ${mutable.size}")
+                                        Log.e("DeleteImage", "Indice non valido: $index, size: ${imageList.size}")
                                     }
                                 },
-                                modifier = Modifier
-                                    .align(Alignment.TopEnd)
-                                    .size(20.dp)
+                                modifier = Modifier.size(24.dp) // Leggermente più grande per essere più facile da toccare
                             ) {
                                 Icon(
                                     imageVector = Icons.Default.Close,
@@ -273,15 +198,16 @@ fun ReorderableProfileImageGridWithAdd(
                     }
                 }
             }
+
+            Text(
+                text = stringResource(R.string.profile_image_hint),
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(top = dimensions.smallPadding),
+                textAlign = TextAlign.Center
+            )
         }
-        Text(
-            text = stringResource(R.string.profile_image_hint),
-            style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f),
-            modifier = Modifier
-                .padding(horizontal = 16.dp)
-                .padding(top = 8.dp)
-                .align(Alignment.CenterHorizontally)
-        )
     }
 }

@@ -2,62 +2,55 @@ package com.gentestrana.screens
 
 import android.util.Log
 import android.widget.Toast
+import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.rememberLazyListState
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.automirrored.filled.Send
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
-import androidx.compose.ui.Modifier
-import androidx.compose.ui.unit.dp
-import androidx.navigation.NavController
-import com.gentestrana.chat.MessageRow
-import com.gentestrana.chat.DateSeparatorRow
-import com.gentestrana.utils.getDateSeparator
-import kotlinx.coroutines.launch
-import androidx.compose.material.icons.Icons
-import androidx.compose.ui.res.stringResource
-import com.gentestrana.R
 import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.Send
+import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Info
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.style.TextDecoration
-import com.gentestrana.components.GenericLoadingScreen // Mantenuto per il loader
-import androidx.lifecycle.viewmodel.compose.viewModel
-import com.gentestrana.ui_controller.ChatViewModel
+import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.dp
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.flow.distinctUntilChanged
-import kotlinx.coroutines.flow.collectLatest
+import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.navigation.NavController
+import com.gentestrana.R
+import com.gentestrana.chat.ChatMessage
+import com.gentestrana.chat.DateSeparatorRow
+import com.gentestrana.chat.MessageRow
+import com.gentestrana.ui_controller.ChatViewModel
 import com.gentestrana.ui_controller.SendMessageEvent
-import androidx.compose.foundation.layout.WindowInsets
-import androidx.compose.foundation.layout.ime
-import androidx.compose.ui.platform.LocalDensity
+import com.gentestrana.utils.getDateSeparator
+import com.google.firebase.Firebase
+import com.google.firebase.auth.auth
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.launch
 
-
-/*
-ChatScreen fa varie cose:
-- quando si apre la chat, scrolla automaticamente all'ultimo messaggio
-- quando scrollo in alto e scrivo un messagio, scrolla automaticamente all'ultimo messaggio
-- quando scrollo in basso e elimino un messaggio, scrolla automaticamente all'ultimo messaggio
-- anche quando l'altro partecipante alla chat manda un messaggio, scrolla automaticamente all'ultimo messaggio
-- mostra il primo messaggio senza scrollare in alto
- */
-
-
-// Factory per il ViewModel
 class ChatViewModelFactory(private val chatId: String) : ViewModelProvider.Factory {
     override fun <T : ViewModel> create(modelClass: Class<T>): T {
         if (modelClass.isAssignableFrom(ChatViewModel::class.java)) {
@@ -68,30 +61,28 @@ class ChatViewModelFactory(private val chatId: String) : ViewModelProvider.Facto
     }
 }
 
-
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ChatScreen(docId: String, navController: NavController) {
     val viewModel: ChatViewModel = viewModel(factory = ChatViewModelFactory(docId))
 
-    // Raccogli stati dal ViewModel
     val currentUserId by viewModel.currentUserId.collectAsState()
     val recipientName by viewModel.recipientName.collectAsState()
+    val currentUserName by remember { mutableStateOf(Firebase.auth.currentUser?.displayName ?: "Tu") }
     val recipientDocId by viewModel.recipientDocId.collectAsState()
-    val messages by viewModel.messages.collectAsState() // Stato dei messaggi dal ViewModel
-    val isLoadingOlderMessages by viewModel.isLoadingOlderMessages.collectAsState() // Stato caricamento dal ViewModel
-    val hasMoreMessages by viewModel.hasMoreMessages.collectAsState() // Stato "ci sono altri messaggi?"
+    val messages by viewModel.messages.collectAsState()
+    val isLoadingOlderMessages by viewModel.isLoadingOlderMessages.collectAsState()
+    val hasMoreMessages by viewModel.hasMoreMessages.collectAsState()
 
-
-    // Stati locali per UI
     var showDeleteDialog by remember { mutableStateOf(false) }
     var messageToDelete by remember { mutableStateOf<String?>(null) }
     var messageText by remember { mutableStateOf("") }
+    var replyingToMessage by remember { mutableStateOf<ChatMessage?>(null) }
 
     val context = LocalContext.current
     val listState = rememberLazyListState()
     val focusRequester = remember { FocusRequester() }
-    val scope = rememberCoroutineScope() // Mantenuto per l'eliminazione
+    val scope = rememberCoroutineScope()
     val initialScrollDone = remember { mutableStateOf(false) }
     val textFieldIsFocused = remember { mutableStateOf(false) }
     val imeInsets = WindowInsets.ime
@@ -100,29 +91,23 @@ fun ChatScreen(docId: String, navController: NavController) {
     LaunchedEffect(isKeyboardVisible) {
         if (!isKeyboardVisible && messages.isNotEmpty()) {
             listState.animateScrollToItem(messages.size - 1)
-            Log.d("ChatScreen_Scroll", "Scrolled to last message because keyboard is closed.")
         }
     }
 
-    // Gestione Eventi di Invio dal ViewModel
     LaunchedEffect(key1 = Unit) {
         viewModel.sendMessageEvent.collectLatest { event ->
             when (event) {
                 is SendMessageEvent.Success -> {
-                    Log.d("ChatScreen", "Message sent successfully (event received).")
-                    // Aggiungiamo un breve delay per permettere l'aggiornamento della lista dei messaggi
-                    delay(200) // da 500 versione non elegante
+                    delay(200)
                     if (messages.isNotEmpty()) {
                         listState.animateScrollToItem(messages.size - 1)
-                        Log.d("ChatScreen_Scroll", "Forced scroll to last message after sending message.")
                     }
                 }
                 is SendMessageEvent.Error -> {
                     val errorMessage = event.message
-                    Log.e("ChatScreen", "Error sending message (event received): $errorMessage")
                     val toastMessage = when {
-                        errorMessage.contains("Daily message limit exceeded") -> "❌📨➡⏳💤"
-                        errorMessage.contains("Rate limit exceeded") -> "🚫📨➡⏳💤 "
+                        errorMessage.contains("Daily message limit exceeded") -> "â ŒðŸ“¨âž¡â ³ðŸ’¤"
+                        errorMessage.contains("Rate limit exceeded") -> "ðŸš«ðŸ“¨âž¡â ³ðŸ’¤ "
                         else -> "Errore nell'invio del messaggio."
                     }
                     Toast.makeText(context, toastMessage, Toast.LENGTH_SHORT).show()
@@ -131,28 +116,18 @@ fun ChatScreen(docId: String, navController: NavController) {
         }
     }
 
-// Effetto per scrollare in fondo quando arrivano nuovi messaggi o all'apertura
     LaunchedEffect(messages.size) {
         if (messages.isNotEmpty()) {
             val lastIndex = messages.size - 1
             if (!initialScrollDone.value) {
-                // PRIMO SCROLL: Vai subito in fondo senza animazione
                 listState.scrollToItem(lastIndex)
                 initialScrollDone.value = true
-                Log.d("ChatScreen_Scroll", "Initial scroll to index: $lastIndex, message size: ${messages.size}")
             } else {
                 val lastMessage = messages.lastOrNull()
-                // Ora scrolla se:
-                // - L'ultimo messaggio è inviato da me
-                // - Oppure il campo di input è focalizzato
-                // - Oppure l'utente è già vicino al fondo
                 if (lastMessage?.sender == currentUserId ||
                     textFieldIsFocused.value ||
                     listState.firstVisibleItemIndex > lastIndex - 5) {
                     listState.animateScrollToItem(lastIndex)
-                    Log.d("ChatScreenScroll", "Animated scroll to index: $lastIndex")
-                } else {
-                    Log.d("ChatScreenScroll", "Scroll skipped (user reading older messages)")
                 }
             }
         }
@@ -161,20 +136,29 @@ fun ChatScreen(docId: String, navController: NavController) {
     LaunchedEffect(textFieldIsFocused.value) {
         if (textFieldIsFocused.value && messages.isNotEmpty()) {
             listState.animateScrollToItem(messages.size - 1)
-            Log.d("ChatScreen_Scroll", "Scrolled to last message due to input focus.")
         }
     }
 
-    // Effetto per caricare messaggi più vecchi quando si raggiunge l'inizio della lista
     LaunchedEffect(listState) {
         snapshotFlow { listState.firstVisibleItemIndex }
             .distinctUntilChanged()
             .collect { firstVisibleIndex ->
-                // Carica se siamo al primo item, non stiamo già caricando e ci sono altri messaggi
                 if (firstVisibleIndex == 0 && !isLoadingOlderMessages && hasMoreMessages) {
                     viewModel.loadOlderMessages()
                 }
             }
+    }
+
+    val onSend = {
+        val messageToSend = messageText.trim()
+        if (messageToSend.isNotEmpty()) {
+            // Chiamiamo la nuova funzione del ViewModel, passando anche `replyingToMessage`
+            viewModel.sendMessage(messageToSend, context, replyingToMessage)
+
+            // Eseguiamo le pulizie!
+            messageText = ""           // Svuota il campo di testo
+            replyingToMessage = null   // Fa sparire l'anteprima della risposta. PROBLEMA RISOLTO!
+        }
     }
 
     Scaffold(
@@ -241,7 +225,7 @@ fun ChatScreen(docId: String, navController: NavController) {
                     modifier = Modifier
                         .weight(1f)
                         .fillMaxWidth(),
-                    reverseLayout = false, // Ora non più necessario invertire il layout
+                    reverseLayout = false,
                     contentPadding = PaddingValues(
                         start = 8.dp,
                         end = 8.dp,
@@ -251,7 +235,6 @@ fun ChatScreen(docId: String, navController: NavController) {
                     verticalArrangement = Arrangement.spacedBy(4.dp)
                 ) {
 
-                    // Mostra il loader in cima se stiamo caricando messaggi vecchi
                     if (isLoadingOlderMessages) {
                         item {
                             Box(modifier = Modifier.fillMaxWidth().padding(vertical = 16.dp), contentAlignment = Alignment.Center) {
@@ -260,12 +243,10 @@ fun ChatScreen(docId: String, navController: NavController) {
                         }
                     }
 
-                    // Usa la lista di messaggi dal ViewModel
                     val currentUid = currentUserId
                     if (currentUid != null) {
                         itemsIndexed(messages, key = { _, message -> message.id }) { index, message ->
                             val currentSeparator = getDateSeparator(message.timestamp)
-                            // Controlla il messaggio precedente nella lista corrente (non invertita)
                             val previousSeparator = if (index > 0) getDateSeparator(messages[index - 1].timestamp) else ""
                             if (index == 0 || currentSeparator != previousSeparator) {
                                 DateSeparatorRow(dateText = currentSeparator)
@@ -275,18 +256,33 @@ fun ChatScreen(docId: String, navController: NavController) {
                             MessageRow(
                                 chatMessage = message,
                                 currentUserId = currentUid,
+                                currentUserName = currentUserName, // Passa il nome dell'utente corrente
+                                recipientName = recipientName ?: "", // Passa il nome del destinatario
                                 showAvatar = isFirstInBlock,
                                 onDelete = if (message.sender == currentUid) {
                                     {
                                         messageToDelete = message.id
                                         showDeleteDialog = true
                                     }
+                                } else null,
+                                onReplySwipe = if (message.sender != currentUid) {
+                                    { replyingToMessage = message }
                                 } else null
                             )
                         }
                     }
                 }
-                // Input field e bottone di invio
+
+                if (replyingToMessage != null) {
+                    ReplyPreview(
+                        // Passiamo il nome del destinatario
+                        recipientName = recipientName ?: replyingToMessage!!.sender,
+                        message = replyingToMessage!!,
+                        onCancelReply = { replyingToMessage = null }
+                    )
+                }
+
+
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -301,7 +297,6 @@ fun ChatScreen(docId: String, navController: NavController) {
                             .weight(1f)
                             .focusRequester(focusRequester)
                             .onFocusChanged { state ->
-                                // Aggiornamento dello stato del focus
                                 textFieldIsFocused.value = state.isFocused
                                 if (state.isFocused) {
                                     scope.launch {
@@ -313,24 +308,16 @@ fun ChatScreen(docId: String, navController: NavController) {
                                 }
                             },
                         placeholder = { Text(stringResource(R.string.write_message)) },
-                        keyboardOptions = KeyboardOptions.Default.copy(imeAction = ImeAction.Send),
-                        keyboardActions = KeyboardActions(onSend = {
-                            val messageToSend = messageText.trim()
-                            if (messageToSend.isNotEmpty()) {
-                                messageText = ""
-                                viewModel.sendMessage(messageToSend, context)
-                            }
-                        })
+                        keyboardOptions = KeyboardOptions.Default.copy(
+                            capitalization = KeyboardCapitalization.Sentences,
+                            imeAction = ImeAction.Send
+                        ),
+                        keyboardActions = KeyboardActions(onSend = { onSend() })
                     )
 
                     Button(
-                        onClick = {
-                            val messageToSend = messageText.trim()
-                            if (messageToSend.isNotEmpty()) {
-                                messageText = ""
-                                viewModel.sendMessage(messageToSend, context)
-                            }
-                        },
+                        // ---> INIZIO MODIFICA 3: Chiama la nuova funzione onSend <---
+                        onClick = { onSend() },
                         contentPadding = PaddingValues(horizontal = 12.dp, vertical = 8.dp)
                     ) {
                         Icon(
@@ -340,7 +327,6 @@ fun ChatScreen(docId: String, navController: NavController) {
                     }
                 }
             }
-            // Dialog per eliminazione messaggio
             if (showDeleteDialog) {
                 AlertDialog(
                     onDismissRequest = {
@@ -376,4 +362,60 @@ fun ChatScreen(docId: String, navController: NavController) {
             }
         }
     )
+}
+
+@Composable
+fun ReplyPreview(
+    recipientName: String,
+    message: ChatMessage,
+    onCancelReply: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    Row(
+        modifier = modifier
+            .fillMaxWidth()
+            .padding(start = 8.dp, end = 8.dp, top = 4.dp) // Leggero padding
+            .background(
+                MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f),
+                RoundedCornerShape(topStart = 12.dp, topEnd = 12.dp, bottomStart = 0.dp, bottomEnd = 0.dp)
+            )
+            .padding(start = 8.dp), // Padding interno per distanziare la linea verticale
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        // Linea verticale colorata (stile WhatsApp)
+        Box(
+            modifier = Modifier
+                .width(4.dp)
+                .height(40.dp) // Altezza fissa per la linea
+                .background(MaterialTheme.colorScheme.primary, shape = RoundedCornerShape(2.dp))
+        )
+
+        Spacer(modifier = Modifier.width(8.dp))
+
+        // Contenuto del messaggio in anteprima
+        Column(
+            modifier = Modifier.weight(1f),
+            verticalArrangement = Arrangement.Center
+        ) {
+            Text(
+                text = recipientName, // Usa il nome passato
+                style = MaterialTheme.typography.bodySmall.copy(fontWeight = FontWeight.Bold),
+                color = MaterialTheme.colorScheme.primary
+            )
+            Text(
+                text = message.message,
+                style = MaterialTheme.typography.bodyMedium,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis
+            )
+        }
+
+        // Bottone per annullare la risposta
+        IconButton(onClick = onCancelReply) {
+            Icon(
+                imageVector = Icons.Default.Close,
+                contentDescription = "Cancel Reply"
+            )
+        }
+    }
 }

@@ -1,7 +1,13 @@
+// File: \Gentestrana\app\src\main\java\com\gentestrana\screens\LoginScreen.kt
+
 package com.gentestrana.screens
 
+import android.Manifest
+import android.os.Build
 import android.util.Log
 import android.widget.Toast
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -28,9 +34,45 @@ fun LoginScreen(
 
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
-    var isLoading by remember { mutableStateOf(false) } // Track loading state
+    var isLoading by remember { mutableStateOf(false) }
 
-    // Layout principale per il login
+    // --- INIZIO CODICE CORRETTO ---
+
+    // Definiamo PRIMA il launcher. La sua unica responsabilità
+    // è completare il login DOPO che l'utente ha risposto alla richiesta di permesso.
+    val notificationPermissionLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.RequestPermission(),
+        onResult = { isGranted ->
+            if (isGranted) {
+                Log.d("LoginScreen", "Permesso notifiche concesso dopo il login.")
+            } else {
+                Log.w("LoginScreen", "Permesso notifiche negato dopo il login.")
+            }
+            // A prescindere dal risultato, la procedura di login è finita.
+            // Navighiamo alla schermata principale.
+            val user = FirebaseAuth.getInstance().currentUser
+            if (user != null) {
+                onLoginSuccess(user) // Chiama l'azione finale.
+            }
+        }
+    )
+
+    // Definiamo DOPO la funzione che lo usa.
+    // Questa funzione è il nostro "controllore del traffico".
+    fun handleLoginFlow(user: FirebaseUser) {
+        // Se siamo su Android 13 o superiore, il nostro "traffico"
+        // deve passare per la richiesta di permesso.
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            notificationPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
+        } else {
+            // Altrimenti (versioni più vecchie), la strada è libera.
+            // Andiamo direttamente alla schermata principale.
+            onLoginSuccess(user)
+        }
+    }
+
+    // --- FINE CODICE CORRETTO ---
+
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -64,37 +106,28 @@ fun LoginScreen(
 
                 isLoading = true // Avvia il caricamento
 
-                // Utilizziamo il metodo loginAndCheckEmail di UserRepository
                 UserRepository().loginAndCheckEmail(
                     email = email,
                     password = password,
                     onVerified = {
-                        // Se l'email è verificata, procediamo recuperando i dettagli utente
                         val firebaseUser = FirebaseAuth.getInstance().currentUser
                         if (firebaseUser != null) {
                             UserRepository().getUser(
                                 docId = firebaseUser.uid,
                                 onSuccess = { user ->
-                                    // Se l'utente è admin, sottoscrivilo al topic "adminReports"
                                     if (user.isAdmin) {
                                         Firebase.messaging.subscribeToTopic("adminReports")
-                                            .addOnCompleteListener { subscribeTask ->
-                                                if (subscribeTask.isSuccessful) {
-                                                    Log.d("FCM", "Iscritto con successo alle notifiche adminReports")
-                                                } else {
-                                                    Log.e("FCM", "Errore nell'iscrizione al topic")
-                                                }
-                                            }
+                                            .addOnCompleteListener { /* ... */ }
                                     }
                                     isLoading = false
-                                    // Procedi con il login completo
-                                    onLoginSuccess(firebaseUser)
+                                    // Adesso chiamiamo il nostro "controllore del traffico"
+                                    handleLoginFlow(firebaseUser)
                                 },
                                 onFailure = { error ->
                                     isLoading = false
                                     Toast.makeText(context, "Errore nel recupero dei dati utente: $error", Toast.LENGTH_SHORT).show()
-                                    // Anche in caso di errore, passiamo l'utente per continuare
-                                    onLoginSuccess(firebaseUser)
+                                    // Anche qui, gestiamo il flusso tramite il controllore
+                                    handleLoginFlow(firebaseUser)
                                 }
                             )
                         } else {
@@ -107,47 +140,41 @@ fun LoginScreen(
                         Toast.makeText(context, "Email non verificata. Controlla la tua casella email.", Toast.LENGTH_SHORT).show()
 
                         val user = FirebaseAuth.getInstance().currentUser
-                        user?.sendEmailVerification()
-                            ?.addOnSuccessListener {
-                                Toast.makeText(context, "Email di verifica inviata nuovamente.", Toast.LENGTH_SHORT).show()
-                            }
-                            ?.addOnFailureListener { e ->
-                                Toast.makeText(context, "Errore nel rinvio dell'email: ${e.message}", Toast.LENGTH_SHORT).show()
-                            }
-
+                        user?.sendEmailVerification()?.addOnSuccessListener {
+                            Toast.makeText(context, "Email di verifica inviata nuovamente.", Toast.LENGTH_SHORT).show()
+                        }?.addOnFailureListener { e ->
+                            Toast.makeText(context, "Errore nel rinvio dell'email: ${e.message}", Toast.LENGTH_SHORT).show()
+                        }
                         navController.navigate("verifyEmail")
                     },
-                    onFailure = { error ->  // ✅ Aggiunto parametro onFailure
+                    onFailure = { error ->
                         isLoading = false
                         Toast.makeText(context, "Errore di login: $error", Toast.LENGTH_SHORT).show()
                     }
                 )
             },
             modifier = Modifier.fillMaxWidth(),
-            enabled = !isLoading // Disabilita il pulsante durante il caricamento
+            enabled = !isLoading
         ) {
             if (isLoading) {
                 CircularProgressIndicator(color = MaterialTheme.colorScheme.onPrimary)
-                // TODO: cambiabile con GenericLoadingScreen?
             } else {
-                Text("Login") // TODO: stringabile
+                Text("Login")
             }
         }
         Spacer(modifier = Modifier.height(16.dp))
-        // Pulsante per navigare alla schermata di registrazione
         TextButton(onClick = onNavigateToRegistration) {
             Text(context.getString(R.string.register_prompt))
         }
         Spacer(modifier = Modifier.height(16.dp))
-        // Sezione per il login con Google
         Text("Or sign in with Google:")
         Spacer(modifier = Modifier.height(8.dp))
         GoogleLoginScreen(
             onLoginSuccess = {
-                // Dopo il login con Google, recupera l'utente corrente e passa alla callback
                 val user = FirebaseAuth.getInstance().currentUser
                 if (user != null) {
-                    onLoginSuccess(user)
+                    // E anche qui usiamo il controllore
+                    handleLoginFlow(user)
                 } else {
                     Toast.makeText(context, "Google authentication failed.", Toast.LENGTH_SHORT).show()
                 }

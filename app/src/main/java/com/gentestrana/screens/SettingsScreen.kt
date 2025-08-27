@@ -1,15 +1,17 @@
 package com.gentestrana.screens
 
 import android.content.Context
-import android.util.Log
+import android.content.pm.PackageManager
+import android.os.Build
+
 import android.widget.Toast
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
+
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
@@ -18,23 +20,18 @@ import androidx.navigation.NavController
 import com.gentestrana.R
 import androidx.compose.foundation.border
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.draw.clip
 import com.gentestrana.users.UserRepository
 import com.google.firebase.auth.FirebaseAuth
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
-import com.gentestrana.BuildConfig
 
-
-
-enum class AppTheme { SYSTEM, LIGHT, DARK, /*SPECIAL*/ }
-// SPECIAL servirà per dislessia probabilmente
+enum class AppTheme { SYSTEM, LIGHT, DARK }
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-
 fun SettingsScreen(
     rootNavController: NavController,
     navController: NavController,
@@ -44,29 +41,44 @@ fun SettingsScreen(
     val context = LocalContext.current
     val userRepository = remember { UserRepository() }
 
+    // Ottenimento informazioni versione app
+    val packageInfo = try {
+        context.packageManager.getPackageInfo(context.packageName, 0)
+    } catch (e: PackageManager.NameNotFoundException) {
+        null
+    }
+
+    val versionName = packageInfo?.versionName ?: "N/A"
+    val versionCode = if (packageInfo != null) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+            packageInfo.longVersionCode.toString()
+        } else {
+            @Suppress("DEPRECATION")
+            packageInfo.versionCode.toString()
+        }
+    } else {
+        "N/A"
+    }
+
     // SharedPreferences
     val sharedPreferences = remember {
         context.getSharedPreferences("settings_prefs", Context.MODE_PRIVATE)
     }
     val pushNotificationsKey = "push_notifications_enabled"
-    val appThemeKey = "app_theme" // Chiave per salvare il tema
+    val appThemeKey = "app_theme"
 
-    // Stato Notifiche Push (già esistente)
+    // Stato Notifiche Push
     val pushNotificationsEnabled = remember {
         mutableStateOf(sharedPreferences.getBoolean(pushNotificationsKey, true))
     }
 
-    // Stato Tema App, caricato da SharedPreferences o valore di default (SYSTEM)
+    // Stato Tema App
     val selectedTheme = remember {
         mutableStateOf(
-            when (sharedPreferences.getString(
-                appThemeKey,
-                "SYSTEM"
-            )) { // "SYSTEM" è il default come stringa
+            when (sharedPreferences.getString(appThemeKey, "SYSTEM")) {
                 "LIGHT" -> AppTheme.LIGHT
                 "DARK" -> AppTheme.DARK
                 else -> AppTheme.SYSTEM
-                // SYSTEM come default se non trovato o valore non valido
             }
         )
     }
@@ -76,7 +88,7 @@ fun SettingsScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text(stringResource(R.string.settings)) } // Usa string resource per "Impostazioni"
+                title = { Text(stringResource(R.string.settings)) }
             )
         }
     ) { paddingValues ->
@@ -87,31 +99,24 @@ fun SettingsScreen(
                 .verticalScroll(rememberScrollState())
         ) {
             Text(
-                text = stringResource(R.string.account_section), // Usa string resource per "Account"
+                text = stringResource(R.string.account_section),
                 style = MaterialTheme.typography.titleMedium
             )
             HorizontalDivider()
             ListItem(
-                headlineContent = { Text(stringResource(R.string.change_password)) }, // Usa string resource
+                headlineContent = { Text(stringResource(R.string.change_password)) },
                 modifier = Modifier.clickable { navController.navigate("changePassword") }
             )
 
-            // subito prima di delete? forse un po' pericolosa come posizione?
             ListItem(
                 headlineContent = { Text(stringResource(R.string.blocked_users_navigation_title)) },
-                modifier = Modifier.clickable {
-                    navController.navigate("blockedUsers") // Naviga alla nuova route usando navController (tabsNavController)
-                }
+                modifier = Modifier.clickable { navController.navigate("blockedUsers") }
             )
-
 
             ListItem(
                 headlineContent = { Text(stringResource(R.string.delete_account)) },
                 colors = ListItemDefaults.colors(headlineColor = MaterialTheme.colorScheme.error),
-                modifier = Modifier.clickable {
-                    showDeleteConfirmationDialog = true
-                    // Mostra il dialog quando si clicca su "Elimina Account"
-                }
+                modifier = Modifier.clickable { showDeleteConfirmationDialog = true }
             )
 
             Spacer(modifier = Modifier.height(16.dp))
@@ -122,7 +127,7 @@ fun SettingsScreen(
             )
             HorizontalDivider()
             ListItem(
-                headlineContent = { Text(stringResource(R.string.push_notifications)) }, // Usa string resource
+                headlineContent = { Text(stringResource(R.string.push_notifications)) },
                 trailingContent = {
                     Switch(
                         checked = pushNotificationsEnabled.value,
@@ -143,18 +148,13 @@ fun SettingsScreen(
                 style = MaterialTheme.typography.titleMedium
             )
             HorizontalDivider()
-            // Opzioni Tema con RadioButton
+            // Opzioni Tema
             Row(verticalAlignment = Alignment.CenterVertically) {
                 RadioButton(
                     selected = selectedTheme.value == AppTheme.SYSTEM,
                     onClick = {
                         val newTheme = AppTheme.SYSTEM
                         selectedTheme.value = newTheme
-                        Log.d(
-                            "SettingsScreen",
-                            "RadioButton SYSTEM cliccato, selectedTheme.value ora: ${selectedTheme.value}"
-                        )
-                        selectedTheme.value = AppTheme.SYSTEM
                         sharedPreferences.edit()
                             .putString(appThemeKey, "SYSTEM")
                             .apply()
@@ -169,11 +169,6 @@ fun SettingsScreen(
                     onClick = {
                         val newTheme = AppTheme.LIGHT
                         selectedTheme.value = newTheme
-                        Log.d(
-                            "SettingsScreen",
-                            "RadioButton SYSTEM cliccato, selectedTheme.value ora: ${selectedTheme.value}"
-                        )
-                        selectedTheme.value = AppTheme.LIGHT
                         sharedPreferences.edit()
                             .putString(appThemeKey, "LIGHT")
                             .apply()
@@ -188,11 +183,6 @@ fun SettingsScreen(
                     onClick = {
                         val newTheme = AppTheme.DARK
                         selectedTheme.value = newTheme
-                        Log.d(
-                            "SettingsScreen",
-                            "RadioButton SYSTEM cliccato, selectedTheme.value ora: ${selectedTheme.value}"
-                        )
-                        selectedTheme.value = AppTheme.DARK
                         sharedPreferences.edit()
                             .putString(appThemeKey, "DARK")
                             .apply()
@@ -201,22 +191,6 @@ fun SettingsScreen(
                 )
                 Text(stringResource(R.string.dark_theme))
             }
-
-            // OPZIONE TEMA SPECIALE (COMMENTATA PER ORA)
-            // Row(verticalAlignment = Alignment.CenterVertically) {
-            //     RadioButton(
-            //         selected = selectedTheme.value == AppTheme.SPECIAL, // Dovremmo aggiungere SPECIAL all'enum AppTheme
-            //         onClick = {
-            //             selectedTheme.value = AppTheme.SPECIAL
-            //             sharedPreferences.edit()
-            //                 .putString(appThemeKey, "SPECIAL") // Dovremmo aggiungere "SPECIAL" alle opzioni salvate
-            //                 .apply()
-
-            //         }
-            //     )
-            //     Text(stringResource(R.string.special_theme)) // Dovremmo aggiungere string resource per "Speciale"
-            // }
-
 
             Spacer(modifier = Modifier.height(16.dp))
 
@@ -230,22 +204,18 @@ fun SettingsScreen(
             )
             ListItem(
                 headlineContent = { Text(stringResource(R.string.terms_of_service)) },
-                modifier = Modifier.clickable {
-                    navController.navigate("termsOfService")
-                }
+                modifier = Modifier.clickable { navController.navigate("termsOfService") }
             )
 
             ListItem(
-                headlineContent = { Text(stringResource(R.string.community_guidelines)) }, // Usa la stringa aggiunta prima
-                modifier = Modifier.clickable {
-                    navController.navigate("communityGuidelines")
-                }
+                headlineContent = { Text(stringResource(R.string.community_guidelines)) },
+                modifier = Modifier.clickable { navController.navigate("communityGuidelines") }
             )
 
             ListItem(
                 headlineContent = { Text(stringResource(R.string.app_version)) },
                 trailingContent = {
-                    Text("Versione: ${BuildConfig.VERSION_NAME} (Code: ${BuildConfig.VERSION_CODE})")
+                    Text("Versione: $versionName (Code: $versionCode)")
                 }
             )
         }
@@ -254,38 +224,26 @@ fun SettingsScreen(
                 modifier = Modifier
                     .clip(RoundedCornerShape(16.dp))
                     .border(2.dp, MaterialTheme.colorScheme.error, RoundedCornerShape(22.dp)),
-                // i .dp differiscono, non proprio elegante
                 onDismissRequest = { showDeleteConfirmationDialog = false },
                 title = {
                     Text(
                         text = stringResource(R.string.delete_account_dialog_title),
-                        color = MaterialTheme.colorScheme.error // Titolo in rosso
+                        color = MaterialTheme.colorScheme.error
                     )
                 },
                 text = { Text(stringResource(R.string.delete_account_dialog_message)) },
                 confirmButton = {
                     Button(
                         onClick = {
-                            // Chiamata a deleteUserAccount
                             CoroutineScope(Dispatchers.Main).launch {
-                                // Lancia la coroutine nel contesto UI
                                 userRepository.deleteUserAccount(
                                     onSuccess = {
-                                        // Account eliminato con successo
                                         Toast.makeText(
                                             context,
-                                            "🚮 ✔ ",
+                                            "Account eliminato",
                                             Toast.LENGTH_SHORT
                                         ).show()
-                                        // 2. Log per debug
-                                        Log.d("SettingsScreen", "Account eliminato, eseguendo signOut...")
-
-                                        // 3. Logout da Firebase
                                         auth.signOut()
-
-                                        // 4. Pulisci dati locali (se hai una funzione clearUserData)
-
-                                        // 5. Navigazione con reset completo
                                         rootNavController.navigate("auth") {
                                             popUpTo(rootNavController.graph.id) {
                                                 inclusive = true
@@ -295,15 +253,12 @@ fun SettingsScreen(
                                         }
                                     },
                                     onFailure = { errorMessage ->
-                                        // Errore durante l'eliminazione
                                         Toast.makeText(
                                             context,
-                                            "Errore eliminazione account: ${errorMessage ?: "Sconosciuto"}",
+                                            "Errore: ${errorMessage ?: "Sconosciuto"}",
                                             Toast.LENGTH_LONG
                                         ).show()
-                                        showDeleteConfirmationDialog =
-                                            false
-                                    // Chiudi il dialog in caso di errore
+                                        showDeleteConfirmationDialog = false
                                     }
                                 )
                             }

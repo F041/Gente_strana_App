@@ -1,183 +1,264 @@
 package com.gentestrana
 
-import android.util.Log
-import com.google.firebase.firestore.ktx.firestore
-import com.google.firebase.ktx.Firebase
-import com.google.firebase.messaging.FirebaseMessagingService
-import com.google.firebase.messaging.RemoteMessage
-import com.google.firebase.auth.ktx.auth
+// Import necessari (verifica che ci siano tutti)
+import android.Manifest
 import android.app.NotificationChannel
 import android.app.NotificationManager
-import android.os.Build
-import androidx.core.app.NotificationCompat
-import androidx.core.app.NotificationManagerCompat
-import android.Manifest
 import android.app.PendingIntent
+import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
+import android.os.Build
+import android.util.Log
+import androidx.core.app.NotificationCompat
+import androidx.core.app.NotificationManagerCompat
 import androidx.core.content.ContextCompat
+import com.google.firebase.auth.ktx.auth
+import com.google.firebase.firestore.ktx.firestore
+import com.google.firebase.ktx.Firebase
 import com.google.firebase.messaging.FirebaseMessaging
+import com.google.firebase.messaging.FirebaseMessagingService
+import com.google.firebase.messaging.RemoteMessage
+import java.util.HashMap
 
-
-// cambiare nome?
 class MyFirebaseMessagingService : FirebaseMessagingService() {
-    private fun handleNewUserNotification(data: Map<String, String>) {
-        val userId = data["userId"] ?: return
-        val userName = data["userName"] ?: ""
 
-        val title = getString(R.string.notification_new_user_title)
-        val body = getString(R.string.notification_new_user_body, userName)
+    // TAG per i log
+    private val TAG = "MyFirebaseMsgService"
 
-        showNotification(
-            title = title,
-            content = body,
-            channelId = "new_users_channel",
-            userId = userId
-        )
+    // ID univoci per i canali di notifica (costanti)
+    companion object {
+        const val ADMIN_REPORTS_CHANNEL_ID = "admin_reports_channel_v1"
+        // Aggiunto v1 per forzare ricreazione
+        const val NEW_USERS_CHANNEL_ID = "new_users_channel_v1"
+        const val DEFAULT_MESSAGES_CHANNEL_ID = "default_messages_channel_v1"
     }
 
+    // Crea i canali all'avvio del servizio (o la prima volta che serve)
+    override fun onCreate() {
+        super.onCreate()
+        createNotificationChannels()
+        Log.d(TAG, "onCreate: Service created, channels initialized.")
+    }
+
+    // Gestisce i messaggi in arrivo
     override fun onMessageReceived(remoteMessage: RemoteMessage) {
-        // Verifica permessi notifiche
+//        Log.d(TAG, "-----------------------------------------") // Separatore per chiarezza
+//        Log.d(TAG, "onMessageReceived: Message Received!")
+//        Log.d(TAG, "From: ${remoteMessage.from}")
+//        Log.d(TAG, "Message ID: ${remoteMessage.messageId}")
+//        Log.d(TAG, "Data Payload: ${remoteMessage.data}")
+//        Log.d(TAG, "Notification Payload: ${remoteMessage.notification?.title} / ${remoteMessage.notification?.body}")
+
+        // Verifica permesso notifiche
         if (!checkNotificationPermissions()) {
-            Log.w(TAG, "Notification permission denied")
+            Log.w(TAG, "Notification permission denied. Skipping notification display.")
             return
         }
 
-        // Gestione dati notifica
-        remoteMessage.data.let { data ->
-            when (data["type"]) {
-                "new_user" -> handleNewUserNotification(data)
-                else -> showDefaultNotification(remoteMessage)
-            }
+        // Estrai i payload
+        val notificationPayload = remoteMessage.notification
+        val dataPayload = remoteMessage.data
+
+        var notificationTitle: String? = null
+        var notificationBody: String? = null
+        var targetChannelId = DEFAULT_MESSAGES_CHANNEL_ID // Default
+        var clickActionData: Map<String, String> = dataPayload // Default: usa tutti i dati
+
+        // --- Logica per determinare tipo, contenuto e canale ---
+        val messageSource = remoteMessage.from ?: ""
+
+        // 1. Notifica Segnalazione Admin (Controlla topic o campo 'type')
+        if (messageSource.contains("/topics/adminReports") || dataPayload["type"] == "admin_report") {
+            Log.d(TAG, "Type: Admin Report Notification")
+            notificationTitle = notificationPayload?.title ?: getString(R.string.report_user_dialog_title) // Titolo specifico
+            notificationBody = notificationPayload?.body ?: "Hai una nuova segnalazione." // Corpo specifico
+            targetChannelId = ADMIN_REPORTS_CHANNEL_ID // Canale ad alta priorità!
+            // clickActionData già contiene il reportId dal payload data
         }
-    }
+        // 2. Notifica Nuovo Utente (Controlla campo 'type')
+        else if (dataPayload["type"] == "new_user") {
+            Log.d(TAG, "Type: New User Notification")
+            val userName = dataPayload["userName"] ?: "Un nuovo utente"
+            notificationTitle = notificationPayload?.title ?: getString(R.string.notification_new_user_title)
+            notificationBody = notificationPayload?.body ?: getString(R.string.notification_new_user_body, userName)
+            targetChannelId = NEW_USERS_CHANNEL_ID
+            // clickActionData già contiene userId e userName
+        }
+        // 3. Notifica Chat o Altro (Default)
+        else {
+            Log.d(TAG, "Type: Default/Chat Notification")
+            notificationTitle = notificationPayload?.title // Prendi dal payload notification
+            notificationBody = notificationPayload?.body
+            // targetChannelId rimane DEFAULT_MESSAGES_CHANNEL_ID
+            // clickActionData contiene eventuali dati specifici della chat
+        }
 
-    private fun showDefaultNotification(remoteMessage: RemoteMessage) {
-        if (!checkNotificationPermissions()) return
+        // Fallback se titolo o corpo sono ancora nulli/vuoti
+        if (notificationTitle.isNullOrBlank()) {
+            notificationTitle = getString(R.string.default_notification_title)
+            Log.w(TAG, "Notification title was blank, using default.")
+        }
+        if (notificationBody.isNullOrBlank()) {
+            notificationBody = getString(R.string.default_notification_body)
+            Log.w(TAG, "Notification body was blank, using default.")
+        }
 
-        val title = remoteMessage.notification?.title ?: getString(R.string.default_notification_title)
-        val body = remoteMessage.notification?.body ?: getString(R.string.default_notification_body)
-
-        createNotificationChannel(getString(R.string.notification_channel_id))
+        // --- Mostra la notifica ---
+        // Lo facciamo sempre qui per coerenza, sia in foreground che background
+        Log.d(TAG, "Preparing to show notification: Title='$notificationTitle', Channel='$targetChannelId'")
         showNotification(
-            title = title,
-            content = body,
-            channelId = getString(R.string.notification_channel_id),
-            userId = ""
+            title = notificationTitle!!, // Usiamo !! perché abbiamo messo i default
+            content = notificationBody!!,
+            channelId = targetChannelId,
+            data = clickActionData // Passa i dati per l'intent
         )
+        Log.d(TAG, "onMessageReceived processing finished.")
+        Log.d(TAG, "-----------------------------------------")
     }
 
-    private fun checkNotificationPermissions(): Boolean {
-        // Controllo per Android 13+ dove serve il permesso POST_NOTIFICATIONS
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-            return ContextCompat.checkSelfPermission(
-                this,
-                Manifest.permission.POST_NOTIFICATIONS
-            ) == PackageManager.PERMISSION_GRANTED
-        }
-        // Per versioni precedenti non è necessario un controllo esplicito
-        return true
-    }
-
-    private fun createNotificationChannel(channelId: String) {
+    // Crea i canali di notifica necessari (chiamato da onCreate)
+    private fun createNotificationChannels() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            // Crea un canale con un nome e descrizione definiti
-            val channel = NotificationChannel(
-                channelId,
-                "Notifiche Principali", // Nome del canale
-                NotificationManager.IMPORTANCE_DEFAULT
+            val adminChannel = NotificationChannel(
+                ADMIN_REPORTS_CHANNEL_ID,
+                "Segnalazioni Admin", // Nome visibile all'utente
+                NotificationManager.IMPORTANCE_HIGH // ** Alta Importanza **
             ).apply {
-                description = "Canale per le notifiche principali"
+                description = "Notifiche critiche per le segnalazioni degli utenti (Admin)"
+                // Qui puoi aggiungere setSound, enableVibration, enableLights se vuoi personalizzarli
             }
 
-            // Ottieni il NotificationManager e crea il canale
-            val notificationManager = getSystemService(NotificationManager::class.java)
-            notificationManager.createNotificationChannel(channel)
+            val newUserChannel = NotificationChannel(
+                NEW_USERS_CHANNEL_ID,
+                "Nuovi Utenti",
+                NotificationManager.IMPORTANCE_DEFAULT // Importanza normale
+            ).apply {
+                description = "Notifiche quando nuovi utenti si uniscono"
+            }
+
+            val defaultChannel = NotificationChannel(
+                DEFAULT_MESSAGES_CHANNEL_ID,
+                "Messaggi e Altro",
+                NotificationManager.IMPORTANCE_DEFAULT // Importanza normale
+            ).apply {
+                description = "Notifiche per messaggi di chat e altre informazioni"
+            }
+
+            val notificationManager: NotificationManager =
+                getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+            notificationManager.createNotificationChannel(adminChannel)
+            notificationManager.createNotificationChannel(newUserChannel)
+            notificationManager.createNotificationChannel(defaultChannel)
+            Log.d(TAG, "Notification channels created/updated.")
         }
     }
 
-
+    // Mostra effettivamente la notifica
     private fun showNotification(
         title: String,
         content: String,
         channelId: String,
-        userId: String = ""
+        data: Map<String, String> = emptyMap()
     ) {
-        // Crea un Intent per MainActivity con eventuali extra per la navigazione
+        // Intent per aprire MainActivity
         val intent = Intent(this, MainActivity::class.java).apply {
-            putExtra("NAVIGATE_TO", "userProfile/$userId")
             flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
+            // Inserisci la mappa 'data' come extra. Usiamo HashMap perché è Serializable.
+            // MainActivity dovrà estrarre questa mappa e decidere dove navigare.
+            putExtra("notification_data", HashMap(data))
+            // Aggiungiamo un action univoco per forzare la creazione di un nuovo intent
+            // invece di riutilizzare uno vecchio, specialmente per i dati extra.
+            action = "ACTION_SHOW_NOTIFICATION_${System.currentTimeMillis()}"
         }
 
-        // Configura il PendingIntent
+        // PendingIntent per quando l'utente clicca sulla notifica
+        val pendingIntentFlag = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+        } else {
+            PendingIntent.FLAG_UPDATE_CURRENT
+        }
         val pendingIntent = PendingIntent.getActivity(
             this,
-            0,
+            System.currentTimeMillis().toInt(), // Request code quasi unico
             intent,
-            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+            pendingIntentFlag
         )
 
-        // Costruisci la notifica
-        val notification = NotificationCompat.Builder(this, channelId)
-            .setSmallIcon(R.drawable.ic_notification)
+        // Costruisci la notifica usando il channelId corretto
+        val notificationBuilder = NotificationCompat.Builder(this, channelId)
+            .setSmallIcon(R.drawable.ic_notification) // Assicurati che l'icona esista!
             .setContentTitle(title)
             .setContentText(content)
-            .setPriority(NotificationCompat.PRIORITY_DEFAULT)
-            .setContentIntent(pendingIntent)
-            .setAutoCancel(true)
-            .build()
+            .setPriority(NotificationCompat.PRIORITY_HIGH) // Alta priorità per aiutare la visibilità
+            .setContentIntent(pendingIntent) // Azione al click
+            .setAutoCancel(true) // Chiude la notifica al click
+            .setStyle(NotificationCompat.BigTextStyle().bigText(content)) // Mostra testo lungo
+            .setDefaults(NotificationCompat.DEFAULT_ALL) // Usa suoni/vibrazioni/luci di default del canale
 
-        // Genera un ID univoco per la notifica
-        val notificationId = System.currentTimeMillis().toInt()
-
-        // Verifica il permesso per POST_NOTIFICATIONS
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU &&
-            ContextCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED) {
-            Log.w("MyFirebaseMsgService", "Permesso per le notifiche non concesso. Notifica non inviata.")
+        // Verifica nuovamente il permesso prima di notificare
+        if (!checkNotificationPermissions()) {
+            Log.w(TAG, "Permission denied in showNotification. Cannot notify.")
             return
         }
 
         // Mostra la notifica
         with(NotificationManagerCompat.from(this)) {
-            notify(notificationId, notification)
+            val notificationId = System.currentTimeMillis().toInt() // ID univoco per la notifica
+            Log.d(TAG, "Notifying with ID: $notificationId on Channel: $channelId")
+            try {
+                notify(notificationId, notificationBuilder.build())
+                Log.d(TAG, "Notification successfully posted.")
+            } catch (e: SecurityException) {
+                Log.e(TAG, "SecurityException while trying to notify: ${e.message}", e)
+            } catch (e: Exception) {
+                Log.e(TAG, "Exception while trying to notify: ${e.message}", e)
+            }
         }
     }
 
-
-
-    // 3. Aggiungi questa dichiarazione all'inizio della classe
-    private val TAG = "MyFirebaseMsgService"
-
+    // Gestisce la generazione di un nuovo token FCM
     override fun onNewToken(token: String) {
         super.onNewToken(token)
-        val userId = Firebase.auth.currentUser?.uid
-        Log.d("FCM_TOKEN_DEBUG", "User ID recuperato da FirebaseAuth: $userId")
-        if (userId == null) {
-            Log.e("FCM_TOKEN_DEBUG", "Utente non autenticato, token NON verrà aggiornato in Firestore")
+        Log.i(TAG, "onNewToken: New FCM token generated: $token")
+        // È importante inviare questo nuovo token al tuo backend per aggiornare
+        // il documento utente corrispondente.
+        sendRegistrationToServer(token)
+    }
+
+    // Funzione helper per inviare il token al server (Firestore)
+    private fun sendRegistrationToServer(token: String?) {
+        if (token == null) {
+            Log.w(TAG, "sendRegistrationToServer: Token is null, cannot update.")
             return
         }
-        Log.d("FCM_TOKEN_DEBUG", "Tentativo di aggiornare fcmToken per user ID: $userId")
+        val userId = Firebase.auth.currentUser?.uid
+        if (userId == null) {
+            Log.w(TAG, "sendRegistrationToServer: User not logged in, cannot update token.")
+            // Potresti voler salvare il token in SharedPreferences per inviarlo dopo il login
+            return
+        }
+
+        Log.d(TAG, "Attempting to update FCM token for user $userId in Firestore.")
         Firebase.firestore.collection("users").document(userId)
             .update("fcmToken", token)
             .addOnSuccessListener {
-                Log.d("FCM_TOKEN_DEBUG", "Token aggiornato CON SUCCESSO in Firestore per user ID: $userId")
+                Log.i(TAG, "FCM token successfully updated in Firestore for user $userId.")
             }
             .addOnFailureListener { e ->
-                Log.e("FCM_TOKEN_DEBUG", "Errore durante l'aggiornamento del token in Firestore per user ID: $userId", e)
-                // Qui puoi gestire ulteriormente l'errore, ad esempio notificando l'utente o riprovando
+                Log.e(TAG, "Error updating FCM token in Firestore for user $userId", e)
             }
+    }
 
-        fun forceTokenRefresh() {
-            // TODO: da rimettere nel main?
-            FirebaseMessaging.getInstance().deleteToken().addOnCompleteListener { task ->
-                if (task.isSuccessful) {
-                    Log.d("FCM_TOKEN_DEBUG", "Token cancellato con successo. Verrà generato un nuovo token.")
-                    // Firebase genererà automaticamente un nuovo token, chiamando onNewToken.
-                } else {
-                    Log.e("FCM_TOKEN_DEBUG", "Errore nella cancellazione del token", task.exception)
-                }
-            }
+    // Controlla il permesso per le notifiche (necessario per Android 13+)
+    private fun checkNotificationPermissions(): Boolean {
+        return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            ContextCompat.checkSelfPermission(
+                this,
+                Manifest.permission.POST_NOTIFICATIONS
+            ) == PackageManager.PERMISSION_GRANTED
+        } else {
+            true // Il permesso non è richiesto per versioni precedenti
         }
-        Log.d("FCM_TOKEN_DEBUG", "** onNewToken EXIT **")
     }
 }

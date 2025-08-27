@@ -51,9 +51,18 @@
             android:excludeFromRecents="true"
             android:exported="false"
             android:theme="@android:style/Theme.Translucent.NoTitleBar" />
+
+        <meta-data
+            android:name="com.google.firebase.messaging.default_notification_icon"
+            android:resource="@drawable/ic_notification" />
+
+        <!-- ASSICURATI che l'ID canale qui corrisponda a DEFAULT_MESSAGES_CHANNEL_ID
+             nel tuo Service (es. default_messages_channel_v1) -->
         <meta-data
             android:name="com.google.firebase.messaging.default_notification_channel_id"
-            android:value="@string/notification_channel_id"/>
+            android:value="default_messages_channel_v1" />
+        <!--  Se usi una string resource @string/..., assicurati che il suo valore sia
+             "default_messages_channel_v1" -->
 
         <provider
             android:name="androidx.core.content.FileProvider"
@@ -66,10 +75,7 @@
         </provider>
 
 
-
-
     </application>
-
 
 
 </manifest>

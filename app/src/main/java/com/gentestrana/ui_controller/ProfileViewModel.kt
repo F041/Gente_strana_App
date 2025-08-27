@@ -193,27 +193,51 @@ class ProfileViewModel : ViewModel() {
 
             // Usa l'indice TROVATO (che si riferisce alla lista NORMALIZZATA)
             // per rimuovere l'elemento dalla lista MUTABILE (mutableCurrentList)
-            if (index in mutableCurrentList.indices) { // Condizione ancora ridondante, ma la lasciamo per ora
+            if (index in mutableCurrentList.indices) {
                 mutableCurrentList.removeAt(index)
                 _profilePicUrl.value = mutableCurrentList // Aggiorna StateFlow con la lista MUTABILE MODIFICATA
             }
-            deleteProfileImageFromStorage(imageUrlToDelete) { isDeletionSuccessful -> // Usa imageUrlToDelete ORIGINALE per l'eliminazione da Storage
-                if (isDeletionSuccessful) {
-                    Log.d("ProfileViewModel", "Immagine eliminata con successo da Storage: $imageUrlToDelete")
-                    viewModelScope.launch {
-                        try {
-                            firestore.collection("users").document(uid)
-                                .update("profilePicUrl", mutableCurrentList) // Aggiorna Firestore con la lista MUTABILE MODIFICATA
-                                .await()
-                            Log.d("ProfileViewModel", "Firestore aggiornato con la lista immagini modificata.")
-                        } catch (e: Exception) {
-                            Log.e("ProfileViewModel", "Errore nell'aggiornamento di Firestore dopo eliminazione immagine: ${e.message}")
-                        }
+
+            // --- INIZIO MODIFICA IMPORTANTE ---
+            // Controlliamo se l'URL è di Firebase Storage prima di tentare la cancellazione da Storage
+            val isFirebaseStorageUrl = imageUrlToDelete.contains("firebasestorage.googleapis.com") || imageUrlToDelete.startsWith("gs://")
+
+            if (isFirebaseStorageUrl) {
+                Log.d("ProfileViewModel", "L'URL '$imageUrlToDelete' sembra essere di Firebase Storage. Procedo con l'eliminazione da Storage.")
+                deleteProfileImageFromStorage(imageUrlToDelete) { isDeletionSuccessful -> // Usa imageUrlToDelete ORIGINALE per l'eliminazione da Storage
+                    if (isDeletionSuccessful) {
+                        Log.d("ProfileViewModel", "Immagine eliminata con successo da Storage: $imageUrlToDelete")
+                        // L'aggiornamento di Firestore avviene comunque dopo, quindi qui non serve fare altro
+                        // se non loggare il successo dell'eliminazione da Storage.
+                    } else {
+                        Log.e("ProfileViewModel", "Errore nell'eliminazione dell'immagine da Storage: $imageUrlToDelete")
+                        // Anche se l'eliminazione da Storage fallisce, l'URL è già stato rimosso
+                        // dalla lista locale e verrà rimosso da Firestore.
+                        // Potresti voler gestire questo errore in modo più specifico se necessario.
                     }
-                } else {
-                    Log.e("ProfileViewModel", "Errore nell'eliminazione dell'immagine da Storage: $imageUrlToDelete")
+                    // L'aggiornamento di Firestore avverrà comunque fuori da questo blocco if/else
+                }
+            } else {
+                Log.d("ProfileViewModel", "L'URL '$imageUrlToDelete' NON sembra essere di Firebase Storage (es. Google Auth). Salto l'eliminazione da Storage.")
+                // Se non è un URL di Firebase Storage, non facciamo nulla per l'eliminazione da Storage.
+                // L'URL è già stato rimosso dalla lista locale (_profilePicUrl.value)
+                // e l'aggiornamento di Firestore avverrà comunque.
+            }
+            // --- FINE MODIFICA IMPORTANTE ---
+
+            // L'aggiornamento di Firestore avviene qui, INDIPENDENTEMENTE dal fatto che l'immagine
+            // sia stata eliminata da Storage o meno (perché l'URL deve essere rimosso dalla lista in Firestore)
+            viewModelScope.launch {
+                try {
+                    firestore.collection("users").document(uid)
+                        .update("profilePicUrl", mutableCurrentList) // Aggiorna Firestore con la lista MUTABILE MODIFICATA
+                        .await()
+                    Log.d("ProfileViewModel", "Firestore aggiornato con la lista immagini modificata.")
+                } catch (e: Exception) {
+                    Log.e("ProfileViewModel", "Errore nell'aggiornamento di Firestore dopo eliminazione immagine: ${e.message}")
                 }
             }
+
         } else {
             Log.w("ProfileViewModel", "imageUrlToDelete NON TROVATO (dopo normalizzazione) nella lista _profilePicUrl: $normalizedImageUrlToDelete")
         }

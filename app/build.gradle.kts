@@ -32,8 +32,8 @@ android {
         applicationId = "com.gentestrana"
         minSdk = 24
         targetSdk = 35
-        versionCode = 16
-        versionName = "1.0"
+        versionCode = 23
+        versionName = "1.0.23"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
@@ -48,6 +48,7 @@ android {
         kotlinCompilerExtensionVersion = "1.5.0" // Matches Compose version
     }
 
+// Assicurati che il blocco buildTypes sia così:
     buildTypes {
         release {
             isMinifyEnabled = false
@@ -104,13 +105,14 @@ dependencies {
     implementation ("com.google.mlkit:language-id:17.0.5")
 
     implementation(platform("com.google.firebase:firebase-bom:33.9.0"))
+    // tested 33.0.0 to try to fix isAdmin problem
     implementation("com.google.firebase:firebase-firestore-ktx")
     implementation("com.google.firebase:firebase-config-ktx")
     implementation("com.google.firebase:firebase-analytics")
     implementation("io.coil-kt:coil-compose:2.4.0")
     implementation("androidx.navigation:navigation-compose:2.7.5")
 
-    implementation ("com.android.billingclient:billing-ktx:6.0.1")
+    implementation ("com.android.billingclient:billing-ktx:8.0.0")
 
     testImplementation ("org.mockito:mockito-core:5.3.1")  // Per creare oggetti "finti" (mock)
     testImplementation ("org.mockito.kotlin:mockito-kotlin:4.1.0") // Estensioni Kotlin per Mockito

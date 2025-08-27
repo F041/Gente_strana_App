@@ -167,7 +167,7 @@ fun FilterDialog(
                     Box(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .height(200.dp) // altezza fissa per la lista
+                            .heightIn(max = 250.dp)  // altezza fissa per la lista
                     ) {
                         LazyColumn {
                             items(filteredCountries) { country ->

@@ -15,6 +15,7 @@ import com.google.firebase.auth.UserProfileChangeRequest
 import com.google.firebase.firestore.FieldValue
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.messaging.FirebaseMessaging
+import com.google.firebase.messaging.ktx.messaging
 
 /**
  * 1. Controllare lo stato di verifica email all'avvio dell'app e/o al login.
@@ -44,8 +45,10 @@ class UserRepository(
         onSuccess: () -> Unit,
         onFailure: (String?) -> Unit
     ) {
+        Log.d("USER_REPO_DEBUG", "loginAndCheckEmail: Inizio login per $email")
         auth.createUserWithEmailAndPassword(email, password)
             .addOnSuccessListener { authResult ->
+                Log.d("USER_REPO_DEBUG", "loginAndCheckEmail: Auth success.")
                 val uid = authResult.user?.uid ?: run {
                     onFailure("User ID is null")
                     return@addOnSuccessListener
@@ -186,7 +189,6 @@ class UserRepository(
         auth.signInWithCredential(credential)
             .addOnCompleteListener { task ->
                 if (task.isSuccessful) {
-                    // --- INIZIO NUOVA LOGICA ---
                     val firebaseUser = task.result?.user // Ottieni l'utente Firebase appena autenticato
                     if (firebaseUser != null) {
                         val uid = firebaseUser.uid
@@ -223,8 +225,7 @@ class UserRepository(
                                 userDocRef.set(googleUserData)
                                     .addOnSuccessListener {
                                         Log.d("UserRepository", "Documento Firestore creato con successo per l'utente $uid.")
-                                        retrieveAndSaveFcmToken(uid) // Chiama la funzione helper
-                                        // --- FINE NUOVA LOGICA PER FCM TOKEN ---
+                                        retrieveAndSaveFcmToken(uid) // Chiama la funzione helper -
                                         onSuccess() // Chiama onSuccess SOLO DOPO aver creato il documento
                                     }
                                     .addOnFailureListener { e ->
@@ -268,24 +269,54 @@ class UserRepository(
         onSuccess: (User) -> Unit,
         onFailure: (Exception) -> Unit
     ) {
+        Log.d("USER_REPO_DEBUG", "getUser: Tentativo recupero utente con docId: $docId")
         firestore.collection("users").document(docId).get()
             .addOnSuccessListener { document ->
                 if (document.exists()) {
-                    // Ensure the User class has a `docId` field
-                    val user = document.toObject(User::class.java)?.copy(docId = document.id)
-                    if (user != null) {
-                        onSuccess(user)
-                    } else {
-                        onFailure(Exception("User data conversion failed"))
+//                    Log.d("USER_REPO_DEBUG", "getUser: Documento $docId trovato.")
+                    try {
+                        // Leggi direttamente isAdmin (default a false se non trovato o tipo errato)
+                        val isAdminFromGet = document.getBoolean("isAdmin") ?: false
+//                        Log.d("USER_REPO_DEBUG", "getUser [CHECK]: Valore letto con document.getBoolean('isAdmin'): $isAdminFromGet")
+
+                        // Esegui toObject
+                        var user = document.toObject(User::class.java)?.copy(docId = document.id)
+
+                        if (user != null) {
+//                            Log.d("USER_REPO_DEBUG", "getUser [toObject PRE-WORKAROUND]: isAdmin: ${user.isAdmin}")
+
+                            // Se il valore letto da toObject è diverso da quello letto direttamente,
+                            // sovrascrivi quello nell'oggetto User.
+                            if (user.isAdmin != isAdminFromGet) {
+//                                Log.w("USER_REPO_DEBUG", "getUser [WORKAROUND APPLICATO]: Sovrascrivo isAdmin da ${user.isAdmin} a $isAdminFromGet")
+                                user = user.copy(isAdmin = isAdminFromGet) // Sovrascrittura!
+                            }
+
+//                            Log.d("USER_REPO_DEBUG", "getUser [FINALE]: Deserializzazione completata. isAdmin finale nell'oggetto User: ${user.isAdmin}")
+                            // Log degli altri campi (puoi rimuoverli se non servono più al debug)
+                            // Log.d("USER_REPO_DEBUG", "getUser [toObject]: topics: ${user.topics}")
+                            // ... altri log ...
+
+                            onSuccess(user) // Passa l'oggetto User (potenzialmente corretto dal workaround)
+                        } else {
+//                            Log.e("USER_REPO_DEBUG", "getUser: document.toObject(User::class.java) ha restituito NULL per $docId.")
+                            onFailure(Exception("User data conversion failed (toObject returned null)"))
+                        }
+                    } catch (e: Exception) {
+//                        Log.e("USER_REPO_DEBUG", "getUser: Eccezione durante getBoolean/get/toObject/copy per $docId", e)
+                        onFailure(Exception("User data processing error: ${e.message}", e))
                     }
                 } else {
+//                    Log.w("USER_REPO_DEBUG", "getUser: Documento $docId NON trovato.")
                     onFailure(Exception("User not found"))
                 }
             }
             .addOnFailureListener { e ->
+//                Log.e("USER_REPO_DEBUG", "getUser: Fallimento chiamata Firestore get() per $docId", e)
                 onFailure(e)
             }
     }
+
     fun reportUser(
         reportedUserId: String,
         reason: ReportReason,
@@ -348,28 +379,65 @@ class UserRepository(
         onNotVerified: () -> Unit,
         onFailure: (String?) -> Unit
     ) {
+//        Log.d("USER_REPO_DEBUG", "loginAndCheckEmail: Inizio login per $email")
         auth.signInWithEmailAndPassword(email, password)
             .addOnSuccessListener {
-                val user = auth.currentUser
-                if (user != null) {
+//                Log.d("USER_REPO_DEBUG", "loginAndCheckEmail: Auth success.")
+                val firebaseUser = auth.currentUser
+                if (firebaseUser != null) {
                     // Ricarica i dati dell'utente per avere lo stato aggiornato della verifica
-                    user.reload().addOnSuccessListener {
-                        if (user.isEmailVerified) {
-                            onVerified()
+                    firebaseUser.reload().addOnSuccessListener {
+//                        Log.d("USER_REPO_DEBUG", "loginAndCheckEmail: User reload success. isEmailVerified: ${firebaseUser.isEmailVerified}") // <-- LOG 3
+                        if (firebaseUser.isEmailVerified) {
+//                            Log.d("USER_REPO_DEBUG", "loginAndCheckEmail: Email verificata. Recupero dettagli utente Firestore...") // <-- LOG 4
+                            getUser( // Chiamiamo getUser qui DENTRO onVerified
+                                docId = firebaseUser.uid,
+                                onSuccess = { user ->
+//                                    Log.d("USER_REPO_DEBUG", "loginAndCheckEmail: Dettagli utente recuperati. Utente: ${user.username}, isAdmin: ${user.isAdmin}") // <-- LOG 5
+                                    if (user.isAdmin) {
+//                                        Log.d("USER_REPO_DEBUG", "loginAndCheckEmail: Utente è ADMIN. Tentativo iscrizione a adminReports...") // <-- LOG 6 (FONDAMENTALE)
+                                        Firebase.messaging.subscribeToTopic("adminReports")
+                                            .addOnCompleteListener { subscribeTask ->
+                                                if (subscribeTask.isSuccessful) {
+                                                    Log.d("FCM", "Iscritto con successo alle notifiche adminReports")
+                                                } else {
+                                                    Log.e("FCM", "Errore nell'iscrizione al topic", subscribeTask.exception)
+                                                }
+                                                // ANCHE SE LA SOTTOSCRIZIONE FALLISCE, PROCEDI COMUNQUE CON onVerified
+//                                                Log.d("USER_REPO_DEBUG", "loginAndCheckEmail: Chiamata onVerified dopo tentativo iscrizione.") // <-- LOG 7
+                                                onVerified()
+                                            }
+                                    } else {
+//                                        Log.d("USER_REPO_DEBUG", "loginAndCheckEmail: Utente NON è admin. Chiamata onVerified diretta.") // <-- LOG 8
+                                        onVerified() // Utente NON admin, procedi diretto
+                                    }
+                                },
+                                onFailure = { error ->
+                                    Log.e("USER_REPO_DEBUG", "loginAndCheckEmail: Errore recupero dettagli utente Firestore.", error) // <-- LOG 9
+                                    // Anche se fallisce il recupero Firestore, l'utente è loggato e verificato
+                                    // Potremmo chiamare onVerified() o onFailure() a seconda della logica desiderata
+                                    onFailure("Errore nel recupero dei dati utente: ${error.localizedMessage}") // <-- Chiamiamo onFailure qui
+                                }
+                            )
                         } else {
+                            Log.d("USER_REPO_DEBUG", "loginAndCheckEmail: Email NON verificata. Chiamata onNotVerified.") // <-- LOG 10
                             onNotVerified()
                         }
                     }.addOnFailureListener { e ->
-                        onFailure(e.message)
+                        Log.e("USER_REPO_DEBUG", "loginAndCheckEmail: Errore durante user.reload()", e) // <-- LOG 11
+                        onFailure("Errore durante la verifica dello stato utente: ${e.localizedMessage}")
                     }
                 } else {
-                    onFailure("Utente non trovato")
+                    Log.e("USER_REPO_DEBUG", "loginAndCheckEmail: firebaseUser è null dopo login successo.") // <-- LOG 12
+                    onFailure("Utente non trovato dopo il login")
                 }
             }
             .addOnFailureListener { e ->
+                Log.e("USER_REPO_DEBUG", "loginAndCheckEmail: Auth fallito.", e) // <-- LOG 13
                 onFailure(e.message)
             }
     }
+
 
     /**
      * Elimina l'account utente corrente da Firebase Authentication.

@@ -10,10 +10,13 @@ data class ChatMessage(
     val sender: String = "",
     val message: String = "",
     val timestamp: Timestamp = Timestamp.now(),
-    val status: String = "SENT"
+    val status: String = "SENT",
+    val isReply: Boolean = false,
+    val replyToMessageText: String = "",
+    val replyToMessageSender: String = ""
 ) {
-    constructor() : this("", "", "", Timestamp.now(), "SENT")
-// Costruttore vuoto per Firestore. A che serviva?
+    constructor() : this("", "", "", Timestamp.now(), "SENT", false, "", "")
+    // Costruttore vuoto per Firestore. A che serviva?
 }
 
 
