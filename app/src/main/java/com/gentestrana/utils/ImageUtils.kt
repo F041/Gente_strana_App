@@ -17,6 +17,7 @@ import androidx.core.content.FileProvider
 import java.net.URLDecoder
 import java.net.URLEncoder
 import java.util.concurrent.ConcurrentHashMap
+import android.graphics.BitmapFactory
 
 
 /**
@@ -269,8 +270,8 @@ fun isValidImageUri(context: Context, uri: Uri): Boolean {
     if (uri.scheme == "content") {
         val cursor = context.contentResolver.query(uri, null, null, null, null)
         cursor?.use {
-            val nameIndex = it.getColumnIndexOrThrow(android.provider.OpenableColumns.DISPLAY_NAME)
-            if (it.moveToFirst()) {
+            val nameIndex = it.getColumnIndex(android.provider.OpenableColumns.DISPLAY_NAME)
+            if (it.moveToFirst() && nameIndex != -1) {
                 fileName = it.getString(nameIndex)
             }
         }
@@ -298,13 +299,17 @@ fun isValidImageUri(context: Context, uri: Uri): Boolean {
  */
 fun convertImageUriToWebP(context: Context, imageUri: Uri, quality: Int = 80): ByteArray? {
     return try {
-        val bitmap: Bitmap = MediaStore.Images.Media.getBitmap(context.contentResolver, imageUri)
+        val bitmap: Bitmap = context.contentResolver.openInputStream(imageUri)?.use { inputStream ->
+            BitmapFactory.decodeStream(inputStream)
+        } ?: return null
+
         val outputStream = ByteArrayOutputStream()
         // // Uso WEBP per compatibilità con API 24+
         bitmap.compress(Bitmap.CompressFormat.WEBP, quality, outputStream)
+        bitmap.recycle()
         outputStream.toByteArray()
-    } catch (e: Exception) {
-        e.printStackTrace()
+    } catch (t: Throwable) {
+        Log.e("ImageUtils", "Errore nella conversione immagine in WebP: ${t.message}", t)
         null
     }
 }
