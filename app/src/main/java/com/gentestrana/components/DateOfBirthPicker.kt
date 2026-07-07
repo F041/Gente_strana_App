@@ -30,9 +30,9 @@ fun DateOfBirthPicker(
     var showDialog by remember { mutableStateOf(false) }
 
     if (showDialog) {
-        DatePickerDialog(
+        val dialog = DatePickerDialog(
             context,
-            android.R.style.Theme_Material_Light_Dialog_Alert, // Modificato il tema in Light**
+            android.R.style.Theme_Material_Light_Dialog_Alert,
         { _, selectedYear, selectedMonth, selectedDay ->
             val newCalendar = Calendar.getInstance().apply {
                 set(Calendar.YEAR, selectedYear)
@@ -45,7 +45,16 @@ fun DateOfBirthPicker(
         calendar.get(Calendar.YEAR),
         calendar.get(Calendar.MONTH),
         calendar.get(Calendar.DAY_OF_MONTH)
-        ).show()
+        )
+
+        // FIX: Se l'utente preme BACK (cancella) senza selezionare una data,
+        // showDialog deve essere resettato a false, altrimenti il dialog
+        // viene ricreato all'infinito ad ogni ricomposizione (loop).
+        dialog.setOnCancelListener {
+            showDialog = false
+        }
+
+        dialog.show()
     }
 
     Button(

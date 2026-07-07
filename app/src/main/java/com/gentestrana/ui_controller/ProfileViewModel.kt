@@ -295,18 +295,25 @@ class ProfileViewModel : ViewModel() {
                 val newUrl = imageUrls.firstOrNull()?.first ?: ""
 
                 // Aggiornamento Firestore
-
                 if (newUrl.isNotEmpty()) {
-                    // Aggiornamento Firestore con transazione
-                    firestore.runTransaction { transaction ->
+                    // Aggiornamento Firestore con transazione.
+                    // La transazione restituisce la lista aggiornata per garantire
+                    // che lo stato locale sia identico a ciò che è stato scritto in Firestore,
+                    // evitando race condition con deleteProfileImage() che modifica
+                    // concorrentemente _profilePicUrl.value e Firestore.
+                    val updatedUrlsFromTransaction = firestore.runTransaction { transaction ->
                         val userDoc = transaction.get(firestore.collection("users").document(uid))
                         val currentUrls = userDoc.get("profilePicUrl") as? List<String> ?: emptyList()
                         val updatedUrls = currentUrls + newUrl
                         transaction.update(userDoc.reference, "profilePicUrl", updatedUrls)
+                        updatedUrls // Restituisce la lista aggiornata dalla transazione
                     }.await()
 
-                    // Aggiorna lo stato locale
-                    _profilePicUrl.value = _profilePicUrl.value + newUrl
+                    // Aggiorna lo stato locale col risultato DALLA TRANSAZIONE FIRESTORE,
+                    // non con _profilePicUrl.value + newUrl (che potrebbe leggere
+                    // uno stato obsoleto se deleteProfileImage ha modificato
+                    // _profilePicUrl.value nel frattempo).
+                    _profilePicUrl.value = updatedUrlsFromTransaction
                 }
 
                 // Notifica il completamento

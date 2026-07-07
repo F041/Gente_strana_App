@@ -8,8 +8,12 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import coil.compose.rememberAsyncImagePainter
+import coil.request.ImageRequest
+import com.gentestrana.R
 
 @Composable
 fun ServiceProfileCard(
@@ -17,6 +21,7 @@ fun ServiceProfileCard(
     onClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
+    val context = LocalContext.current
     Card(
         modifier = modifier
             .fillMaxWidth()
@@ -31,10 +36,16 @@ fun ServiceProfileCard(
             // Immagine del servizio
             Image(
                 painter = rememberAsyncImagePainter(
-                    service.profilePicUrl.firstOrNull() ?: "res/drawable/random_user.webp"
+                    ImageRequest.Builder(context)
+                        .data(service.profilePicUrl.firstOrNull()?.takeIf { it.isNotBlank() } ?: R.drawable.random_user)
+                        .placeholder(R.drawable.random_user)
+                        .error(R.drawable.random_user)
+                        .crossfade(true)
+                        .build()
                 ),
                 contentDescription = "Service Image",
-                modifier = Modifier.size(64.dp)
+                modifier = Modifier.size(64.dp),
+                contentScale = ContentScale.Crop
             )
             Spacer(modifier = Modifier.width(16.dp))
             // Dettagli del servizio

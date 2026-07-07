@@ -1,5 +1,3 @@
-// File: Gentestrana\app\src\main\java\com\gentestrana\MainActivity.kt
-
 package com.gentestrana
 
 import android.os.Bundle
@@ -11,6 +9,7 @@ import com.gentestrana.ui.theme.GenteStranaTheme
 import android.content.Intent
 import android.content.Context
 import android.util.Log
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -18,7 +17,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.platform.LocalContext
 import com.gentestrana.screens.AppTheme
 import androidx.compose.runtime.CompositionLocalProvider
-import androidx.navigation.NavHostController // Importa NavHostController
+import androidx.navigation.NavHostController
 import com.gentestrana.ui.theme.LocalAppTheme
 import com.gentestrana.utils.forceTokenRefreshIfNeeded
 import com.google.firebase.auth.FirebaseAuth
@@ -29,9 +28,10 @@ import com.google.firebase.remoteconfig.ktx.remoteConfigSettings
 
 class MainActivity : ComponentActivity() {
 
-    // --- INIZIO NUOVA PARTE ---
-    private var navController: NavHostController? = null // Riferimento al NavController
-    // --- FINE NUOVA PARTE ---
+    private var navController: NavHostController? = null
+    // Stato reactive per la navigazione pendente dalle notifiche.
+    // Usiamo mutableStateOf di Compose per notificare la UI quando cambia.
+    private val pendingChatId = mutableStateOf<String?>(null)
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -60,15 +60,11 @@ class MainActivity : ComponentActivity() {
                 }
             }
 
-        // Rimosso il blocco di gestione Intent da qui, lo mettiamo in una funzione separata
-        // e lo chiamiamo sia in onCreate che in onNewIntent.
-
         setContent {
             val context = LocalContext.current
             val sharedPreferences = remember {
                 context.getSharedPreferences("settings_prefs", Context.MODE_PRIVATE)
             }
-            // val authState by remember { mutableStateOf(FirebaseAuth.getInstance().currentUser) } // Non sembra usato direttamente qui
             val appThemeKey = "app_theme"
 
             var appTheme by remember {
@@ -91,15 +87,33 @@ class MainActivity : ComponentActivity() {
                 }
             }
 
-            // Ricorda il NavController e assegnalo alla variabile di istanza
             val rememberedNavController = rememberNavController()
-            navController = rememberedNavController // Assegna al NavController della classe
+            navController = rememberedNavController
 
             val onVerifyEmailScreenNavigation: () -> Unit = remember {
                 {
-                    // Usa la variabile di istanza navController ---
                     navController?.navigate("verifyEmail")
                     Log.d("MainActivity", "Navigating to VerifyEmailScreen")
+                }
+            }
+
+            // ===== GESTIONE NOTIFICA: Navigazione alla chat =====
+            // Osserva pendingChatId e naviga alla chat quando il valore cambia.
+            // Questo LaunchedEffect si attiva quando pendingChatId.value NON è null,
+            // risolvendo il problema di timing tra handleIntent() e inizializzazione del navController.
+            val currentPendingChatId = pendingChatId.value
+            LaunchedEffect(currentPendingChatId) {
+                if (currentPendingChatId != null) {
+                    val currentUser = FirebaseAuth.getInstance().currentUser
+                    if (currentUser != null && isOnboardingCompleted()) {
+                        Log.d("MainActivity", "Navigazione pendente verso la chat: $currentPendingChatId")
+                        rememberedNavController.navigate("chat/$currentPendingChatId") {
+                            launchSingleTop = true
+                        }
+                    } else {
+                        Log.w("MainActivity", "Utente non loggato o onboarding non completato. Chat navigazione rimandata.")
+                    }
+                    pendingChatId.value = null
                 }
             }
 
@@ -112,7 +126,6 @@ class MainActivity : ComponentActivity() {
                 ) {
                     Surface {
                         AppNavHost(
-                            // Passa il rememberedNavController ---
                             navController = rememberedNavController,
                             onThemeChange = onThemeChange,
                             isOnboardingCompleted = ::isOnboardingCompleted,
@@ -122,22 +135,63 @@ class MainActivity : ComponentActivity() {
                 }
             }
         }
-        // --- INIZIO NUOVA PARTE ---
-        // Gestisci l'intent iniziale dopo che setContent è stato chiamato
-        // e navController è potenzialmente inizializzato.
+
+        // Gestisci l'intent iniziale DOPO che setContent è stato chiamato.
         intent?.let { handleIntent(it) }
-        // --- FINE NUOVA PARTE ---
 
         forceTokenRefreshIfNeeded(this)
     }
 
     override fun onNewIntent(intent: Intent?) {
         super.onNewIntent(intent)
-        // Quando l'attività riceve un nuovo intent mentre è già in esecuzione
-        // (es. l'utente tocca una notifica mentre l'app è in background),
-        // gestisci il nuovo intent.
-        setIntent(intent) // Aggiorna l'intent dell'attività
+        setIntent(intent)
         intent?.let { handleIntent(it) }
+    }
+
+    /**
+     * Estrae il chatId dall'Intent indipendentemente dalla provenienza.
+     *
+     * Ci sono DUE possibili origini per l'Intent di una notifica tap:
+     *
+     * 1. [FOREGROUND] Notifica creata manualmente da showNotification() in MyFirebaseMessagingService.
+     *    In questo caso i dati sono in un Serializable extra chiamato "notification_data".
+     *
+     * 2. [BACKGROUND - LA PIÙ COMUNE] Notifica creata automaticamente dal sistema FCM.
+     *    Quando l'app è in background, onMessageReceived() NON viene chiamato (per messaggi
+     *    notification+data). Il sistema crea la notifica dalla parte "notification" del payload
+     *    e, al tap, mette la parte "data" COME EXTRAS DIRETTI sull'Intent di lancio.
+     *    Quindi chatId, messageId sono extras direttamente sull'Intent, NON annidati.
+     *
+     * Bisogna controllare ENTRAMBI i casi.
+     */
+    private fun extractChatIdFromIntent(intent: Intent): String? {
+        // CASO 1: Notifica creata manualmente (app in foreground)
+        // I dati sono in un HashMap<String,String> sotto la chiave "notification_data"
+        @Suppress("DEPRECATION")
+        if (intent.hasExtra("notification_data")) {
+            val notificationData = intent.getSerializableExtra("notification_data") as? HashMap<*, *>
+            if (notificationData != null) {
+                val chatId = notificationData["chatId"] as? String
+                if (!chatId.isNullOrEmpty()) {
+                    Log.d("MainActivity", "chatId estratto da notification_data: $chatId")
+                    return chatId
+                }
+            }
+        }
+
+        // CASO 2: Notifica creata dal sistema FCM (app in background)
+        // chatId è un extra diretto dell'Intent, perché FCM system mette
+        // i campi del data payload come extras direttamente sull'Intent
+        if (intent.hasExtra("chatId")) {
+            val chatId = intent.getStringExtra("chatId")
+            if (!chatId.isNullOrEmpty()) {
+                Log.d("MainActivity", "chatId estratto come direct extra dall'Intent: $chatId")
+                return chatId
+            }
+        }
+
+        Log.d("MainActivity", "chatId non trovato nell'Intent")
+        return null
     }
 
     private fun handleIntent(intent: Intent) {
@@ -146,57 +200,19 @@ class MainActivity : ComponentActivity() {
 
         Log.d("MainActivity", "handleIntent: action=$action, data=$data")
 
-        // Controlla se l'intent proviene da una notifica FCM che abbiamo gestito
-        if (intent.hasExtra("notification_data")) {
-            @Suppress("UNCHECKED_CAST")
-            val notificationData = intent.getSerializableExtra("notification_data") as? HashMap<String, String>
-            Log.d("MainActivity", "Dati dalla notifica: $notificationData")
+        // Estrai chatId dall'Intent, indipendentemente dalla provenienza
+        val chatId = extractChatIdFromIntent(intent)
 
-            val chatId = notificationData?.get("chatId") // Estrai il chatId
-
-            if (!chatId.isNullOrEmpty()) {
-                Log.d("MainActivity", "Trovato chatId dalla notifica: $chatId. Navigazione a chat/$chatId")
-                // Assicurati che il navController sia inizializzato
-                // Potrebbe essere necessario un piccolo delay o un LaunchedEffect
-                // se la navigazione avviene troppo presto.
-                // Per ora proviamo direttamente:
-                navController?.let {
-                    // Naviga alla chat specifica
-                    // È importante assicurarsi che il NavHost e le sue destinazioni siano già
-                    // state composte prima di tentare la navigazione.
-                    // Se la mainTabs non è la startDestination principale dell'app,
-                    // potrebbe essere necessario navigare prima a "main"
-                    // e poi a "chat/{chatId}".
-
-                    // Assumendo che 'main' (che contiene 'mainTabs') sia la route principale dopo login/onboarding
-                    if (FirebaseAuth.getInstance().currentUser != null && isOnboardingCompleted()) {
-                        it.navigate("main") {
-                            // Opzionale: pulisci la backstack se necessario
-                            popUpTo(it.graph.startDestinationId) { inclusive = true }
-                            launchSingleTop = true
-                        }
-                        it.navigate("chat/$chatId") {
-                            launchSingleTop = true // Evita di impilare la stessa chat più volte
-                        }
-                    } else {
-                        Log.w("MainActivity", "Utente non loggato o onboarding non completato. Navigazione alla chat $chatId saltata.")
-                        // Potresti voler navigare alla schermata di login/onboarding qui
-                    }
-                } ?: Log.e("MainActivity", "navController è null in handleIntent, impossibile navigare alla chat.")
-            } else {
-                Log.d("MainActivity", "chatId non trovato nei dati della notifica.")
-            }
+        if (chatId != null) {
+            Log.d("MainActivity", "handleIntent: chatId=$chatId. Imposto navigazione pendente.")
+            pendingChatId.value = chatId
         }
-        // Gestione del deep link per la verifica email (codice che avevi già)
-        else if (action == Intent.ACTION_VIEW && data != null) {
+
+        // Gestione del deep link per la verifica email (invariata)
+        if (action == Intent.ACTION_VIEW && data != null) {
             if (data.scheme == "gentestrana" && data.host == "verifyemail") {
                 val token = data.getQueryParameter("token")
                 Log.d("DeepLink", "Token di verifica da deep link: $token")
-                // Qui dovresti avere la logica per usare il token e navigare
-                // alla schermata appropriata (es. login o direttamente main se la verifica va a buon fine)
-                // Per ora, se il token è per la verifica, potresti voler navigare a "verifyEmail"
-                // o direttamente a "login" se la verifica avviene altrove.
-                // navController?.navigate("login") // Esempio
             }
         }
     }

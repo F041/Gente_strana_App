@@ -136,10 +136,20 @@ class UserRepository(
                                 }
                         }
                     }
-                    .addOnFailureListener { e -> // Questo è il listener del .set(userData)
+                    .addOnFailureListener { e ->
                         Log.e("UserRepository", "Failed to create user document in Firestore: ${e.message}")
+                        // CLEANUP: Se la creazione del documento Firestore fallisce,
+                        // l'utente Auth esiste già ma è orfano (nessun dato in Firestore).
+                        // Eliminiamo l'utente Auth per evitare un account in "limbo".
+                        Log.w("UserRepository", "Firestore document creation failed. Cleaning up Auth user $uid...")
+                        auth.currentUser?.delete()?.addOnCompleteListener { cleanupTask ->
+                            if (cleanupTask.isSuccessful) {
+                                Log.d("UserRepository", "Auth user $uid deleted successfully after Firestore failure.")
+                            } else {
+                                Log.e("UserRepository", "CRITICAL: Failed to delete Auth user $uid after Firestore failure! Orphan user created.")
+                            }
+                        }
                         onFailure(e.message)
-                        // Considera qui logica di cleanup per l'utente Auth se necessario
                     }
             } // Chiusura del .addOnSuccessListener del createUserWithEmailAndPassword
             .addOnFailureListener { e ->
@@ -413,10 +423,27 @@ class UserRepository(
                                     }
                                 },
                                 onFailure = { error ->
-                                    Log.e("USER_REPO_DEBUG", "loginAndCheckEmail: Errore recupero dettagli utente Firestore.", error) // <-- LOG 9
-                                    // Anche se fallisce il recupero Firestore, l'utente è loggato e verificato
-                                    // Potremmo chiamare onVerified() o onFailure() a seconda della logica desiderata
-                                    onFailure("Errore nel recupero dei dati utente: ${error.localizedMessage}") // <-- Chiamiamo onFailure qui
+                                    Log.e("USER_REPO_DEBUG", "loginAndCheckEmail: Errore recupero dettagli utente Firestore.", error)
+                                    // Distinguiamo tra "documento non trovato" (utente in limbo) e altri errori
+                                    val errorMessage = error.localizedMessage ?: ""
+                                    if (errorMessage.contains("User not found")) {
+                                        // UTENTE IN LIMBO: autenticato su Firebase Auth ma senza documento Firestore
+                                        // Tentiamo automaticamente il recupero ricreando il documento
+                                        Log.w("USER_REPO_DEBUG", "loginAndCheckEmail: Rilevato utente in limbo (${firebaseUser.uid}). Tentativo recupero automatico...")
+                                        createMissingUserDocument(
+                                            onSuccess = {
+                                                Log.d("USER_REPO_DEBUG", "loginAndCheckEmail: Recupero riuscito! Utente ${firebaseUser.uid} ora ha un documento Firestore.")
+                                                onVerified() // Ora l'utente ha un documento, procediamo
+                                            },
+                                            onFailure = { recoveryError ->
+                                                Log.e("USER_REPO_DEBUG", "loginAndCheckEmail: Recupero fallito: $recoveryError")
+                                                onFailure("Account danneggiato. Contatta il supporto: $recoveryError")
+                                            }
+                                        )
+                                    } else {
+                                        // Altro errore (problemi di rete, permessi, ecc.)
+                                        onFailure("Errore nel recupero dei dati utente: $errorMessage")
+                                    }
                                 }
                             )
                         } else {
@@ -438,6 +465,60 @@ class UserRepository(
             }
     }
 
+
+    /**
+     * Crea un documento Firestore per un utente già autenticato su Firebase Auth
+     * ma che non ha un documento corrispondente in Firestore (utente in "limbo").
+     * Questo può accadere se la creazione del documento fallisce durante la registrazione
+     * a causa di errori di rete, timeout, o permessi.
+     *
+     * @param username Nome utente da usare (se null, usa un placeholder)
+     * @param onSuccess Callback in caso di successo
+     * @param onFailure Callback in caso di fallimento
+     */
+    fun createMissingUserDocument(
+        username: String? = null,
+        onSuccess: () -> Unit,
+        onFailure: (String?) -> Unit
+    ) {
+        val firebaseUser = auth.currentUser ?: run {
+            onFailure("Utente non autenticato")
+            return
+        }
+        val uid = firebaseUser.uid
+        val registrationTimestamp = Timestamp.now()
+
+        Log.w("UserRepository", "createMissingUserDocument: Utente $uid autenticato ma senza documento Firestore. Ricreazione...")
+
+        val userData = mapOf(
+            "username" to (username ?: firebaseUser.displayName ?: "User"),
+            "bio" to "",
+            "profilePicUrl" to emptyList<String>(),
+            "sex" to "Undefined",
+            "topics" to emptyList<String>(),
+            "rawBirthTimestamp" to null,
+            "docId" to uid,
+            "fcmToken" to "",
+            "spokenLanguages" to emptyList<String>(),
+            "location" to "",
+            "isAdmin" to false,
+            "registrationDate" to registrationTimestamp,
+            "registrationType" to "recovery",
+            "lastActive" to registrationTimestamp
+        )
+
+        firestore.collection("users").document(uid)
+            .set(userData)
+            .addOnSuccessListener {
+                Log.d("UserRepository", "createMissingUserDocument: Documento Firestore ricreato con successo per $uid")
+                retrieveAndSaveFcmToken(uid)
+                onSuccess()
+            }
+            .addOnFailureListener { e ->
+                Log.e("UserRepository", "createMissingUserDocument: Errore nella ricreazione del documento Firestore per $uid", e)
+                onFailure("Errore nel recupero dei dati: ${e.localizedMessage}")
+            }
+    }
 
     /**
      * Elimina l'account utente corrente da Firebase Authentication.

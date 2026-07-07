@@ -178,12 +178,15 @@ fun ReorderableProfileImageGridWithAdd(
                             )
                             IconButton(
                                 onClick = {
-                                    if (index >= 0 && index < imageList.size) {
-                                        val removedItem = imageList.removeAt(index)
+                                    // Usa indexOf su imageList invece dell'indice di displayList
+                                    // perché displayList può includere "ADD_CELL" e divergere da imageList
+                                    val realIndex = imageList.indexOf(item)
+                                    if (realIndex >= 0) {
+                                        val removedItem = imageList.removeAt(realIndex)
                                         onImageOrderChanged(imageList.toList()) // Notifica la nuova lista
                                         onDeleteImage(removedItem)
                                     } else {
-                                        Log.e("DeleteImage", "Indice non valido: $index, size: ${imageList.size}")
+                                        Log.e("DeleteImage", "URL '$item' non trovato in imageList, size: ${imageList.size}")
                                     }
                                 },
                                 modifier = Modifier.size(24.dp) // Leggermente più grande per essere più facile da toccare

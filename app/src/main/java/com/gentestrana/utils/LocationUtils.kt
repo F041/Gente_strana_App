@@ -121,23 +121,25 @@ object LocationUtils {
                 Looper.getMainLooper()
             )
 
-            // Timeout per NETWORK_PROVIDER (es. 10 secondi - PIÙ BREVE perché dovrebbe essere più veloce)
+            // Timeout per NETWORK_PROVIDER (10 secondi)
             Handler(Looper.getMainLooper()).postDelayed({
-                // Log.w("LocationUtils", "Timeout GPS_PROVIDER: Rimozione listener e tentativo NETWORK_PROVIDER") // LOG - VECCHIO WARNING
-                Log.d("LocationUtils", "Timeout GPS_PROVIDER: Rimozione listener e tentativo NETWORK_PROVIDER") // LOG - CAMBIATO A DEBUG
-                locationManager.removeUpdates(locationListener) // Rimuovi listener GPS
+                Log.d("LocationUtils", "Timeout NETWORK_PROVIDER: Rimozione listener e tentativo GPS_PROVIDER")
+                locationManager.removeUpdates(locationListener) // Rimuovi listener NETWORK
 
-                // FASE 2: FALLBACK con NETWORK_PROVIDER (SE GPS FALLISCE)
+                // FASE 2: FALLBACK con GPS_PROVIDER (SE NETWORK FALLISCE)
                 try {
-                    // ...
+                    locationManager.requestSingleUpdate(
+                        LocationManager.GPS_PROVIDER,
+                        locationListener,
+                        Looper.getMainLooper()
+                    )
 
-                    // Timeout anche per NETWORK_PROVIDER
+                    // Timeout anche per GPS_PROVIDER
                     Handler(Looper.getMainLooper()).postDelayed({
-                        // Log.w("LocationUtils", "Timeout NETWORK_PROVIDER: Rimozione listener (ENTRAMBI I PROVIDER FALLITI)") // LOG - VECCHIO WARNING
-                        Log.d("LocationUtils", "Timeout NETWORK_PROVIDER: Rimozione listener (ENTRAMBI I PROVIDER FALLITI)") // LOG - CAMBIATO A DEBUG
+                        Log.d("LocationUtils", "Timeout GPS_PROVIDER: Rimozione listener (ENTRAMBI I PROVIDER FALLITI)")
                         locationManager.removeUpdates(locationListener)
                         onLocationResult(OperationResult.Error("Timeout localizzazione (Network e GPS)")) // Errore definitivo
-                    }, 30000) // Timeout per NETWORK_PROVIDER
+                    }, 30000) // Timeout per GPS_PROVIDER
 
                 } catch (e: SecurityException) {
                     Log.e("LocationUtils", "SecurityException fallback GPS_PROVIDER: ${e.message}")
@@ -146,7 +148,7 @@ object LocationUtils {
                     Log.e("LocationUtils", "Exception fallback GPS_PROVIDER: ${e.message}")
                     onLocationResult(OperationResult.Error("Errore fallback GPS Provider: ${e.message}"))
                 }
-            }, 10000) // Timeout per NETWORK_PROVIDER (10 secondi - PIÙ BREVE)
+            }, 10000) // Timeout per NETWORK_PROVIDER
 
         } catch (e: SecurityException) {
             Log.e("LocationUtils", "SecurityException NETWORK_PROVIDER: ${e.message}")

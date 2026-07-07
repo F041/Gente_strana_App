@@ -45,10 +45,14 @@ As you read from the name of this repository, Gente Strana becomes the Italian v
      
 
 ### To do:
-- fix images in UsersListScreen
 - speacial theme for who has dyslexia
-- "reply to one bubble"
 - facebook registration and login
+
+### Recent fixes
+- Fixed image loading: `ServiceProfileCard.kt` fallback URI, `ReorderableProfileImageGallery.kt` index mismatch, `ProfileViewModel.kt` race condition upload/delete
+- Fixed `DateOfBirthPicker.kt` dialog loop on BACK
+- Fixed `LocationUtils.kt` GPS fallback not firing after NETWORK timeout
+- Added tests: `ImageLoadingCrashTest.kt`, `LocationAndLanguageBugTest.kt`, `CreateTestProfileTest.kt`
 
 ### Customizing the App (For Developers)
 
