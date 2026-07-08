@@ -1,0 +1,52 @@
+<resources>
+    <!-- Domande rompighiaccio - Italiano -->
+    <string-array name="icebreakers">
+        <item>Cosa ti ha spinto a iscriverti a quest\'app?</item>
+        <item>Qual è la cosa più strana che hai fatto di recente?</item>
+        <item>Se potessi viaggiare in un posto domani, dove andresti?</item>
+        <item>Qual è il tuo posto preferito in cui sei stato?</item>
+        <item>C\'è un posto in cui non sei mai stato ma che sogni di visitare?</item>
+        <item>Preferisci la montagna o il mare? Perché?</item>
+        <item>Se potessi vivere in un\'altra epoca storica, quale sceglieresti?</item>
+        <item>Qual è la cosa più bella che ti è successa quest\'anno?</item>
+        <item>Se fossi un animale, quale saresti?</item>
+        <item>Cosa c\'è nella tua lista dei desideri in questo momento?</item>
+        <item>Hai un hobby che hai da tanto tempo? Racconta!</item>
+        <item>C\'è qualcosa che hai sempre voluto imparare ma non hai mai iniziato?</item>
+        <item>Che tipo di musica ascolti di più in questo periodo?</item>
+        <item>Suoni qualche strumento o hai mai provato?</item>
+        <item>Leggi libri? Qual è l\'ultimo che hai letto?</item>
+        <item>Serie TV o film? Hai qualcosa da consigliare?</item>
+        <item>Ti piace cucinare? Hai un piatto forte?</item>
+        <item>Sei più da giornata al museo o da giornata all\'aria aperta?</item>
+        <item>Fai sport? Da quanto tempo?</item>
+        <item>Hai animali domestici?</item>
+        <item>Sei una persona mattiniera o notturna?</item>
+        <item>Cosa ti rilassa di più dopo una giornata stressante?</item>
+        <item>Qual è una piccola cosa che ti rende felice ogni giorno?</item>
+        <item>Se potessi dare un consiglio al te stesso del passato, quale sarebbe?</item>
+        <item>Qual è la tua più grande paura?</item>
+        <item>C\'è una cosa di te che la gente spesso fraintende?</item>
+        <item>Qual è il complimento più bello che hai ricevuto?</item>
+        <item>Cosa apprezzi di più in un\'amicizia?</item>
+        <item>Sei più estroverso o introverso? Ti riconosci in qualcosa?</item>
+        <item>Qual è il tuo guilty pleasure (serie, cibo, musica…)?</item>
+        <item>Se la tua vita fosse un film, che genere sarebbe?</item>
+        <item>Cosa faresti se vincessi alla lotteria?</item>
+        <item>Qual è la cosa più imbarazzante che ti è capitata?</item>
+        <item>Se potessi cenare con un personaggio famoso (vivo o morto), chi sarebbe?</item>
+        <item>Hai un talento nascosto?</item>
+        <item>Quale superpotere vorresti avere e perché?</item>
+        <item>Preferisci una serata in casa o una serata fuori?</item>
+        <item>Se dovessi descriverti con tre parole, quali sarebbero?</item>
+        <item>Cosa c\'è nella tua borsa/tasca in questo momento?</item>
+        <item>C\'è qualcosa della neurodivergenza che vorresti spiegare meglio agli altri?</item>
+        <item>C\'è un tratto strano di te che hai imparato ad apprezzare?</item>
+        <item>Qual è la tua hyperfixation (interesse intenso) del momento?</item>
+        <item>Sei mai stato frainteso per via del tuo modo di essere?</item>
+        <item>Cosa ti aiuta a ricaricare le energie sociali?</item>
+        <item>Hai un tocco magico o un rituale che ti aiuta a concentrarti?</item>
+        <item>Ti piace parlare di ciò che ti appassiona o preferisci tenerlo per te?</item>
+        <item>Hai mai incontrato qualcuno con i tuoi stessi interessi specifici?</item>
+    </string-array>
+</resources>
