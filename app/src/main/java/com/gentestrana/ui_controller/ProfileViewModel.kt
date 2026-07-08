@@ -101,6 +101,7 @@ class ProfileViewModel : ViewModel() {
                     _topicsText.value = it.topics.joinToString(", ")
                     _profilePicUrl.value = it.profilePicUrl
                     _location.value = it.location ?: ""
+                    _birthTimestamp.value = it.birthTimestamp.takeIf { ts -> ts > 0L }
                 }
             }
             .addOnFailureListener { e ->
