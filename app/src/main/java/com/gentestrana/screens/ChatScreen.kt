@@ -43,6 +43,7 @@ import com.gentestrana.chat.DateSeparatorRow
 import com.gentestrana.chat.MessageRow
 import com.gentestrana.ui_controller.ChatViewModel
 import com.gentestrana.ui_controller.SendMessageEvent
+import com.gentestrana.utils.IcebreakerUtils
 import com.gentestrana.utils.getDateSeparator
 import com.google.firebase.Firebase
 import com.google.firebase.auth.auth
@@ -81,6 +82,17 @@ fun ChatScreen(docId: String, navController: NavController) {
 
     val context = LocalContext.current
     val listState = rememberLazyListState()
+
+    // Stato per gli icebreaker: calcolato solo se la chat è vuota
+    val icebreakerQuestions = remember {
+        mutableStateOf<List<String>>(emptyList())
+    }
+    // Aggiorna gli icebreaker quando i messaggi cambiano (solo se vuoti)
+    LaunchedEffect(messages.size, recipientName) {
+        if (messages.isEmpty() && recipientName != null) {
+            icebreakerQuestions.value = IcebreakerUtils.getRandomIcebreakers(context, 3)
+        }
+    }
     val focusRequester = remember { FocusRequester() }
     val scope = rememberCoroutineScope()
     val initialScrollDone = remember { mutableStateOf(false) }
@@ -282,6 +294,36 @@ fun ChatScreen(docId: String, navController: NavController) {
                     )
                 }
 
+                // Icebreaker chips: mostrati SOLO quando la chat è vuota
+                if (messages.isEmpty() && icebreakerQuestions.value.isNotEmpty()) {
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 8.dp, vertical = 4.dp),
+                        verticalArrangement = Arrangement.spacedBy(4.dp)
+                    ) {
+                        Text(
+                            text = stringResource(R.string.icebreaker_header),
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                        icebreakerQuestions.value.forEach { question ->
+                            SuggestionChip(
+                                onClick = {
+                                    messageText = question
+                                },
+                                label = {
+                                    Text(
+                                        text = question,
+                                        maxLines = 2,
+                                        style = MaterialTheme.typography.bodySmall
+                                    )
+                                },
+                                modifier = Modifier.fillMaxWidth()
+                            )
+                        }
+                    }
+                }
 
                 Row(
                     modifier = Modifier

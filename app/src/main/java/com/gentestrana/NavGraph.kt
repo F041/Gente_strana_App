@@ -97,6 +97,12 @@ fun AppNavHost(navController: NavHostController,
             OnboardingScreen(navController = navController)
         }
 
+        // Route per il reset password tramite deep link (oobCode dal link email)
+        composable("resetPassword/{oobCode}") { backStackEntry ->
+            val oobCode = backStackEntry.arguments?.getString("oobCode") ?: ""
+            ResetPasswordScreen(oobCode = oobCode, navController = navController)
+        }
+
     }
 }
 

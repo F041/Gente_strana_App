@@ -1,56 +1,106 @@
-<?xml version="1.0" encoding="utf-8"?>
 <resources>
+    <!-- Icebreaker questions - English -->
+    <string-array name="icebreakers">
+        <item>What made you sign up for this app?</item>
+        <item>What is the weirdest thing you have done recently?</item>
+        <item>If you could travel anywhere tomorrow, where would you go?</item>
+        <item>What is your favorite place you have ever been to?</item>
+        <item>Is there a place you dream of visiting but have never been to?</item>
+        <item>Do you prefer the mountains or the sea? Why?</item>
+        <item>If you could live in another historical era, which would you choose?</item>
+        <item>What is the best thing that happened to you this year?</item>
+        <item>If you were an animal, which one would you be?</item>
+        <item>What is on your bucket list right now?</item>
+        <item>Do you have a long-time hobby? Tell me about it!</item>
+        <item>Is there something you have always wanted to learn but never started?</item>
+        <item>What kind of music have you been listening to lately?</item>
+        <item>Do you play any instrument or have you ever tried?</item>
+        <item>Do you read books? What is the last one you read?</item>
+        <item>TV series or movies? Do you have any recommendations?</item>
+        <item>Do you like cooking? Do you have a signature dish?</item>
+        <item>Are you more of a museum day or an outdoor day person?</item>
+        <item>Do you do sports? For how long?</item>
+        <item>Do you have any pets?</item>
+        <item>Are you a morning person or a night owl?</item>
+        <item>What relaxes you the most after a stressful day?</item>
+        <item>What is a small thing that makes you happy every day?</item>
+        <item>If you could give advice to your past self, what would it be?</item>
+        <item>What is your biggest fear?</item>
+        <item>Is there something about you that people often misunderstand?</item>
+        <item>What is the nicest compliment you have ever received?</item>
+        <item>What do you value most in a friendship?</item>
+        <item>Are you more extroverted or introverted? Do you recognize yourself in something?</item>
+        <item>What is your guilty pleasure (series, food, music...)?</item>
+        <item>If your life were a movie, what genre would it be?</item>
+        <item>What would you do if you won the lottery?</item>
+        <item>What is the most embarrassing thing that has happened to you?</item>
+        <item>If you could have dinner with a famous person (alive or dead), who would it be?</item>
+        <item>Do you have a hidden talent?</item>
+        <item>What superpower would you want and why?</item>
+        <item>Do you prefer a night in or a night out?</item>
+        <item>If you had to describe yourself in three words, what would they be?</item>
+        <item>What is in your bag/pocket right now?</item>
+        <item>Is there anything about neurodivergence you would like to explain better to others?</item>
+        <item>Is there a quirky trait of yours that you have learned to appreciate?</item>
+        <item>What is your current hyperfixation?</item>
+        <item>Have you ever been misunderstood because of who you are?</item>
+        <item>What helps you recharge your social battery?</item>
+        <item>Do you have a ritual that helps you focus?</item>
+        <item>Do you like talking about your passions or do you prefer to keep them to yourself?</item>
+        <item>Have you ever met someone with your same specific interests?</item>
+    </string-array>
+
+    <!-- Supported language codes for the language picker -->
     <string-array name="supported_language_codes">
-        <item>en</item>  <!-- Inglese -->
-        <item>zh</item>  <!-- Cinese -->
-        <item>hi</item>  <!-- Hindi -->
-        <item>es</item>  <!-- Spagnolo -->
-        <item>fr</item>  <!-- Francese -->
-        <item>ar</item>  <!-- Arabo -->
-        <item>bn</item>  <!-- Bengalese -->
-        <item>ru</item>  <!-- Russo -->
-        <item>pt</item>  <!-- Portoghese -->
-        <item>id</item>  <!-- Indonesiano -->
-        <item>de</item>  <!-- Tedesco -->
-        <item>ja</item>  <!-- Giapponese -->
-        <item>sw</item>  <!-- Swahili -->
-        <item>ko</item>  <!-- Coreano -->
-        <item>it</item>  <!-- Italiano -->
-        <item>tr</item>  <!-- Turco -->
-        <item>vi</item>  <!-- Vietnamita -->
-        <item>ta</item>  <!-- Tamil -->
-        <item>te</item>  <!-- Telugu -->
-        <item>mr</item>  <!-- Marathi -->
-        <item>ur</item>  <!-- Urdu -->
-        <item>fa</item>  <!-- Persiano (Farsi) -->
-        <item>gu</item>  <!-- Gujarati -->
-        <item>pl</item>  <!-- Polacco -->
-        <item>uk</item>  <!-- Ucraino -->
-        <item>my</item>  <!-- Birmano -->
-        <item>ml</item>  <!-- Malayalam -->
-        <item>kn</item>  <!-- Kannada -->
-        <item>th</item>  <!-- Thai -->
-        <item>nl</item>  <!-- Olandese -->
-        <item>ms</item>  <!-- Malese -->
-        <item>ro</item>  <!-- Rumeno -->
-        <item>el</item>  <!-- Greco -->
-        <item>hu</item>  <!-- Ungherese -->
-        <item>sv</item>  <!-- Svedese -->
-        <item>da</item>  <!-- Danese -->
-        <item>fi</item>  <!-- Finlandese -->
-        <item>no</item>  <!-- Norvegese -->
-        <item>cs</item>  <!-- Ceco -->
-        <item>sk</item>  <!-- Slovacco -->
-        <item>hr</item>  <!-- Croato -->
-        <item>sr</item>  <!-- Serbo -->
-        <item>bg</item>  <!-- Bulgaro -->
-        <item>he</item>  <!-- Ebraico -->
-        <item>iw</item>  <!-- Ebraico (vecchio codice, ora he) -->
-        <item>ar</item>  <!-- Arabo (già presente, ripetuto per errore?) -->
-        <item>fil</item> <!-- Filippino -->
-        <item>tl</item>  <!-- Tagalog (vecchio codice, ora fil) -->
-        <item>yue</item> <!-- Cantonese -->
-        <item>jv</item>  <!-- Giavanese -->
-        <item>ha</item>  <!-- Hausa -->
+        <item>en</item>
+        <item>zh</item>
+        <item>hi</item>
+        <item>es</item>
+        <item>fr</item>
+        <item>ar</item>
+        <item>bn</item>
+        <item>ru</item>
+        <item>pt</item>
+        <item>id</item>
+        <item>de</item>
+        <item>ja</item>
+        <item>sw</item>
+        <item>ko</item>
+        <item>it</item>
+        <item>tr</item>
+        <item>vi</item>
+        <item>ta</item>
+        <item>te</item>
+        <item>mr</item>
+        <item>ur</item>
+        <item>fa</item>
+        <item>gu</item>
+        <item>pl</item>
+        <item>uk</item>
+        <item>my</item>
+        <item>ml</item>
+        <item>kn</item>
+        <item>th</item>
+        <item>nl</item>
+        <item>ms</item>
+        <item>ro</item>
+        <item>el</item>
+        <item>hu</item>
+        <item>sv</item>
+        <item>da</item>
+        <item>fi</item>
+        <item>no</item>
+        <item>cs</item>
+        <item>sk</item>
+        <item>hr</item>
+        <item>sr</item>
+        <item>bg</item>
+        <item>he</item>
+        <item>iw</item>
+        <item>fil</item>
+        <item>tl</item>
+        <item>yue</item>
+        <item>jv</item>
+        <item>ha</item>
     </string-array>
 </resources>

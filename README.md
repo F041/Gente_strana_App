@@ -39,6 +39,10 @@ The visual design of the app, as shown in the screenshots, might change as I dev
 * Multilingual support: app available in both Italian and English (default).
 * Themes: dark, white, system (white) and "special".
 * You can report and or block users. This can happen in such community too. 
+* Icebreaker suggestions (Phase 0): when you open an empty chat, the app shows 3 random "break the ice" questions (localized in IT/EN) as tappable chips. Tapping a chip fills the message box so you can send it immediately. Chips disappear as soon as the first message is sent.
+
+### Known Limitations / Not Yet Implemented
+* **Chat message translation**: The UI strings (profile, settings, menus) are fully localized in Italian and English via `res/values/strings.xml` and `res/values-it/strings.xml`. However, **the chat messages themselves are NOT automatically translated** between users. If user A writes in Italian and user B prefers English, user B sees the raw Italian text. A future feature (leveraging the existing ML Kit Translate / `TranslationHelper`) should add an inline "translate" action on each received message, similar to the profile translation flow.
 
 ## Why "GS" as logo?
 As you read from the name of this repository, Gente Strana becomes the Italian version of Quirky People. The infinite became the symbol of neurodiverse people, hence the logo that reminds that symbol. A bit more difficult to create that with the initials Q and P of Quirky People. The dots inside the letters represent a social network. 

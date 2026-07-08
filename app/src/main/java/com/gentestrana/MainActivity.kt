@@ -29,9 +29,12 @@ import com.google.firebase.remoteconfig.ktx.remoteConfigSettings
 class MainActivity : ComponentActivity() {
 
     private var navController: NavHostController? = null
-    // Stato reactive per la navigazione pendente dalle notifiche.
-    // Usiamo mutableStateOf di Compose per notificare la UI quando cambia.
+
+    // Stato reactive per la navigazione pendente dalle notifiche chat.
     private val pendingChatId = mutableStateOf<String?>(null)
+
+    // Stato reactive per gestire il deep link di reset password (oobCode).
+    private val pendingOobCode = mutableStateOf<String?>(null)
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -98,9 +101,6 @@ class MainActivity : ComponentActivity() {
             }
 
             // ===== GESTIONE NOTIFICA: Navigazione alla chat =====
-            // Osserva pendingChatId e naviga alla chat quando il valore cambia.
-            // Questo LaunchedEffect si attiva quando pendingChatId.value NON è null,
-            // risolvendo il problema di timing tra handleIntent() e inizializzazione del navController.
             val currentPendingChatId = pendingChatId.value
             LaunchedEffect(currentPendingChatId) {
                 if (currentPendingChatId != null) {
@@ -114,6 +114,22 @@ class MainActivity : ComponentActivity() {
                         Log.w("MainActivity", "Utente non loggato o onboarding non completato. Chat navigazione rimandata.")
                     }
                     pendingChatId.value = null
+                }
+            }
+
+            // ===== GESTIONE DEEP LINK: Reset Password =====
+            // Quando l'utente clicca il link di reset password nell'email,
+            // viene generato un oobCode. handleIntent() imposta pendingOobCode.value
+            // che questa LaunchedEffect osserva per navigare alla schermata di reset.
+            val currentPendingOobCode = pendingOobCode.value
+            LaunchedEffect(currentPendingOobCode) {
+                if (currentPendingOobCode != null) {
+                    Log.d("MainActivity", "Reset password con oobCode: $currentPendingOobCode")
+                    rememberedNavController.navigate("resetPassword/$currentPendingOobCode") {
+                        launchSingleTop = true
+                        popUpTo(0) { inclusive = true } // Pulisce tutto, parte da zero
+                    }
+                    pendingOobCode.value = null
                 }
             }
 
@@ -208,11 +224,33 @@ class MainActivity : ComponentActivity() {
             pendingChatId.value = chatId
         }
 
-        // Gestione del deep link per la verifica email (invariata)
+        // Gestione del deep link: intercetta link da email Firebase
+        // (reset password o verifica email) e naviga allo screen appropriato.
         if (action == Intent.ACTION_VIEW && data != null) {
             if (data.scheme == "gentestrana" && data.host == "verifyemail") {
-                val token = data.getQueryParameter("token")
-                Log.d("DeepLink", "Token di verifica da deep link: $token")
+                // Firebase ActionCodeSettings redirige qui.
+                // I parametri possono essere:
+                //   - ?oobCode=...&mode=resetPassword    (reset password)
+                //   - ?oobCode=...&mode=verifyEmail      (verifica email)
+                //   - ?token=...                          (verifica email legacy)
+                val oobCode = data.getQueryParameter("oobCode")
+                val mode = data.getQueryParameter("mode")
+
+                if (!oobCode.isNullOrBlank()) {
+                    if (mode == "resetPassword" || mode == null) {
+                        // resetPassword o redirect senza mode (da emailVerificationRedirect)
+                        Log.d("DeepLink", "Reset password deep link ricevuto con oobCode: $oobCode")
+                        pendingOobCode.value = oobCode
+                    } else if (mode == "verifyEmail") {
+                        // Verifica email tramite oobCode
+                        Log.d("DeepLink", "Verifica email deep link con oobCode: $oobCode")
+                        val token = data.getQueryParameter("token")
+                        Log.d("DeepLink", "Token di verifica da deep link: $token")
+                    }
+                } else {
+                    val token = data.getQueryParameter("token")
+                    Log.d("DeepLink", "Deep link generico a verifyemail, token: $token")
+                }
             }
         }
     }

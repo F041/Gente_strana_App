@@ -128,6 +128,7 @@
     <string name="delete_message_confirm">
         Do you feel sure you want to delete this message?
     </string>
+    <string name="icebreaker_header">Break the ice:</string>
 
     // Zona Utente
     <string name="photos">photos</string>
@@ -149,8 +150,31 @@
     <string name="unblock_button">Unblock</string>
 
     // Zona settings
-    <string name="change_password">change Password</string>
-    <string name="change_password_instructions">enter your email and we will send you a link to reset your password.</string>
+    <string name="change_password">change password</string>
+    <string name="change_password_instructions">enter your current password and choose a new one.</string>
+    <string name="current_password_label">current password</string>
+    <string name="new_password_label">new password</string>
+    <string name="confirm_new_password_label">confirm new password</string>
+    <string name="change_password_button">change password</string>
+    <string name="change_password_success">password changed successfully!</string>
+    <string name="back_to_settings">back to settings</string>
+    <string name="error_wrong_password">current password is wrong</string>
+    <string name="error_passwords_dont_match">the new passwords do not match</string>
+    <string name="error_password_min_length">the new password must be at least 6 characters</string>
+    <string name="error_fill_all_fields">fill in all the fields</string>
+    <string name="error_user_not_authenticated">user not authenticated</string>
+    <string name="error_email_not_found">user email not found</string>
+    <string name="error_prefix">error: %1$s</string>
+
+    <!-- Reset password screen (deep link) -->
+    <string name="reset_password_screen_title">reset password</string>
+    <string name="reset_password_instruction">enter your new password</string>
+    <string name="reset_password_button">reset password</string>
+    <string name="reset_password_link_invalid">the reset link is no longer valid. Request a new reset.</string>
+    <string name="reset_password_link_expired">the reset link has expired. Request a new reset.</string>
+    <string name="reset_password_success">password reset successfully! You can now log in with your new password.</string>
+    <string name="go_to_login">go to login</string>
+
     <string name="email_address">email Address</string>
     <string name="send_reset_email_button">send Reset Email</string>
     <string name="password_reset_email_sent">password reset email sent. Check your inbox (and spam folder).</string>
