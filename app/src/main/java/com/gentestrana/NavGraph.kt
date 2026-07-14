@@ -148,7 +148,7 @@ fun MainTabsScreen(navController: NavHostController,
             }
 
             composable("changePassword") {
-                ChangePasswordScreen(navController = navController)
+                ChangePasswordScreen(navController = tabsNavController)
             }
 
             composable("communityGuidelines") {

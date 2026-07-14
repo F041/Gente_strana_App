@@ -11,7 +11,8 @@
     <string name="registration_password_placeholder">strong but not trivial password</string>
     <string name="registration_firstname_label">first name</string>
     <string name="registration_firstname_placeholder">Mark, Susan, only FIRST name</string>
-    <string name="registration_select_profile_picture_button">select Profile Picture</string>
+    <string name="registration_select_profile_picture_button">select profile picture</string>
+    <string name="registration_birthdate_label">date of birth</string>
     <string name="registration_register_button">register</string>
     <string name="sex_male_description">sex: male</string>
     <string name="sex_female_description">sex: Female</string>
@@ -110,7 +111,7 @@
     <string name="topics_title">My topics</string>
     <string name="topics_placeholder">eg. I want to talk about tennis </string>
     <string name="add">Add</string>
-    <string name="set_birthdate">Pick birthdate</string>
+    <string name="set_birthdate">pick birthdate</string>
 
     <string name="get_location">get location</string>
     <string name="your_location">your location</string>
@@ -129,6 +130,7 @@
         Do you feel sure you want to delete this message?
     </string>
     <string name="icebreaker_header">Break the ice:</string>
+    <string name="icebreaker_loading">Looking for the proper question…</string>
 
     // Zona Utente
     <string name="photos">photos</string>

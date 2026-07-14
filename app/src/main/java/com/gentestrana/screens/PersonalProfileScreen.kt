@@ -16,6 +16,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Logout
 import androidx.compose.material.icons.filled.QuestionMark
+import androidx.compose.ui.res.painterResource
 import androidx.compose.material.icons.filled.RemoveRedEye
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -187,6 +188,18 @@ fun PersonalProfileScreen(
                 title = { Text(stringResource(id = R.string.personal_profile)) },
                 actions = {
 
+                    // Icona Autopilot (search_hands_free) — stile B-Spec GT4
+                    IconButton(onClick = {
+                        Toast.makeText(context, "Funzione Autopilot, in arrivo in futuro", Toast.LENGTH_SHORT).show()
+                    }) {
+                        Icon(
+                            painter = painterResource(id = R.drawable.search_hands_free),
+                            contentDescription = "Autopilot (in arrivo)",
+                            tint = MaterialTheme.colorScheme.primary,
+                            modifier = Modifier.size(28.dp)
+                        )
+                    }
+
                     IconButton(onClick = {
                         val videoUrl = "https://youtube.com/shorts/hD9KP_bgxuE"
                         // TikTok darebbe problemi in Italia, richiederebbe Login
@@ -319,13 +332,19 @@ fun PersonalProfileScreen(
 
                 Spacer(modifier = Modifier.height(8.dp))
 
-                DateOfBirthPicker(
-                    context = LocalContext.current,
-                    birthTimestamp = birthTimestamp ?: 0L, // Rimosso .value
-                    onDateSelected = { newTimestamp ->
-                        profileViewModel.setBirthTimestamp(newTimestamp)
-                    }
-                )
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 16.dp)
+                ) {
+                    DateOfBirthPicker(
+                        context = LocalContext.current,
+                        birthTimestamp = birthTimestamp ?: 0L,
+                        onDateSelected = { newTimestamp ->
+                            profileViewModel.setBirthTimestamp(newTimestamp)
+                        }
+                    )
+                }
 
                 Spacer(modifier = Modifier.height(16.dp))
 

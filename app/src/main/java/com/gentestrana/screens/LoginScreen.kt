@@ -9,10 +9,13 @@ import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
@@ -36,10 +39,6 @@ fun LoginScreen(
     var password by remember { mutableStateOf("") }
     var isLoading by remember { mutableStateOf(false) }
 
-    // --- INIZIO CODICE CORRETTO ---
-
-    // Definiamo PRIMA il launcher. La sua unica responsabilità
-    // è completare il login DOPO che l'utente ha risposto alla richiesta di permesso.
     val notificationPermissionLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.RequestPermission(),
         onResult = { isGranted ->
@@ -48,30 +47,20 @@ fun LoginScreen(
             } else {
                 Log.w("LoginScreen", "Permesso notifiche negato dopo il login.")
             }
-            // A prescindere dal risultato, la procedura di login è finita.
-            // Navighiamo alla schermata principale.
             val user = FirebaseAuth.getInstance().currentUser
             if (user != null) {
-                onLoginSuccess(user) // Chiama l'azione finale.
+                onLoginSuccess(user)
             }
         }
     )
 
-    // Definiamo DOPO la funzione che lo usa.
-    // Questa funzione è il nostro "controllore del traffico".
     fun handleLoginFlow(user: FirebaseUser) {
-        // Se siamo su Android 13 o superiore, il nostro "traffico"
-        // deve passare per la richiesta di permesso.
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
             notificationPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
         } else {
-            // Altrimenti (versioni più vecchie), la strada è libera.
-            // Andiamo direttamente alla schermata principale.
             onLoginSuccess(user)
         }
     }
-
-    // --- FINE CODICE CORRETTO ---
 
     Column(
         modifier = Modifier
@@ -80,23 +69,30 @@ fun LoginScreen(
         verticalArrangement = Arrangement.Center
     ) {
         // Campo email
-        TextField(
+        OutlinedTextField(
             value = email,
             onValueChange = { email = it },
             label = { Text("Email") },
-            modifier = Modifier.fillMaxWidth()
+            modifier = Modifier.fillMaxWidth(),
+            keyboardOptions = KeyboardOptions(
+                keyboardType = KeyboardType.Email,
+                imeAction = ImeAction.Next
+            )
         )
         Spacer(modifier = Modifier.height(8.dp))
-        // Campo password
-        TextField(
+        // Campo password — oscurata con PasswordVisualTransformation
+        OutlinedTextField(
             value = password,
             onValueChange = { password = it },
             label = { Text("Password") },
             visualTransformation = PasswordVisualTransformation(),
-            modifier = Modifier.fillMaxWidth()
+            modifier = Modifier.fillMaxWidth(),
+            keyboardOptions = KeyboardOptions(
+                keyboardType = KeyboardType.Password,
+                imeAction = ImeAction.Done
+            )
         )
         Spacer(modifier = Modifier.height(16.dp))
-        // Pulsante per il login via email
         Button(
             onClick = {
                 if (email.isBlank() || password.isBlank()) {
@@ -104,7 +100,7 @@ fun LoginScreen(
                     return@Button
                 }
 
-                isLoading = true // Avvia il caricamento
+                isLoading = true
 
                 UserRepository().loginAndCheckEmail(
                     email = email,
@@ -120,13 +116,11 @@ fun LoginScreen(
                                             .addOnCompleteListener { /* ... */ }
                                     }
                                     isLoading = false
-                                    // Adesso chiamiamo il nostro "controllore del traffico"
                                     handleLoginFlow(firebaseUser)
                                 },
                                 onFailure = { error ->
                                     isLoading = false
                                     Toast.makeText(context, "Errore nel recupero dei dati utente: $error", Toast.LENGTH_SHORT).show()
-                                    // Anche qui, gestiamo il flusso tramite il controllore
                                     handleLoginFlow(firebaseUser)
                                 }
                             )
@@ -173,7 +167,6 @@ fun LoginScreen(
             onLoginSuccess = {
                 val user = FirebaseAuth.getInstance().currentUser
                 if (user != null) {
-                    // E anche qui usiamo il controllore
                     handleLoginFlow(user)
                 } else {
                     Toast.makeText(context, "Google authentication failed.", Toast.LENGTH_SHORT).show()

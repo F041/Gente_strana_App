@@ -68,8 +68,33 @@ fun GoogleLoginScreen(
                                     onLoginSuccess()
                                 },
                                 onFailure = { error ->
-                                    Toast.makeText(context, "Errore nel recupero dati utente: $error", Toast.LENGTH_SHORT).show()
-                                    onLoginSuccess()
+                                    Log.e("GOOGLE_LOGIN", "getUser fallito dopo signInWithGoogle: ${error.message}")
+                                    // FIX BUG: Non procedere ciecamente con onLoginSuccess().
+                                    // Se getUser() fallisce (documento non trovato o errore Firestore),
+                                    // l'utente entrerebbe in app senza dati, causando "Errore nel recupero dati utente".
+                                    
+                                    // Tentiamo il recupero automatico: ricrea il documento mancante
+                                    val errorMessage = error.localizedMessage ?: ""
+                                    if (errorMessage.contains("User not found")) {
+                                        // Utente in limbo: tenta recovery
+                                        userRepository.createMissingUserDocument(
+                                            onSuccess = {
+                                                Log.d("GOOGLE_LOGIN", "Recupero automatico riuscito per ${firebaseUser.uid}")
+                                                onLoginSuccess()
+                                            },
+                                            onFailure = { recoveryError ->
+                                                Log.e("GOOGLE_LOGIN", "Recupero automatico fallito: $recoveryError")
+                                                // Se anche il recovery fallisce, blocchiamo il login
+                                                FirebaseAuth.getInstance().signOut()
+                                                onError("Errore nel recupero dati utente: impossibile accedere. Contatta il supporto.")
+                                            }
+                                        )
+                                    } else {
+                                        // Errore generico Firestore (rete, permessi, ecc.)
+                                        // Blocchiamo il login invece di procedere senza dati
+                                        FirebaseAuth.getInstance().signOut()
+                                        onError("Errore nel recupero dati utente: $errorMessage. Riprova più tardi.")
+                                    }
                                 }
                             )
                         } else {

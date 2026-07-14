@@ -41,6 +41,7 @@ class UserRepository(
         sex: String,
         bio: String,
         selectedImageUri: Uri?,
+        rawBirthTimestamp: Long = 0L,
         context: Context,
         onSuccess: () -> Unit,
         onFailure: (String?) -> Unit
@@ -68,7 +69,7 @@ class UserRepository(
                     "profilePicUrl" to emptyList<String>(),
                     "sex" to sex,
                     "topics" to emptyList<String>(),
-                    "rawBirthTimestamp" to null,
+                    "rawBirthTimestamp" to (if (rawBirthTimestamp > 0L) rawBirthTimestamp else null),
                     "docId" to uid,
                     "fcmToken" to "",
                     "spokenLanguages" to emptyList<String>(),
@@ -189,6 +190,7 @@ class UserRepository(
     /**
      * Authenticates the user on Firebase using a Google ID token.
      * **UPDATED:** Checks if the user document exists in Firestore and creates it if it's the first login.
+     * **FIX BUG:** If Firestore document creation fails, the Auth user is deleted to avoid orphan accounts.
      */
     fun signInWithGoogle(
         idToken: String,
@@ -240,6 +242,17 @@ class UserRepository(
                                     }
                                     .addOnFailureListener { e ->
                                         Log.e("UserRepository", "Errore nella creazione del documento Firestore per l'utente $uid", e)
+                                        // FIX BUG: Se la creazione del documento Firestore fallisce,
+                                        // l'utente Auth esiste ma è orfano (nessun dato in Firestore).
+                                        // Eliminiamo l'utente Auth per evitare account in "limbo".
+                                        Log.w("UserRepository", "Google sign-in: Firestore document creation failed. Cleaning up Auth user $uid...")
+                                        auth.currentUser?.delete()?.addOnCompleteListener { cleanupTask ->
+                                            if (cleanupTask.isSuccessful) {
+                                                Log.d("UserRepository", "Auth user $uid deleted successfully after Google sign-in Firestore failure.")
+                                            } else {
+                                                Log.e("UserRepository", "CRITICAL: Failed to delete Auth user $uid after Google sign-in Firestore failure! Orphan user created.")
+                                            }
+                                        }
                                         onFailure("Errore nella creazione dei dati utente: ${e.localizedMessage}")
                                     }
                             } else {
@@ -255,6 +268,16 @@ class UserRepository(
                         }.addOnFailureListener { e ->
                             // Errore durante il controllo dell'esistenza del documento
                             Log.e("UserRepository", "Errore nel controllo esistenza documento per $uid", e)
+                            // FIX BUG: Se il controllo del documento fallisce, l'utente Auth è orfano.
+                            // Eliminiamo l'utente Auth per sicurezza.
+                            Log.w("UserRepository", "Google sign-in: Document check failed. Cleaning up Auth user $uid...")
+                            auth.currentUser?.delete()?.addOnCompleteListener { cleanupTask ->
+                                if (cleanupTask.isSuccessful) {
+                                    Log.d("UserRepository", "Auth user $uid deleted successfully after Google sign-in document check failure.")
+                                } else {
+                                    Log.e("UserRepository", "CRITICAL: Failed to delete Auth user $uid after Google sign-in document check failure!")
+                                }
+                            }
                             onFailure("Errore accesso ai dati utente: ${e.localizedMessage}")
                         }
                     } else {

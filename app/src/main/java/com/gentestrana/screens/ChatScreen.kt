@@ -9,6 +9,9 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
@@ -71,6 +74,8 @@ fun ChatScreen(docId: String, navController: NavController) {
     val recipientName by viewModel.recipientName.collectAsState()
     val currentUserName by remember { mutableStateOf(Firebase.auth.currentUser?.displayName ?: "Tu") }
     val recipientDocId by viewModel.recipientDocId.collectAsState()
+    val recipientBio by viewModel.recipientBio.collectAsState()
+    val recipientTopics by viewModel.recipientTopics.collectAsState()
     val messages by viewModel.messages.collectAsState()
     val isLoadingOlderMessages by viewModel.isLoadingOlderMessages.collectAsState()
     val hasMoreMessages by viewModel.hasMoreMessages.collectAsState()
@@ -87,10 +92,26 @@ fun ChatScreen(docId: String, navController: NavController) {
     val icebreakerQuestions = remember {
         mutableStateOf<List<String>>(emptyList())
     }
-    // Aggiorna gli icebreaker quando i messaggi cambiano (solo se vuoti)
-    LaunchedEffect(messages.size, recipientName) {
+    var isIcebreakerLoading by remember { mutableStateOf(false) }
+
+    // Aggiorna gli icebreaker quando i messaggi cambiano o arrivano bio/topics (solo se vuoti)
+    LaunchedEffect(messages.size, recipientName, recipientBio, recipientTopics) {
         if (messages.isEmpty() && recipientName != null) {
-            icebreakerQuestions.value = IcebreakerUtils.getRandomIcebreakers(context, 3)
+            // Inizia animazione di caricamento
+            isIcebreakerLoading = true
+            icebreakerQuestions.value = emptyList()
+
+            // Ritardo artificiale di 1.5s per dare feedback visivo
+            delay(1500)
+
+            icebreakerQuestions.value = IcebreakerUtils.matchIcebreakers(
+                bio = recipientBio,
+                topics = recipientTopics,
+                context = context,
+                count = 3
+            )
+            // Fine caricamento: lo spinner scompare, i chip appaiono con fade-in
+            isIcebreakerLoading = false
         }
     }
     val focusRequester = remember { FocusRequester() }
@@ -295,32 +316,61 @@ fun ChatScreen(docId: String, navController: NavController) {
                 }
 
                 // Icebreaker chips: mostrati SOLO quando la chat è vuota
-                if (messages.isEmpty() && icebreakerQuestions.value.isNotEmpty()) {
+                // Tre stati: loading (shimmer), pronto (chip con fade-in), nascosto
+                if (messages.isEmpty() && (isIcebreakerLoading || icebreakerQuestions.value.isNotEmpty())) {
                     Column(
                         modifier = Modifier
                             .fillMaxWidth()
                             .padding(horizontal = 8.dp, vertical = 4.dp),
                         verticalArrangement = Arrangement.spacedBy(4.dp)
                     ) {
-                        Text(
-                            text = stringResource(R.string.icebreaker_header),
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                        icebreakerQuestions.value.forEach { question ->
-                            SuggestionChip(
-                                onClick = {
-                                    messageText = question
-                                },
-                                label = {
-                                    Text(
-                                        text = question,
-                                        maxLines = 2,
-                                        style = MaterialTheme.typography.bodySmall
+                        if (isIcebreakerLoading) {
+                            // Stato di caricamento: loader + testo
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                                modifier = Modifier.padding(vertical = 8.dp)
+                            ) {
+                                CircularProgressIndicator(
+                                    modifier = Modifier.size(16.dp),
+                                    strokeWidth = 2.dp,
+                                    color = MaterialTheme.colorScheme.primary
+                                )
+                                Text(
+                                    text = stringResource(R.string.icebreaker_loading),
+                                    style = MaterialTheme.typography.labelMedium,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                            }
+                        }
+
+                        // Quando le domande sono pronte, appaiono con fade-in
+                        AnimatedVisibility(
+                            visible = icebreakerQuestions.value.isNotEmpty(),
+                            enter = fadeIn()
+                        ) {
+                            Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                                Text(
+                                    text = stringResource(R.string.icebreaker_header),
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                                icebreakerQuestions.value.forEach { question ->
+                                    SuggestionChip(
+                                        onClick = {
+                                            messageText = question
+                                        },
+                                        label = {
+                                            Text(
+                                                text = question,
+                                                maxLines = 2,
+                                                style = MaterialTheme.typography.bodySmall
+                                            )
+                                        },
+                                        modifier = Modifier.fillMaxWidth()
                                     )
-                                },
-                                modifier = Modifier.fillMaxWidth()
-                            )
+                                }
+                            }
                         }
                     }
                 }

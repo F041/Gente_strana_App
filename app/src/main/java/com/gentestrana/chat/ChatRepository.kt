@@ -61,6 +61,14 @@ class ChatRepository(
                 val participants = doc.get("participants") as? List<String> ?: emptyList()
                 val otherUserId = participants.firstOrNull { it != currentUserId } ?: return@coroutineScope null
 
+                // **FIX 1**: Se hasMessages è false, la chat è vuota (appena creata senza messaggi).
+                // Non mostrarla nella lista di nessuno.
+                val hasMessages = doc.getBoolean("hasMessages") ?: false
+                if (!hasMessages) {
+                    Log.d("ChatRepository", "Chat ${doc.id} saltata (hasMessages=false)")
+                    return@coroutineScope null
+                }
+
                 // --- LANCIA LA LETTURA UTENTE IN PARALLELO ---
                 val deferredOtherUser = async(Dispatchers.IO) { // Usa async con Dispatchers.IO
                     db.collection("users")
@@ -84,18 +92,24 @@ class ChatRepository(
                 val otherUserSnapshot = deferredOtherUser.await() // Aspetta il risultato della lettura utente
                 val lastMessageQuerySnapshot = deferredLastMessageQuery.await() // Aspetta il risultato della query messaggi
 
-                // --- ELABORA I RISULTATI (logica simile a prima) ---
+                // **FIX 2**: Doppio check di sicurezza — se non ci sono messaggi, non mostrare la chat
+                val lastMessageDoc = lastMessageQuerySnapshot.documents.firstOrNull()
+                if (lastMessageDoc == null) {
+                    Log.d("ChatRepository", "Chat ${doc.id} saltata (nessun messaggio trovato)")
+                    return@coroutineScope null
+                }
+
+                // --- ELABORA I RISULTATI ---
                 val userObj = otherUserSnapshot.toObject(User::class.java)
                 val profilePicList = otherUserSnapshot["profilePicUrl"] as? List<String> ?: emptyList()
                 val firstPhotoUrl = profilePicList.firstOrNull() ?: ""
 
-                val lastMessageDoc = lastMessageQuerySnapshot.documents.firstOrNull()
-                val lastMessageText = lastMessageDoc?.getString("message") ?: "No messages" // Default se non ci sono messaggi
-                val timestamp = lastMessageDoc?.getTimestamp("timestamp") ?: doc.getTimestamp("createdAt") ?: Timestamp.now() // Usa createdAt della chat o now() come fallback timestamp
-                val lastMessageStatus = when (lastMessageDoc?.getString("status")) {
+                val lastMessageText = lastMessageDoc.getString("message") ?: ""
+                val timestamp = lastMessageDoc.getTimestamp("timestamp") ?: Timestamp.now()
+                val lastMessageStatus = when (lastMessageDoc.getString("status")) {
                     "DELIVERED" -> MessageStatus.DELIVERED
                     "READ" -> MessageStatus.READ
-                    else -> MessageStatus.SENT // Default a SENT
+                    else -> MessageStatus.SENT
                 }
 
                 // --- CREA E RESTITUISCI L'OGGETTO CHAT ---
@@ -107,7 +121,6 @@ class ChatRepository(
                     photoUrl = firstPhotoUrl,
                     lastMessageStatus = lastMessageStatus,
                     timestamp = timestamp,
-                    // isOnline non viene letto qui, verrà aggiornato nel ViewModel probabilmente
                 )
             }
 
@@ -292,13 +305,32 @@ class ChatRepository(
 
     suspend fun deleteMessage(chatId: String, messageId: String) {
         try {
-            db.collection("chats")
+            val messagesRef = db.collection("chats")
                 .document(chatId)
                 .collection("messages")
+
+            // Cancella il messaggio specifico
+            messagesRef
                 .document(messageId)
                 .delete()
                 .await()
-            Log.d("ChatRepository", "Messaggio eliminato con successo")
+            Log.d("ChatRepository", "Messaggio $messageId eliminato")
+
+            // Verifica se nella chat rimangono altri messaggi
+            val remainingMessages = messagesRef
+                .limit(1)
+                .get()
+                .await()
+                .documents
+
+            // Se non ci sono più messaggi, elimina l'intero documento chat
+            if (remainingMessages.isEmpty()) {
+                db.collection("chats")
+                    .document(chatId)
+                    .delete()
+                    .await()
+                Log.d("ChatRepository", "Chat $chatId eliminata: ultimo messaggio rimosso")
+            }
         } catch (e: Exception) {
             Log.e("ChatRepository", "Errore durante l'eliminazione del messaggio", e)
             throw e

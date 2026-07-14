@@ -40,6 +40,11 @@ class ChatViewModel(
     val recipientName: StateFlow<String?> = _recipientName
     private val _recipientDocId = MutableStateFlow<String?>(null)
     val recipientDocId: StateFlow<String?> = _recipientDocId
+    // Per Fase 1 — Smart Matching
+    private val _recipientBio = MutableStateFlow<String?>(null)
+    val recipientBio: StateFlow<String?> = _recipientBio
+    private val _recipientTopics = MutableStateFlow<List<String>>(emptyList())
+    val recipientTopics: StateFlow<List<String>> = _recipientTopics
     private val _sendMessageEvent = MutableSharedFlow<SendMessageEvent>()
     val sendMessageEvent = _sendMessageEvent.asSharedFlow()
     private val _messages = MutableStateFlow<List<ChatMessage>>(emptyList())
@@ -173,6 +178,9 @@ class ChatViewModel(
                 _recipientDocId.value = otherUserId
                 val userDoc = db.collection("users").document(otherUserId).get().await()
                 _recipientName.value = userDoc.getString("username") ?: "Sconosciuto"
+                // Fase 1 — Smart Matching: recupera bio e topics
+                _recipientBio.value = userDoc.getString("bio") ?: ""
+                _recipientTopics.value = (userDoc.get("topics") as? List<String>) ?: emptyList()
             }
         } catch (e: Exception) {
             Log.e("ChatViewModel", "Error fetching recipient info for chat $chatId", e)

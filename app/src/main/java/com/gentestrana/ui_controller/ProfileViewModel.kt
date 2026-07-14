@@ -37,7 +37,9 @@ import java.util.UUID
 class ProfileViewModel : ViewModel() {
     private val db = FirebaseFirestore.getInstance()
     private val auth = FirebaseAuth.getInstance()
-    private val uid = auth.currentUser?.uid ?: ""
+    // FIX BUG: L'uid NON viene più salvato al construction time come stringa vuota.
+    // Usiamo una funzione per ottenerlo sempre fresco da auth.currentUser.
+    private fun getUid(): String? = auth.currentUser?.uid
     private val firestore = Firebase.firestore
 
     // Stati per il profilo
@@ -64,6 +66,7 @@ class ProfileViewModel : ViewModel() {
 
     fun setBirthTimestamp(newTimestamp: Long?) {
         _birthTimestamp.value = newTimestamp
+        val uid = getUid() ?: return // FIX: uid reattivo
         newTimestamp?.let {
             val seconds = it / 1000
             val nanoseconds = (it % 1000) * 1_000_000
@@ -91,21 +94,53 @@ class ProfileViewModel : ViewModel() {
 
 
     init {
-        // Carica i dati dell'utente da Firestore
-        firestore.collection("users").document(uid).get()
-            .addOnSuccessListener { document ->
-                val user = document.toObject(User::class.java)
-                user?.let {
-                    _username.value = it.username
-                    _bio.value = it.bio
-                    _topicsText.value = it.topics.joinToString(", ")
-                    _profilePicUrl.value = it.profilePicUrl
-                    _location.value = it.location ?: ""
+        loadUserData()
+    }
+
+
+    fun loadUserData() {
+        viewModelScope.launch {
+            try {
+                val uid = getUid()
+                if (uid == null) {
+                    Log.e("ProfileViewModel", "loadUserData: Utente non loggato")
+                    return@launch
                 }
+                val userDoc = db.collection("users").document(uid).get().await()
+                if (!userDoc.exists()) {
+                    Log.w("ProfileViewModel", "loadUserData: Documento non trovato per $uid")
+                    return@launch
+                }
+                
+                // Carica username
+                _username.value = userDoc.getString("username") ?: ""
+                // Carica bio
+                _bio.value = userDoc.getString("bio") ?: ""
+                // Carica topics
+                val topicsList = userDoc.get("topics") as? List<String> ?: emptyList()
+                _topicsText.value = topicsList.joinToString(", ")
+                // Carica profilePicUrl
+                _profilePicUrl.value = userDoc.get("profilePicUrl") as? List<String> ?: emptyList()
+                // Carica location
+                _location.value = userDoc.getString("location") ?: ""
+                // Carica spokenLanguages
+                val languagesList = userDoc.get("spokenLanguages") as? List<String> ?: emptyList()
+                _spokenLanguages.value = languagesList.joinToString(",")
+                // Carica birthTimestamp
+                val rawBirthTimestamp = userDoc.get("rawBirthTimestamp")
+                if (rawBirthTimestamp is com.google.firebase.Timestamp) {
+                    _birthTimestamp.value = rawBirthTimestamp.toDate().time
+                }
+                
+                // Aggiorna userState
+                val user = userDoc.toObject(User::class.java)?.copy(docId = userDoc.id)
+                _userState.value = user
+                
+                Log.d("ProfileViewModel", "loadUserData completato per $uid")
+            } catch (e: Exception) {
+                Log.e("ProfileViewModel", "loadUserData: Errore: ${e.message}", e)
             }
-            .addOnFailureListener { e ->
-                // Gestione dell'errore: si potrebbe usare un ulteriore StateFlow per gli errori
-            }
+        }
     }
 
 
@@ -155,6 +190,8 @@ class ProfileViewModel : ViewModel() {
 
 
     suspend fun deleteProfileImage(imageUrlToDelete: String) {
+        val uid = getUid() ?: return // FIX: uid reattivo
+        
         Log.d("ProfileViewModel", "deleteProfileImage STARTED - imageUrlToDelete: $imageUrlToDelete")
 
         // 1. Recupera la lista attuale da Firestore (RE-FETCH per sicurezza)
@@ -247,6 +284,11 @@ class ProfileViewModel : ViewModel() {
     // Funzione per gestire l'upload dell'immagine
 
     fun uploadNewProfileImage(newImageUri: Uri, context: Context, onComplete: (String) -> Unit) {
+        val uid = getUid() ?: run {
+            Log.e("ProfileViewModel", "uploadNewProfileImage: Utente non loggato")
+            return
+        }
+        
         viewModelScope.launch(Dispatchers.IO) {
             try {
                 // Validazione formato immagine
@@ -335,6 +377,7 @@ class ProfileViewModel : ViewModel() {
 
     fun setTopics(newTopics: String) {
         _topicsText.value = newTopics
+        val uid = getUid() ?: return // FIX: uid reattivo
         val topicsList = newTopics.split(",").map { it.trim() }.filter { it.isNotEmpty() }
         firestore.collection("users").document(uid)
             .update("topics", topicsList)
@@ -348,6 +391,7 @@ class ProfileViewModel : ViewModel() {
 
     fun setBio(newBio: String) {
         _bio.value = newBio
+        val uid = getUid() ?: return // FIX: uid reattivo
         firestore.collection("users").document(uid)
             .update("bio", newBio)
             .addOnSuccessListener {
@@ -360,6 +404,7 @@ class ProfileViewModel : ViewModel() {
 
     fun setLocation(newLocation: String) {
         _location.value = newLocation
+        val uid = getUid() ?: return // FIX: uid reattivo
         firestore.collection("users").document(uid)
             .update("location", newLocation)
             .addOnSuccessListener {
@@ -370,37 +415,13 @@ class ProfileViewModel : ViewModel() {
             }
     }
 
-
-    // Carica i dati iniziali dall'utente
-    fun loadUserData() {
-        viewModelScope.launch {
-            try {
-//                println("1. Inizio caricamento lingue...")
-                val userId = auth.currentUser?.uid ?: return@launch.also {
-                    println("2. Utente non loggato")
-                }
-//                println("3. User ID: $userId")
-                val userDoc = db.collection("users").document(userId).get().await()
-//                println("4. Documento ottenuto: ${userDoc.exists()}")
-                val languagesList = userDoc.get("spokenLanguages") as? List<String> ?: emptyList()
-                val languages = languagesList.joinToString(",")
-//                println("5. Lingue trovate: $languages")
-                _spokenLanguages.value = languages
-//                println("6. Stato aggiornato: ${_spokenLanguages.value}")
-
-            } catch (e: Exception) {
-                println("ERRORE durante il caricamento: ${e.message}")
-            }
-        }
-    }
-
     // Salva le lingue su Firestore
     fun setSpokenLanguages(languages: String) {
         _spokenLanguages.value = languages
+        val uid = getUid() ?: return // FIX: uid reattivo
         viewModelScope.launch {
             try {
-                val userId = FirebaseAuth.getInstance().currentUser?.uid ?: return@launch
-                db.collection("users").document(userId)
+                db.collection("users").document(uid)
                     .update("spokenLanguages", languages.split(","))
                     .await()
             } catch (e: Exception) {

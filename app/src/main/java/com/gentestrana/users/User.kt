@@ -62,6 +62,15 @@ data class User(
                 }
                 cal.timeInMillis // Restituisci timestamp UTC
             }
+            is Long -> {
+                // Già timestamp in millisecondi (es. da registrazione o conversione precedente)
+                val cal = Calendar.getInstance(TimeZone.getTimeZone("UTC")).apply {
+                    timeInMillis = rawBirthTimestamp
+                }
+                // Clamp per evitare date troppo vecchie o future
+                val now = Calendar.getInstance(TimeZone.getTimeZone("UTC"))
+                if (cal.after(now)) now.timeInMillis else cal.timeInMillis
+            }
             else -> 0L
         }
 }

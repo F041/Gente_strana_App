@@ -47,9 +47,6 @@ fun DateOfBirthPicker(
         calendar.get(Calendar.DAY_OF_MONTH)
         )
 
-        // FIX: Se l'utente preme BACK (cancella) senza selezionare una data,
-        // showDialog deve essere resettato a false, altrimenti il dialog
-        // viene ricreato all'infinito ad ogni ricomposizione (loop).
         dialog.setOnCancelListener {
             showDialog = false
         }
@@ -59,15 +56,10 @@ fun DateOfBirthPicker(
 
     Button(
         onClick = { showDialog = true },
-                modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 16.dp)// il bottone occuperà tutta la larghezza disponibile
-        // altrimenti solo larghezza teesto
-
+        modifier = Modifier.fillMaxWidth()
     ) {
         val displayText = if (birthTimestamp > 0L) {
             val sdf = SimpleDateFormat("dd/MM/yyyy", Locale.getDefault())
-            // Cambiare con stringa?
             sdf.format(Date(birthTimestamp))
         } else {
             stringResource(R.string.set_birthdate)

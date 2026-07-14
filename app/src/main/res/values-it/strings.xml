@@ -12,6 +12,7 @@
     <string name="registration_firstname_label">First name</string>
     <string name="registration_firstname_placeholder">Marco, Giovanna, solo il PRIMO nome</string>
     <string name="registration_select_profile_picture_button">Select Profile Picture</string>
+    <string name="registration_birthdate_label">data di nascita</string>
     <string name="registration_register_button">Register</string>
     <string name="sex_male_description">Sesso: Maschio</string>
     <string name="sex_female_description">Sesso: Femmina</string>
@@ -138,6 +139,7 @@
         Vuoi eliminare definitivamente questo messaggio?
     </string>
     <string name="icebreaker_header">Rompi il ghiaccio:</string>
+    <string name="icebreaker_loading">Cerco la domanda opportuna…</string>
 
 
     // Zona Utente
