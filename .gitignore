@@ -1,12 +1,9 @@
 *.iml
 .gradle
 /local.properties
-/.idea/caches
-/.idea/libraries
-/.idea/modules.xml
-/.idea/workspace.xml
-/.idea/navEditor.xml
-/.idea/assetWizardSettings.xml
+
+# IntelliJ / Android Studio
+.idea/
 .DS_Store
 /build
 /captures
@@ -16,3 +13,9 @@ local.properties
 /plan_icebreaker_autopilot.md
 /plan_release_guide.md
 /plan_porting_a_ios.md
+/firestore_rules.md
+
+# Scripts per gestione utenti
+/scripts/venv
+/scripts/__pycache__
+*.pyc
