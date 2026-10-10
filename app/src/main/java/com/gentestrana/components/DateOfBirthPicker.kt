@@ -24,7 +24,9 @@ fun DateOfBirthPicker(
     onDateSelected: (Long) -> Unit
 ) {
     val calendar = remember { Calendar.getInstance() }
-    if (birthTimestamp > 0L) {
+    // 0L e la convenzione per "data non impostata".
+    // Attenzione: un timestamp negativo indica una data precedente al 1970 ed e valido.
+    if (birthTimestamp != 0L) {
         calendar.timeInMillis = birthTimestamp
     }
     var showDialog by remember { mutableStateOf(false) }
@@ -58,7 +60,7 @@ fun DateOfBirthPicker(
         onClick = { showDialog = true },
         modifier = Modifier.fillMaxWidth()
     ) {
-        val displayText = if (birthTimestamp > 0L) {
+        val displayText = if (birthTimestamp != 0L) {
             val sdf = SimpleDateFormat("dd/MM/yyyy", Locale.getDefault())
             sdf.format(Date(birthTimestamp))
         } else {

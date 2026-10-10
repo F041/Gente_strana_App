@@ -40,9 +40,14 @@ fun ChatListScreen(
                     .padding(paddingValues)
                     .padding(dimensions.smallPadding)
             ) {
-                ChatList(chats = chats, onChatClick = { chat ->
-                    navController.navigate("chat/${chat.id}")
-                })
+                ChatList(
+                    chats = chats,
+                    onChatClick = { chat ->
+                        navController.navigate("chat/${chat.id}")
+                    },
+                    onChatPin = { chat -> viewModel.togglePin(chat) },
+                    onChatDelete = { chat -> viewModel.deleteChat(chat) }
+                )
             }
         }
     )

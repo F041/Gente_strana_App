@@ -8,14 +8,21 @@ import com.gentestrana.chat.Chat
 @Composable
 fun ChatList(
     chats: List<Chat>,
-    onChatClick: (Chat) -> Unit
+    onChatClick: (Chat) -> Unit,
+    onChatPin: (Chat) -> Unit = {},
+    onChatDelete: (Chat) -> Unit = {}
 ) {
     LazyColumn {
         items(
             items = chats,
             key = { chat -> chat.id } // Usa chat.id come chiave univoca
         ) { chat ->
-            ChatListItem(chat = chat, onClick = { onChatClick(chat) })
+            ChatListItem(
+                chat = chat,
+                onClick = { onChatClick(chat) },
+                onPin = { onChatPin(chat) },
+                onDelete = { onChatDelete(chat) }
+            )
         }
     }
 }

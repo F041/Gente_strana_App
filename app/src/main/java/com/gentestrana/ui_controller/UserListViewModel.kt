@@ -130,8 +130,12 @@ class UserListViewModel : ViewModel() {
                         doc.toObject(User::class.java)?.copy(docId = doc.id)
                     }
 
-                    // Escludi subito l'utente corrente dalla lista raw
-                    _rawUsers.value = _rawUsers.value + newUsers.filterNot { it.docId == currentUserId }
+                    // Escludi subito l'utente corrente dalla lista raw.
+                    // FIX: distinctBy evita duplicati. La paginazione e' ordinata per lastActive:
+                    // un utente che torna attivo tra una pagina e l'altra puo' riapparire,
+                    // e una key duplicata nella LazyColumn farebbe crashare la lista.
+                    _rawUsers.value = (_rawUsers.value + newUsers.filterNot { it.docId == currentUserId })
+                        .distinctBy { it.docId }
 
                     _hasMoreData.value = result.documents.size >= pageSize
                     Log.d("UserListVM", "Caricati ${newUsers.size} nuovi utenti raw. HasMoreData: ${_hasMoreData.value}")

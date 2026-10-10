@@ -49,14 +49,11 @@ As you read from the name of this repository, Gente Strana becomes the Italian v
      
 
 ### To do:
+- if you hold tap on a conversation from the chat screen, it shows a pop up with "delete", "pin"
+- align language spoken with the bottome of the card of the profile (ask examples)
 - speacial theme for who has dyslexia
 - facebook registration and login
-
-### Recent fixes
-- Fixed image loading: `ServiceProfileCard.kt` fallback URI, `ReorderableProfileImageGallery.kt` index mismatch, `ProfileViewModel.kt` race condition upload/delete
-- Fixed `DateOfBirthPicker.kt` dialog loop on BACK
-- Fixed `LocationUtils.kt` GPS fallback not firing after NETWORK timeout
-- Added tests: `ImageLoadingCrashTest.kt`, `LocationAndLanguageBugTest.kt`, `CreateTestProfileTest.kt`
+- fix last message not shown in chat screen right after you sent a message
 
 ### Customizing the App (For Developers)
 

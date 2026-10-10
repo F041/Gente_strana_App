@@ -13,6 +13,7 @@ import android.util.Log
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
 import androidx.core.content.ContextCompat
+import com.gentestrana.utils.NotificationChannels
 import com.google.firebase.auth.ktx.auth
 import com.google.firebase.firestore.ktx.firestore
 import com.google.firebase.ktx.Firebase
@@ -26,12 +27,11 @@ class MyFirebaseMessagingService : FirebaseMessagingService() {
     // TAG per i log
     private val TAG = "MyFirebaseMsgService"
 
-    // ID univoci per i canali di notifica (costanti)
+    // ID univoci per i canali di notifica (definiti in NotificationChannels).
     companion object {
-        const val ADMIN_REPORTS_CHANNEL_ID = "admin_reports_channel_v1"
-        // Aggiunto v1 per forzare ricreazione
-        const val NEW_USERS_CHANNEL_ID = "new_users_channel_v1"
-        const val DEFAULT_MESSAGES_CHANNEL_ID = "default_messages_channel_v1"
+        const val ADMIN_REPORTS_CHANNEL_ID = NotificationChannels.ADMIN_REPORTS_CHANNEL_ID
+        const val NEW_USERS_CHANNEL_ID = NotificationChannels.NEW_USERS_CHANNEL_ID
+        const val DEFAULT_MESSAGES_CHANNEL_ID = NotificationChannels.DEFAULT_MESSAGES_CHANNEL_ID
     }
 
     // Crea i canali all'avvio del servizio (o la prima volta che serve)
@@ -117,41 +117,11 @@ class MyFirebaseMessagingService : FirebaseMessagingService() {
         Log.d(TAG, "-----------------------------------------")
     }
 
-    // Crea i canali di notifica necessari (chiamato da onCreate)
+    // Crea i canali di notifica necessari (chiamato da onCreate).
+    // La logica vera e' in NotificationChannels, cosi' gli stessi canali
+    // vengono creati anche all'avvio dell'app (MainActivity).
     private fun createNotificationChannels() {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            val adminChannel = NotificationChannel(
-                ADMIN_REPORTS_CHANNEL_ID,
-                "Segnalazioni Admin", // Nome visibile all'utente
-                NotificationManager.IMPORTANCE_HIGH // ** Alta Importanza **
-            ).apply {
-                description = "Notifiche critiche per le segnalazioni degli utenti (Admin)"
-                // Qui puoi aggiungere setSound, enableVibration, enableLights se vuoi personalizzarli
-            }
-
-            val newUserChannel = NotificationChannel(
-                NEW_USERS_CHANNEL_ID,
-                "Nuovi Utenti",
-                NotificationManager.IMPORTANCE_DEFAULT // Importanza normale
-            ).apply {
-                description = "Notifiche quando nuovi utenti si uniscono"
-            }
-
-            val defaultChannel = NotificationChannel(
-                DEFAULT_MESSAGES_CHANNEL_ID,
-                "Messaggi e Altro",
-                NotificationManager.IMPORTANCE_DEFAULT // Importanza normale
-            ).apply {
-                description = "Notifiche per messaggi di chat e altre informazioni"
-            }
-
-            val notificationManager: NotificationManager =
-                getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
-            notificationManager.createNotificationChannel(adminChannel)
-            notificationManager.createNotificationChannel(newUserChannel)
-            notificationManager.createNotificationChannel(defaultChannel)
-            Log.d(TAG, "Notification channels created/updated.")
-        }
+        NotificationChannels.ensureCreated(this)
     }
 
     // Mostra effettivamente la notifica

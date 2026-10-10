@@ -4,6 +4,7 @@ import android.util.Log
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -189,22 +190,33 @@ fun UsersListScreen(navController: NavHostController) {
                 modifier = Modifier.padding(start = 8.dp, bottom = 8.dp)
             )
 
+            // FIX scrolling: il caricamento della pagina successiva dipende dallo stato
+            // dello scroll, non dall'ultimo elemento della lista FILTRATA. Cosi' se il filtro
+            // non trova nessuno tra gli utenti gia' caricati (lista vuota o corta),
+            // si continua a caricare finche' il server ha altri profili.
+            val listState = rememberLazyListState()
+            val filteredCount = filteredUsers.size
+            LaunchedEffect(listState, filteredCount, hasMoreData, isLoading, hasError) {
+                if (!hasMoreData || isLoading || hasError) return@LaunchedEffect
+                snapshotFlow { listState.layoutInfo.visibleItemsInfo.lastOrNull()?.index ?: -1 }
+                    .collect { lastVisibleIndex ->
+                        if (lastVisibleIndex >= filteredCount - 3) {
+                            Log.d("UserListScreen", "Caricamento prossima pagina...")
+                            viewModel.loadUsers()
+                        }
+                    }
+            }
+
             // Lista utenti con caricamento progressivo
-            LazyColumn(modifier = Modifier.fillMaxSize()) {
-                itemsIndexed(filteredUsers) { index, user ->
+            LazyColumn(state = listState, modifier = Modifier.fillMaxSize()) {
+                // FIX: key stabile, cosi' quando arrivano nuovi profili (es. ordinamento per
+                // similarita') la lista non salta e lo scroll resta sullo stesso profilo.
+                itemsIndexed(filteredUsers, key = { _, user -> user.docId }) { _, user ->
                     UserProfileCard(
                         user = user,
                         onClick = { navController.navigate("userProfile/${user.docId}") }
                     )
                     HorizontalDivider(thickness = 1.dp, color = MaterialTheme.colorScheme.outlineVariant)
-
-                    // Caricamento progressivo (invariato)
-                    if (index == filteredUsers.lastIndex && hasMoreData && !isLoading) {
-                        LaunchedEffect(Unit) {
-                            Log.d("UserListScreen", "Caricamento prossima pagina...") // Log per debug
-                            viewModel.loadUsers()
-                        }
-                    }
                 }
 
                 // Indicatore di caricamento e errore (invariati)

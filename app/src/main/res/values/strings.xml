@@ -14,6 +14,16 @@
     <string name="registration_select_profile_picture_button">select profile picture</string>
     <string name="registration_birthdate_label">date of birth</string>
     <string name="registration_register_button">register</string>
+    <string name="registration_confirm_password_label">confirm password</string>
+    <string name="registration_passwords_dont_match">the passwords do not match</string>
+    <string name="registration_password_min_length">at least %1$d characters</string>
+    <string name="registration_show_password">show password</string>
+    <string name="registration_hide_password">hide password</string>
+    <string name="registration_error_generic">registration failed. Try again.</string>
+    <string name="registration_error_email_in_use">this email is already registered. Try to log in.</string>
+    <string name="registration_error_weak_password">the password is too weak. Use at least 6 characters.</string>
+    <string name="registration_error_invalid_email">the email address is not valid.</string>
+    <string name="registration_error_network">connection error. Check your internet and try again.</string>
     <string name="sex_male_description">sex: male</string>
     <string name="sex_female_description">sex: Female</string>
     <string name="sex_undefined_description">sex: undefined</string>
@@ -112,6 +122,22 @@
     <string name="topics_placeholder">eg. I want to talk about tennis </string>
     <string name="add">Add</string>
     <string name="set_birthdate">pick birthdate</string>
+    <!-- Campi obbligatori del profilo (bio, topic, data di nascita) -->
+    <string name="profile_bio_label">bio</string>
+    <string name="profile_topics_label">topics</string>
+    <string name="profile_topics_empty_hint">add at least one topic</string>
+    <string name="profile_birthdate_label">birthdate</string>
+    <string name="profile_field_required">this field is required</string>
+
+    <!-- Menu contestuale della conversazione (pressione lunga sulla chat) -->
+    <string name="chat_pin">pin</string>
+    <string name="chat_unpin">unpin</string>
+    <string name="chat_delete">delete</string>
+    <string name="profile_complete_title">Complete your profile</string>
+    <string name="profile_complete_subtitle">To continue, add a bio, at least one topic and your birthdate.</string>
+    <string name="profile_complete_save_button">save and continue</string>
+    <string name="profile_complete_required_error">Fill in bio, at least one topic and your birthdate to continue.</string>
+    <string name="profile_save_error">Could not save your profile. Try again.</string>
 
     <string name="get_location">get location</string>
     <string name="your_location">your location</string>

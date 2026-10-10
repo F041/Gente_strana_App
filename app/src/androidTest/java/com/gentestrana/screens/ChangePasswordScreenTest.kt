@@ -1,52 +1,56 @@
 package com.gentestrana.screens
 
-import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.test.junit4.createComposeRule
-import androidx.compose.ui.test.onNodeWithText
-import androidx.compose.ui.test.performClick
-import androidx.compose.ui.test.performTextInput
-import androidx.navigation.testing.TestNavHostController
-import androidx.test.ext.junit.rules.ActivityScenarioRule
-import com.gentestrana.TestActivity
-import org.junit.Before
+import androidx.compose.ui.test.*
+import androidx.compose.ui.test.junit4.*
+import androidx.navigation.compose.rememberNavController
 import org.junit.Rule
 import org.junit.Test
 
-// TODO: non va come GoogleLoginScreen, stesso problema
 class ChangePasswordScreenTest {
-
-    @get:Rule
-    val activityRule = ActivityScenarioRule(TestActivity::class.java)
 
     @get:Rule
     val composeTestRule = createComposeRule()
 
-    private lateinit var navController: TestNavHostController
-
-    @Before
-    fun setupNavController() {
+    private fun launchChangePasswordScreen() {
         composeTestRule.setContent {
-            navController = TestNavHostController(LocalContext.current)
+            ChangePasswordScreen(navController = rememberNavController())
         }
     }
 
     @Test
-    fun changePasswordScreen_displaysTopBarAndEmailField() {
-        composeTestRule.setContent {
-            ChangePasswordScreen(navController = navController)
-        }
-
-        composeTestRule.onNodeWithText("Change Password").assertExists()
-        composeTestRule.onNodeWithText("Email Address").assertExists()
+    fun emptyFields_showsFillFieldsError() {
+        launchChangePasswordScreen()
+        composeTestRule.onAllNodesWithText("change password")
+            .filter(hasClickAction())
+            .onFirst()
+            .performClick()
+        composeTestRule.onNodeWithText("fill in all the fields").assertIsDisplayed()
     }
 
     @Test
-    fun changePasswordScreen_enterEmailAndClickReset() {
-        composeTestRule.setContent {
-            ChangePasswordScreen(navController = navController)
-        }
-
-        composeTestRule.onNodeWithText("Email Address").performTextInput("test@example.com")
-        composeTestRule.onNodeWithText("Send Reset Email").performClick()
+    fun passwordMismatch_showsMismatchError() {
+        launchChangePasswordScreen()
+        composeTestRule.onNodeWithText("current password").performTextInput("current")
+        composeTestRule.onNodeWithText("new password").performTextInput("newpass")
+        composeTestRule.onNodeWithText("confirm new password").performTextInput("nomatch")
+        composeTestRule.onAllNodesWithText("change password")
+            .filter(hasClickAction())
+            .onFirst()
+            .performClick()
+        composeTestRule.onNodeWithText("the new passwords do not match").assertIsDisplayed()
     }
+
+    @Test
+    fun shortPassword_showsMinLengthError() {
+        launchChangePasswordScreen()
+        composeTestRule.onNodeWithText("current password").performTextInput("current")
+        composeTestRule.onNodeWithText("new password").performTextInput("123")
+        composeTestRule.onNodeWithText("confirm new password").performTextInput("123")
+        composeTestRule.onAllNodesWithText("change password")
+            .filter(hasClickAction())
+            .onFirst()
+            .performClick()
+        composeTestRule.onNodeWithText("the new password must be at least 6 characters").assertIsDisplayed()
+    }
+
 }

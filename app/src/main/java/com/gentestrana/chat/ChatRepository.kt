@@ -61,6 +61,17 @@ class ChatRepository(
                 val participants = doc.get("participants") as? List<String> ?: emptyList()
                 val otherUserId = participants.firstOrNull { it != currentUserId } ?: return@coroutineScope null
 
+                // Chat eliminata dall'utente corrente: non deve apparire nella sua lista.
+                val deletedFor = doc.get("deletedFor") as? List<String> ?: emptyList()
+                if (deletedFor.contains(currentUserId)) {
+                    Log.d("ChatRepository", "Chat ${doc.id} saltata (eliminata da $currentUserId)")
+                    return@coroutineScope null
+                }
+
+                // Chat fissata in cima dall'utente corrente
+                val pinnedBy = doc.get("pinnedBy") as? List<String> ?: emptyList()
+                val isPinned = pinnedBy.contains(currentUserId)
+
                 // **FIX 1**: Se hasMessages è false, la chat è vuota (appena creata senza messaggi).
                 // Non mostrarla nella lista di nessuno.
                 val hasMessages = doc.getBoolean("hasMessages") ?: false
@@ -121,6 +132,7 @@ class ChatRepository(
                     photoUrl = firstPhotoUrl,
                     lastMessageStatus = lastMessageStatus,
                     timestamp = timestamp,
+                    isPinned = isPinned,
                 )
             }
 
@@ -302,6 +314,38 @@ class ChatRepository(
     }
 
 
+
+    /**
+     * Fissa o rimuove il fissaggio di una chat per l'utente corrente.
+     * Il flag e' salvato nel documento chat come array `pinnedBy`.
+     */
+    suspend fun setChatPinnedForMe(chatId: String, pinned: Boolean) {
+        val currentUserId = auth.currentUser?.uid
+            ?: throw IllegalStateException("Utente non loggato")
+
+        val field = if (pinned) FieldValue.arrayUnion(currentUserId)
+                    else FieldValue.arrayRemove(currentUserId)
+
+        db.collection("chats").document(chatId)
+            .update("pinnedBy", field)
+            .await()
+        Log.d("ChatRepository", "Chat $chatId ${if (pinned) "fissata" else "sbloccata"} per $currentUserId")
+    }
+
+    /**
+     * Elimina (per l'utente corrente) una conversazione: la chat resta visibile
+     * all'altro partecipante ma non appare piu' nella lista di chi l'ha eliminata.
+     * Implementata come soft-delete via array `deletedFor`.
+     */
+    suspend fun deleteChatForMe(chatId: String) {
+        val currentUserId = auth.currentUser?.uid
+            ?: throw IllegalStateException("Utente non loggato")
+
+        db.collection("chats").document(chatId)
+            .update("deletedFor", FieldValue.arrayUnion(currentUserId))
+            .await()
+        Log.d("ChatRepository", "Chat $chatId eliminata per $currentUserId")
+    }
 
     suspend fun deleteMessage(chatId: String, messageId: String) {
         try {

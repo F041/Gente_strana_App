@@ -3,8 +3,10 @@ package com.gentestrana.users
 import android.content.Context
 import android.net.Uri
 import android.util.Log
+import com.gentestrana.R
 import com.gentestrana.utils.FirestoreDeletionUtils
 import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.auth.FirebaseAuthException
 import com.google.firebase.auth.GoogleAuthProvider
 import com.google.firebase.firestore.ktx.firestore
 import com.google.firebase.ktx.Firebase
@@ -40,6 +42,7 @@ class UserRepository(
         username: String,
         sex: String,
         bio: String,
+        topics: List<String> = emptyList(),
         selectedImageUri: Uri?,
         rawBirthTimestamp: Long = 0L,
         context: Context,
@@ -55,8 +58,6 @@ class UserRepository(
                     return@addOnSuccessListener
                 }
 
-                // Invia email di verifica subito dopo la registrazione
-                authResult.user?.sendEmailVerification()
                 // Ottieni il tipo di registrazione (per ora, valore di default)
                 val registrationType = "self_assessment" // Per ora, supponiamo "autovalutazione"
                 // Crea un Timestamp per la data di registrazione (data e ora corrente)
@@ -68,8 +69,9 @@ class UserRepository(
                     "bio" to bio,
                     "profilePicUrl" to emptyList<String>(),
                     "sex" to sex,
-                    "topics" to emptyList<String>(),
-                    "rawBirthTimestamp" to (if (rawBirthTimestamp > 0L) rawBirthTimestamp else null),
+                    "topics" to topics,
+                    // != 0L perche' una data precedente al 1970 ha timestamp negativo ed e valida.
+                    "rawBirthTimestamp" to (if (rawBirthTimestamp != 0L) rawBirthTimestamp else null),
                     "docId" to uid,
                     "fcmToken" to "",
                     "spokenLanguages" to emptyList<String>(),
@@ -83,57 +85,39 @@ class UserRepository(
                     .set(userData)
                     .addOnSuccessListener {
                         retrieveAndSaveFcmToken(uid)
-                        if (selectedImageUri != null) {
-                            // Use centralized function to upload the image
-                              uploadMainProfileImage(context, uid, selectedImageUri
-                              ) { imageUrl ->
-                                  if (imageUrl.isNotEmpty()) {
-                                      // Update Firestore with the profile photo URL
-                                      firestore.collection("users").document(uid)
-                                          .update("profilePicUrl", listOf(imageUrl))
-                                          .addOnSuccessListener {
-                                              // Also update the profile in FirebaseAuth
-                                              val user = auth.currentUser
-                                              val profileUpdates = UserProfileChangeRequest.Builder()
-                                                  .setPhotoUri(Uri.parse(imageUrl)) // Usa .setPhotoUri()
-                                                  .setDisplayName(username)          // Usa .setDisplayName()
-                                                  .build()
-                                              user?.updateProfile(profileUpdates)
-                                                  ?.addOnCompleteListener { task ->
-                                                      if (task.isSuccessful) {
-                                                          onSuccess()
-                                                      } else {
-                                                          onFailure(task.exception?.message)
-                                                      }
-                                                  }
-                                          }
-                                          .addOnFailureListener { e ->
-                                              onFailure(e.message)
-                                          }
-                                  } else {
-                                      onFailure("Image upload failed")
-                                  }
-                              }
-                        } else {
-                            // Nessuna immagine selezionata dall'utente.
-                            // Il documento Firestore ha già profilePicUrl: [].
-                            // Aggiorniamo solo il displayName in FirebaseAuth.
-                            Log.d("UserRepository", "No image selected. Updating FirebaseAuth displayName only.")
-                            val user = auth.currentUser
-                            val profileUpdates = UserProfileChangeRequest.Builder()
-                                .setDisplayName(username)
-                                .build()
-                            user?.updateProfile(profileUpdates)
-                                ?.addOnCompleteListener { task ->
-                                    if (task.isSuccessful) {
-                                        Log.d("UserRepository", "FirebaseAuth profile updated (displayName only).")
-                                        onSuccess() // La registrazione di base è riuscita
-                                    } else {
-                                        // Il fallimento dell'aggiornamento del displayName in Auth
-                                        // non dovrebbe bloccare il successo della registrazione.
-                                        Log.w("UserRepository", "FirebaseAuth profile update (displayName only) failed: ${task.exception?.message}")
-                                        onSuccess() // Consideriamo comunque la registrazione riuscita
+
+                        // FIX: l'email di verifica parte solo DOPO il salvataggio del profilo,
+                        // cosi' non arriva mai per un account che viene poi cancellato.
+                        authResult.user?.sendEmailVerification()
+                            ?.addOnFailureListener { e ->
+                                Log.w("UserRepository", "Invio email di verifica fallito: ${e.message}")
+                            }
+
+                        if (selectedImageUri == null) {
+                            updateAuthProfile(username, null) { onSuccess() }
+                            return@addOnSuccessListener
+                        }
+
+                        // FIX: a questo punto account e profilo esistono gia'.
+                        // Se la foto non si carica, la registrazione resta valida
+                        // (l'utente potra' aggiungere la foto dal profilo) invece di
+                        // lasciarlo bloccato con "email gia' in uso" al nuovo tentativo.
+                        uploadMainProfileImage(context, uid, selectedImageUri) { imageUrl ->
+                            if (imageUrl.isEmpty()) {
+                                Log.w("UserRepository", "Upload foto fallito: registrazione completata senza foto.")
+                                updateAuthProfile(username, null) { onSuccess() }
+                                return@uploadMainProfileImage
+                            }
+                            firestore.collection("users").document(uid)
+                                .update("profilePicUrl", listOf(imageUrl))
+                                .addOnCompleteListener { task ->
+                                    if (!task.isSuccessful) {
+                                        Log.w("UserRepository", "Salvataggio URL foto fallito: ${task.exception?.message}")
                                     }
+                                    updateAuthProfile(
+                                        username,
+                                        if (task.isSuccessful) imageUrl else null
+                                    ) { onSuccess() }
                                 }
                         }
                     }
@@ -156,7 +140,17 @@ class UserRepository(
             .addOnFailureListener { e ->
                 // Questo è il listener del createUserWithEmailAndPassword
                 Log.e("UserRepository", "Failed to create user in FirebaseAuth: ${e.message}")
-                onFailure(e.message)
+                // FIX: gli errori di Firebase arrivano in inglese. Li traduciamo usando i codici di errore.
+                val errorCode = (e as? FirebaseAuthException)?.errorCode
+                onFailure(
+                    when (errorCode) {
+                        "ERROR_EMAIL_ALREADY_IN_USE" -> context.getString(R.string.registration_error_email_in_use)
+                        "ERROR_WEAK_PASSWORD" -> context.getString(R.string.registration_error_weak_password)
+                        "ERROR_INVALID_EMAIL" -> context.getString(R.string.registration_error_invalid_email)
+                        "ERROR_NETWORK_REQUEST_FAILED" -> context.getString(R.string.registration_error_network)
+                        else -> context.getString(R.string.registration_error_generic)
+                    }
+                )
             }
     }
 
@@ -544,6 +538,47 @@ class UserRepository(
     }
 
     /**
+     * Aggiorna i campi obbligatori del profilo (bio, topics, data di nascita) dell'utente corrente.
+     *
+     * Usato da:
+     * - CompleteProfileScreen (completamento per login Google e utenti gia registrati)
+     * - salvataggio del profilo personale
+     *
+     * @param rawBirthTimestamp 0L lascia la data invariata, altrimenti la imposta
+     *        (anche se negativa, cioe' precedente al 1970).
+     */
+    suspend fun updateRequiredProfileFields(
+        bio: String,
+        topics: List<String>,
+        rawBirthTimestamp: Long,
+        onSuccess: () -> Unit,
+        onFailure: (String?) -> Unit
+    ) {
+        val currentUserId = auth.currentUser?.uid ?: run {
+            onFailure("Utente non autenticato")
+            return
+        }
+
+        try {
+            val updates = mutableMapOf<String, Any>(
+                "bio" to bio,
+                "topics" to topics
+            )
+            if (rawBirthTimestamp != 0L) {
+                updates["rawBirthTimestamp"] = rawBirthTimestamp
+            }
+            firestore.collection("users").document(currentUserId)
+                .update(updates)
+                .await()
+            onSuccess()
+            Log.d("UserRepository", "Campi obbligatori del profilo aggiornati per $currentUserId.")
+        } catch (e: Exception) {
+            Log.e("UserRepository", "Errore aggiornando i campi obbligatori per $currentUserId: ${e.message}")
+            onFailure(e.message)
+        }
+    }
+
+    /**
      * Elimina l'account utente corrente da Firebase Authentication.
      * Questa funzione elimina SOLO l'account di autenticazione, non i dati utente in Firestore.
      */
@@ -568,6 +603,29 @@ class UserRepository(
         } catch (e: Exception) {
             onFailure("Errore: ${e.message}")
         }
+    }
+
+    /**
+     * Aggiorna displayName (e foto, se presente) in FirebaseAuth.
+     * Chiama SEMPRE [onDone], anche se l'utente e' null o l'aggiornamento fallisce:
+     * cosi' la UI non resta mai bloccata con la rotellina di caricamento.
+     */
+    private fun updateAuthProfile(username: String, photoUrl: String?, onDone: () -> Unit) {
+        val user = auth.currentUser
+        if (user == null) {
+            Log.w("UserRepository", "updateAuthProfile: currentUser null, salto l'aggiornamento.")
+            onDone()
+            return
+        }
+        val builder = UserProfileChangeRequest.Builder().setDisplayName(username)
+        if (photoUrl != null) builder.setPhotoUri(Uri.parse(photoUrl))
+        user.updateProfile(builder.build())
+            .addOnCompleteListener { task ->
+                if (!task.isSuccessful) {
+                    Log.w("UserRepository", "Aggiornamento profilo Auth fallito: ${task.exception?.message}")
+                }
+                onDone()
+            }
     }
 
     private fun retrieveAndSaveFcmToken(userId: String) {

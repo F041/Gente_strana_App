@@ -15,6 +15,8 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Female
 import androidx.compose.material.icons.filled.Male
 import androidx.compose.material.icons.filled.QuestionMark
+import androidx.compose.material.icons.filled.Visibility
+import androidx.compose.material.icons.filled.VisibilityOff
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -26,19 +28,44 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
+import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
 import coil.compose.rememberAsyncImagePainter
 import com.gentestrana.R
-import com.gentestrana.components.DateOfBirthPicker
 import com.gentestrana.components.GenericLoadingScreen
+import com.gentestrana.components.ProfileCompletionFields
 import com.gentestrana.users.UserRepository
+import com.gentestrana.utils.missingRequiredProfileFields
 import com.google.firebase.ktx.Firebase
 import com.google.firebase.remoteconfig.ktx.remoteConfig
 
 val userRepository = UserRepository()
 
 private const val REMOTE_CONFIG_EMAIL_REGEX_KEY = "registration_email_validation_regex"
-private const val DEFAULT_EMAIL_REGEX = "^[A-Za-z0-9._%+-]+@(?:gmail\\.com|outlook\\.com|yahoo\\.com|icloud\\.com|protonmail\\.com|live\\.com|hotmail\\.it|yahoo\\.it)$"
+
+// FIX: aggiunti domini molto diffusi (hotmail.com, outlook.it, libero.it, ecc.).
+// Il controllo viene fatto ignorando maiuscole/minuscole (vedi buildEmailRegex).
+private const val DEFAULT_EMAIL_REGEX =
+    "^[A-Za-z0-9._%+-]+@(?:gmail\\.com|googlemail\\.com|outlook\\.com|outlook\\.it|hotmail\\.com|hotmail\\.it|" +
+        "live\\.com|live\\.it|msn\\.com|yahoo\\.com|yahoo\\.it|icloud\\.com|me\\.com|mac\\.com|" +
+        "protonmail\\.com|proton\\.me|libero\\.it|virgilio\\.it|tiscali\\.it|alice\\.it|tim\\.it|" +
+        "fastwebnet\\.it|aol\\.com|gmx\\.com|gmx\\.it)$"
+
+/** Lunghezza minima richiesta da Firebase Auth. */
+private const val MIN_PASSWORD_LENGTH = 6
+
+/**
+ * FIX: una regex scritta male in Remote Config non deve far crashare la schermata.
+ * In quel caso si torna alla regex di default.
+ */
+private fun buildEmailRegex(pattern: String): Regex {
+    val source = pattern.ifBlank { DEFAULT_EMAIL_REGEX }
+    return runCatching { source.toRegex(RegexOption.IGNORE_CASE) }
+        .getOrElse { e ->
+            Log.w("RegistrationScreen", "Regex email di Remote Config non valida, uso quella di default: ${e.message}")
+            DEFAULT_EMAIL_REGEX.toRegex(RegexOption.IGNORE_CASE)
+        }
+}
 
 @Composable
 fun RegistrationScreen(
@@ -50,12 +77,22 @@ fun RegistrationScreen(
 
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
+    var confirmPassword by remember { mutableStateOf("") }
+    var passwordVisible by remember { mutableStateOf(false) }
     var username by remember { mutableStateOf("") }
     var isLoading by remember { mutableStateOf(false) }
     var errorMessage by remember { mutableStateOf<String?>(null) }
-    var isEmailError by remember { mutableStateOf(false) }
     var sex by remember { mutableStateOf("Undefined") }
     var rawBirthTimestamp by remember { mutableStateOf(0L) }
+    var bio by remember { mutableStateOf("") }
+    var topics by remember { mutableStateOf<List<String>>(emptyList()) }
+    // Diventa true quando l'utente prova a registrarsi senza aver compilato i campi obbligatori.
+    // Serve per mostrare gli errori in rosso solo dopo il primo tentativo.
+    var showValidationErrors by remember { mutableStateOf(false) }
+
+    // Campi obbligatori ancora mancanti (bio, almeno 1 topic, data di nascita).
+    // Funzione pura e testata: vedi ProfileValidationTest.
+    val missingFields = missingRequiredProfileFields(bio, topics, rawBirthTimestamp)
 
     var selectedImageUri by remember { mutableStateOf<Uri?>(null) }
     val imagePickerLauncher = rememberLauncherForActivityResult(
@@ -64,15 +101,43 @@ fun RegistrationScreen(
         selectedImageUri = uri
     }
 
-    val remoteConfig = Firebase.remoteConfig
-    val emailValidationRegexString = remoteConfig.getString(REMOTE_CONFIG_EMAIL_REGEX_KEY)
-    val actualEmailRegexString = emailValidationRegexString.ifBlank { DEFAULT_EMAIL_REGEX }
-    val emailRegexPattern = remember(actualEmailRegexString) { actualEmailRegexString.toRegex() }
+    // FIX: Remote Config viene davvero aggiornato (fetchAndActivate) e la regex
+    // si ricostruisce quando arriva il nuovo valore.
+    val remoteConfig = remember { Firebase.remoteConfig }
+    var emailRegexString by remember {
+        mutableStateOf(remoteConfig.getString(REMOTE_CONFIG_EMAIL_REGEX_KEY))
+    }
+    LaunchedEffect(Unit) {
+        remoteConfig.fetchAndActivate().addOnCompleteListener {
+            emailRegexString = remoteConfig.getString(REMOTE_CONFIG_EMAIL_REGEX_KEY)
+        }
+    }
+    val emailRegexPattern = remember(emailRegexString) { buildEmailRegex(emailRegexString) }
+
+    // FIX: email ripulita da spazi e in minuscolo; l'errore e' calcolato a ogni
+    // ricomposizione, quindi resta corretto anche se la regex cambia.
+    val normalizedEmail = email.trim().lowercase()
+    val isEmailError = email.isNotBlank() && !normalizedEmail.matches(emailRegexPattern)
+    val isConfirmPasswordError = confirmPassword.isNotEmpty() && confirmPassword != password
 
     LaunchedEffect(errorMessage) {
         errorMessage?.let { message ->
             snackbarHostState.showSnackbar(message)
             errorMessage = null
+        }
+    }
+
+    val passwordTransformation =
+        if (passwordVisible) VisualTransformation.None else PasswordVisualTransformation()
+    val passwordToggle: @Composable () -> Unit = {
+        IconButton(onClick = { passwordVisible = !passwordVisible }) {
+            Icon(
+                imageVector = if (passwordVisible) Icons.Filled.VisibilityOff else Icons.Filled.Visibility,
+                contentDescription = stringResource(
+                    if (passwordVisible) R.string.registration_hide_password
+                    else R.string.registration_show_password
+                )
+            )
         }
     }
 
@@ -93,14 +158,12 @@ fun RegistrationScreen(
                 // Campo email
                 OutlinedTextField(
                     value = email,
-                    onValueChange = {
-                        email = it
-                        isEmailError = !it.matches(emailRegexPattern)
-                    },
+                    onValueChange = { email = it },
                     label = { Text(stringResource(R.string.registration_email_label)) },
                     modifier = Modifier.fillMaxWidth(),
                     placeholder = { Text(stringResource(R.string.registration_email_placeholder)) },
                     isError = isEmailError,
+                    singleLine = true,
                     keyboardOptions = KeyboardOptions(
                         keyboardType = KeyboardType.Email,
                         imeAction = ImeAction.Next
@@ -116,19 +179,49 @@ fun RegistrationScreen(
                 }
                 Spacer(modifier = Modifier.height(8.dp))
 
-                // Campo password — oscurata con PasswordVisualTransformation
+                // Campo password — con pulsante mostra/nascondi
                 OutlinedTextField(
                     value = password,
                     onValueChange = { password = it },
                     label = { Text(stringResource(R.string.registration_password_label)) },
                     placeholder = { Text(stringResource(R.string.registration_password_placeholder)) },
                     modifier = Modifier.fillMaxWidth(),
-                    visualTransformation = PasswordVisualTransformation(),
+                    singleLine = true,
+                    visualTransformation = passwordTransformation,
+                    trailingIcon = passwordToggle,
+                    isError = password.isNotEmpty() && password.length < MIN_PASSWORD_LENGTH,
+                    supportingText = {
+                        Text(stringResource(R.string.registration_password_min_length, MIN_PASSWORD_LENGTH))
+                    },
                     keyboardOptions = KeyboardOptions(
                         keyboardType = KeyboardType.Password,
                         imeAction = ImeAction.Next
                     )
                 )
+                Spacer(modifier = Modifier.height(8.dp))
+
+                // Campo conferma password
+                OutlinedTextField(
+                    value = confirmPassword,
+                    onValueChange = { confirmPassword = it },
+                    label = { Text(stringResource(R.string.registration_confirm_password_label)) },
+                    modifier = Modifier.fillMaxWidth(),
+                    singleLine = true,
+                    visualTransformation = passwordTransformation,
+                    isError = isConfirmPasswordError,
+                    keyboardOptions = KeyboardOptions(
+                        keyboardType = KeyboardType.Password,
+                        imeAction = ImeAction.Next
+                    )
+                )
+                if (isConfirmPasswordError) {
+                    Text(
+                        text = stringResource(R.string.registration_passwords_dont_match),
+                        color = MaterialTheme.colorScheme.error,
+                        style = MaterialTheme.typography.bodySmall,
+                        modifier = Modifier.padding(start = 16.dp, top = 4.dp)
+                    )
+                }
                 Spacer(modifier = Modifier.height(8.dp))
 
                 // Campo username
@@ -138,6 +231,7 @@ fun RegistrationScreen(
                     label = { Text(stringResource(R.string.registration_firstname_label)) },
                     placeholder = { Text(stringResource(R.string.registration_firstname_placeholder)) },
                     modifier = Modifier.fillMaxWidth(),
+                    singleLine = true,
                     keyboardOptions = KeyboardOptions(
                         imeAction = ImeAction.Done
                     )
@@ -212,10 +306,15 @@ fun RegistrationScreen(
                 }
                 Spacer(modifier = Modifier.height(8.dp))
 
-                DateOfBirthPicker(
+                ProfileCompletionFields(
                     context = context,
+                    bio = bio,
+                    onBioChange = { bio = it },
+                    topics = topics,
+                    onTopicsChange = { topics = it },
                     birthTimestamp = rawBirthTimestamp,
-                    onDateSelected = { rawBirthTimestamp = it }
+                    onBirthTimestampChange = { rawBirthTimestamp = it },
+                    missingFields = if (showValidationErrors) missingFields else emptyList()
                 )
 
                 Spacer(modifier = Modifier.height(8.dp))
@@ -242,18 +341,37 @@ fun RegistrationScreen(
             Spacer(modifier = Modifier.height(4.dp))
             Button(
                 onClick = {
-                    if (isEmailError || email.isBlank() || password.isBlank() || username.isBlank()) {
+                    if (normalizedEmail.isBlank() || password.isBlank() || username.isBlank()) {
                         errorMessage = context.getString(R.string.login_fill_fields)
-                        if (isEmailError) errorMessage = context.getString(R.string.registration_email_error_message)
+                        return@Button
+                    }
+                    if (isEmailError) {
+                        errorMessage = context.getString(R.string.registration_email_error_message)
+                        return@Button
+                    }
+                    // Campi obbligatori: bio, almeno un topic e data di nascita.
+                    if (missingFields.isNotEmpty()) {
+                        showValidationErrors = true
+                        errorMessage = context.getString(R.string.profile_complete_required_error)
+                        return@Button
+                    }
+                    // FIX: controlli sulla password prima di chiamare Firebase.
+                    if (password.length < MIN_PASSWORD_LENGTH) {
+                        errorMessage = context.getString(R.string.registration_password_min_length, MIN_PASSWORD_LENGTH)
+                        return@Button
+                    }
+                    if (confirmPassword != password) {
+                        errorMessage = context.getString(R.string.registration_passwords_dont_match)
                         return@Button
                     }
                     isLoading = true
                     userRepository.registerUserAndUploadImage(
-                        email = email,
+                        email = normalizedEmail,
                         password = password,
-                        username = username,
+                        username = username.trim(),
                         sex = sex,
-                        bio = "",
+                        bio = bio,
+                        topics = topics,
                         rawBirthTimestamp = rawBirthTimestamp,
                         selectedImageUri = selectedImageUri,
                         context = context,
@@ -263,7 +381,7 @@ fun RegistrationScreen(
                         },
                         onFailure = { error ->
                             isLoading = false
-                            errorMessage = error
+                            errorMessage = error ?: context.getString(R.string.registration_error_generic)
                         }
                     )
                 },

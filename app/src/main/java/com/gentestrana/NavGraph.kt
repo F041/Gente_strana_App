@@ -1,8 +1,14 @@
 package com.gentestrana
 
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
@@ -10,7 +16,11 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navigation
 import com.google.firebase.auth.FirebaseAuth
+import com.gentestrana.components.GenericLoadingScreen
 import com.gentestrana.screens.*
+import com.gentestrana.users.User
+import com.gentestrana.users.UserRepository
+import com.gentestrana.utils.isProfileComplete
 
 @Composable
 fun AppNavHost(navController: NavHostController,
@@ -65,7 +75,10 @@ fun AppNavHost(navController: NavHostController,
         // Main Flow with Bottom Navigation
         navigation(startDestination = "mainTabs", route = "main") {
             composable("mainTabs") {
-                MainTabsScreen(navController, onThemeChange = onThemeChange)
+                ProfileRequirementGate(
+                    navController = navController,
+                    onThemeChange = onThemeChange
+                )
             }
             composable("userProfile/{docId}") { backStackEntry ->
                 val docId = backStackEntry.arguments?.getString("docId") ?: ""
@@ -160,5 +173,72 @@ fun MainTabsScreen(navController: NavHostController,
             }
 
         }
+    }
+}
+
+/**
+ * Blocca l'accesso all'app finche' il profilo non ha bio, almeno un topic e data di nascita.
+ *
+ * Copre tutti i modi in cui un utente arriva a "main":
+ * - login con email
+ * - login con Google (il documento viene creato vuoto)
+ * - app riaperta da utente gia' loggato
+ * - account recuperati da createMissingUserDocument()
+ * - utenti registrati prima dell'introduzione di questo obbligo
+ *
+ * Se il profilo e' completo mostra MainTabsScreen, altrimenti CompleteProfileScreen.
+ */
+@Composable
+fun ProfileRequirementGate(
+    navController: NavHostController,
+    onThemeChange: (AppTheme) -> Unit
+) {
+    val userRepository = remember { UserRepository() }
+    var user by remember { mutableStateOf<User?>(null) }
+    var loading by remember { mutableStateOf(true) }
+    var loadFailed by remember { mutableStateOf(false) }
+
+    fun loadProfile() {
+        val uid = FirebaseAuth.getInstance().currentUser?.uid
+        if (uid == null) {
+            loading = false
+            return
+        }
+        userRepository.getUser(
+            docId = uid,
+            onSuccess = {
+                user = it
+                loading = false
+            },
+            onFailure = {
+                loadFailed = true
+                loading = false
+            }
+        )
+    }
+
+    LaunchedEffect(Unit) {
+        loadProfile()
+    }
+
+    if (loading) {
+        GenericLoadingScreen(modifier = Modifier.fillMaxSize())
+        return
+    }
+
+    val current = user
+    // In caso di errore di caricamento non blocchiamo l'utente fuori dall'app.
+    if (loadFailed || current == null || isProfileComplete(current)) {
+        MainTabsScreen(navController, onThemeChange = onThemeChange)
+    } else {
+        CompleteProfileScreen(
+            initialBio = current.bio,
+            initialTopics = current.topics,
+            initialBirthTimestamp = current.birthTimestamp,
+            onProfileCompleted = {
+                loading = true
+                loadProfile()
+            }
+        )
     }
 }

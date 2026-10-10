@@ -42,6 +42,7 @@ import com.gentestrana.components.ProfileTopicsList
 import com.gentestrana.components.ReorderableProfileImageGridWithAdd
 import com.gentestrana.utils.LocationUtils
 import com.gentestrana.utils.OperationResult
+import com.gentestrana.utils.missingRequiredProfileFields
 import kotlinx.coroutines.launch
 
 /**
@@ -415,6 +416,17 @@ fun PersonalProfileScreen(
                 // Bottone per salvare gli aggiornamenti del profilo
                 Button(
                     onClick = {
+                        // Campi obbligatori: bio, almeno un topic e data di nascita.
+                        // Senza questi non si puo' salvare (stessa regola della registrazione).
+                        val missing = missingRequiredProfileFields(bio, topicsList, birthTimestamp ?: 0L)
+                        if (missing.isNotEmpty()) {
+                            Toast.makeText(
+                                context,
+                                context.getString(R.string.profile_complete_required_error),
+                                Toast.LENGTH_SHORT
+                            ).show()
+                            return@Button
+                        }
                         profileViewModel.updateProfile(
                             updatedUsername = username,
                             updatedBio = bio,

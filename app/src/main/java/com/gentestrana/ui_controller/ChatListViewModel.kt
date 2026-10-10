@@ -120,9 +120,9 @@ class ChatListViewModel(
         chatsListenerRegistration = repository.registerChatsListener(userId) { docs ->
             Log.d("ChatListVM", "Chats listener received ${docs.size} documents.")
             viewModelScope.launch(Dispatchers.IO) {
-                val updatedProcessedChats = docs.mapNotNull { doc ->
-                    repository.processChatDocument(doc, userId)
-                }.sortedByDescending { it.timestamp }
+                val updatedProcessedChats = sortChats(
+                    docs.mapNotNull { doc -> repository.processChatDocument(doc, userId) }
+                )
 
                 // Aggiorna _processedChats. Combine farà il resto.
                 _processedChats.value = updatedProcessedChats
@@ -156,7 +156,7 @@ class ChatListViewModel(
                         if (chatIndex != -1) {
                             val updatedChat = currentProcessed[chatIndex].copy(lastMessageStatus = newStatus)
                             currentProcessed[chatIndex] = updatedChat
-                            _processedChats.value = currentProcessed.sortedByDescending { it.timestamp }
+                            _processedChats.value = sortChats(currentProcessed)
                             // Log.d("ChatListVM_Status", "Updated status in _processedChats for ${chat.id} to $newStatus")
                         } else {
                             Log.w("ChatListVM_Status", "Chat ${chat.id} not found in _processedChats for status update.")
@@ -164,6 +164,39 @@ class ChatListViewModel(
                     }
                 }
                 messageListeners[chat.id] = listener
+            }
+        }
+    }
+
+    /**
+     * Ordina le chat: prima quelle fissate (in cima), poi per timestamp decrescente.
+     */
+    private fun sortChats(chats: List<Chat>): List<Chat> =
+        chats.sortedWith(
+            compareByDescending<Chat> { it.isPinned }.thenByDescending { it.timestamp }
+        )
+
+    /** Fissa/sblocca una chat per l'utente corrente. */
+    fun togglePin(chat: Chat) {
+        val userId = currentUserId ?: return
+        viewModelScope.launch {
+            try {
+                repository.setChatPinnedForMe(chat.id, !chat.isPinned)
+                Log.d("ChatListVM", "Chat ${chat.id} ${if (chat.isPinned) "sbloccata" else "fissata"}")
+            } catch (e: Exception) {
+                Log.e("ChatListVM", "Errore nel pin della chat ${chat.id}", e)
+            }
+        }
+    }
+
+    /** Elimina (per l'utente corrente) una conversazione dalla lista. */
+    fun deleteChat(chat: Chat) {
+        viewModelScope.launch {
+            try {
+                repository.deleteChatForMe(chat.id)
+                Log.d("ChatListVM", "Chat ${chat.id} eliminata per l'utente corrente")
+            } catch (e: Exception) {
+                Log.e("ChatListVM", "Errore nell'eliminazione della chat ${chat.id}", e)
             }
         }
     }

@@ -14,6 +14,16 @@
     <string name="registration_select_profile_picture_button">Select Profile Picture</string>
     <string name="registration_birthdate_label">data di nascita</string>
     <string name="registration_register_button">Register</string>
+    <string name="registration_confirm_password_label">conferma password</string>
+    <string name="registration_passwords_dont_match">le password non coincidono</string>
+    <string name="registration_password_min_length">almeno %1$d caratteri</string>
+    <string name="registration_show_password">mostra password</string>
+    <string name="registration_hide_password">nascondi password</string>
+    <string name="registration_error_generic">registrazione non riuscita. Riprova.</string>
+    <string name="registration_error_email_in_use">questa email è già registrata. Prova ad accedere.</string>
+    <string name="registration_error_weak_password">la password è troppo debole. Usa almeno 6 caratteri.</string>
+    <string name="registration_error_invalid_email">l\'indirizzo email non è valido.</string>
+    <string name="registration_error_network">errore di connessione. Controlla internet e riprova.</string>
     <string name="sex_male_description">Sesso: Maschio</string>
     <string name="sex_female_description">Sesso: Femmina</string>
     <string name="sex_undefined_description">Sesso: Non definito</string>
@@ -122,6 +132,22 @@
     <string name="topics_placeholder">es. parliamo di tennis amatoriale</string>
     <string name="add">aggiungi</string>
     <string name="set_birthdate">seleziona data di nascita</string>
+    <!-- Campi obbligatori del profilo (bio, topic, data di nascita) -->
+    <string name="profile_bio_label">bio</string>
+    <string name="profile_topics_label">argomenti</string>
+    <string name="profile_topics_empty_hint">aggiungi almeno un argomento</string>
+    <string name="profile_birthdate_label">data di nascita</string>
+    <string name="profile_field_required">questo campo è obbligatorio</string>
+
+    <!-- Menu contestuale della conversazione (pressione lunga sulla chat) -->
+    <string name="chat_pin">fissa in alto</string>
+    <string name="chat_unpin">rimuovi fissaggio</string>
+    <string name="chat_delete">elimina</string>
+    <string name="profile_complete_title">Completa il profilo</string>
+    <string name="profile_complete_subtitle">Per continuare aggiungi una bio, almeno un argomento e la data di nascita.</string>
+    <string name="profile_complete_save_button">salva e continua</string>
+    <string name="profile_complete_required_error">Compila bio, almeno un argomento e la data di nascita per continuare.</string>
+    <string name="profile_save_error">Impossibile salvare il profilo. Riprova.</string>
 
     <string name="get_location">ottieni località</string>
     <string name="your_location">la tua località</string>
