@@ -166,6 +166,10 @@
     </string>
     <string name="icebreaker_header">Rompi il ghiaccio:</string>
     <string name="icebreaker_loading">Cerco la domanda opportuna…</string>
+    <string name="autopilot_title">Autopilot</string>
+    <string name="autopilot_description">Permetti agli altri utenti di ricevere domande guida quando aprono una nuova chat con te</string>
+    <string name="autopilot_enabled_toast">Autopilot attivato</string>
+    <string name="autopilot_disabled_toast">Autopilot disattivato</string>
 
 
     // Zona Utente
@@ -235,6 +239,7 @@
     <string name="light_theme">chiaro</string>
     <string name="dark_theme">scuro</string>
     <string name="special_theme">speciale</string>
+    <string name="dyslexia_theme">accessibile (dislessia)</string>
     <string name="info_section">informazioni</string>
     <string name="privacy_policy">privacy policy</string>
     <string name="terms_of_service">termini di servizio</string>

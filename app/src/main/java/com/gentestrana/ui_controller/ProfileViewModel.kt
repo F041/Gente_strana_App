@@ -184,6 +184,19 @@ class ProfileViewModel : ViewModel() {
             }
     }
 
+    fun setAutopilotEnabled(enabled: Boolean, onSuccess: () -> Unit = {}, onFailure: (String) -> Unit = {}) {
+        val uid = getUid() ?: return
+        firestore.collection("users").document(uid)
+            .update("autopilotEnabled", enabled)
+            .addOnSuccessListener {
+                _userState.value = _userState.value?.copy(autopilotEnabled = enabled)
+                onSuccess()
+            }
+            .addOnFailureListener { e ->
+                onFailure(e.localizedMessage ?: "Errore durante l'aggiornamento dell'Autopilot")
+            }
+    }
+
     fun setProfilePicOrder(newOrder: List<String>) {
         _profilePicUrl.value = newOrder
     }

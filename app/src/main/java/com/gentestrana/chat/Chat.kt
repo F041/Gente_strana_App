@@ -7,6 +7,7 @@ data class Chat(
     val participantName: String,
     val lastMessage: String,
     val lastMessageStatus: MessageStatus,
+    val lastMessageSenderId: String = "",
     val photoUrl: String,
     val timestamp: Timestamp,
     val isOnline: Boolean = false, // Campo per lo stato online

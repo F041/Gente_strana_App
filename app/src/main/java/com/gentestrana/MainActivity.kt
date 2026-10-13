@@ -75,6 +75,7 @@ class MainActivity : ComponentActivity() {
                     when (sharedPreferences.getString(appThemeKey, "SYSTEM")) {
                         "LIGHT" -> AppTheme.LIGHT
                         "DARK" -> AppTheme.DARK
+                        "DYSLEXIA" -> AppTheme.DYSLEXIA
                         else -> AppTheme.SYSTEM
                     }
                 )

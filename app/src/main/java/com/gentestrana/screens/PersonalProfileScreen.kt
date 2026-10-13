@@ -190,13 +190,21 @@ fun PersonalProfileScreen(
                 actions = {
 
                     // Icona Autopilot (search_hands_free) — stile B-Spec GT4
+                    val isAutopilotOn = user?.autopilotEnabled == true
                     IconButton(onClick = {
-                        Toast.makeText(context, "Funzione Autopilot, in arrivo in futuro", Toast.LENGTH_SHORT).show()
+                        val newStatus = !isAutopilotOn
+                        profileViewModel.setAutopilotEnabled(
+                            enabled = newStatus,
+                            onSuccess = {
+                                val msg = if (newStatus) context.getString(R.string.autopilot_enabled_toast) else context.getString(R.string.autopilot_disabled_toast)
+                                Toast.makeText(context, msg, Toast.LENGTH_SHORT).show()
+                            }
+                        )
                     }) {
                         Icon(
                             painter = painterResource(id = R.drawable.search_hands_free),
-                            contentDescription = "Autopilot (in arrivo)",
-                            tint = MaterialTheme.colorScheme.primary,
+                            contentDescription = stringResource(R.string.autopilot_title),
+                            tint = if (isAutopilotOn) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outline,
                             modifier = Modifier.size(28.dp)
                         )
                     }
@@ -410,6 +418,55 @@ fun PersonalProfileScreen(
                         .fillMaxWidth()
                         .padding(horizontal = 16.dp)
                 )
+
+                Spacer(modifier = Modifier.height(16.dp))
+
+                // Sezione Autopilot (Fase 2)
+                Card(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 16.dp),
+                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
+                ) {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(16.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Icon(
+                            painter = painterResource(id = R.drawable.search_hands_free),
+                            contentDescription = "Autopilot",
+                            tint = if (user?.autopilotEnabled == true) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant,
+                            modifier = Modifier.size(28.dp)
+                        )
+                        Spacer(modifier = Modifier.width(12.dp))
+                        Column(modifier = Modifier.weight(1f)) {
+                            Text(
+                                text = stringResource(R.string.autopilot_title),
+                                style = MaterialTheme.typography.titleMedium
+                            )
+                            Text(
+                                text = stringResource(R.string.autopilot_description),
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Switch(
+                            checked = user?.autopilotEnabled == true,
+                            onCheckedChange = { isChecked ->
+                                profileViewModel.setAutopilotEnabled(
+                                    enabled = isChecked,
+                                    onSuccess = {
+                                        val msg = if (isChecked) context.getString(R.string.autopilot_enabled_toast) else context.getString(R.string.autopilot_disabled_toast)
+                                        Toast.makeText(context, msg, Toast.LENGTH_SHORT).show()
+                                    }
+                                )
+                            }
+                        )
+                    }
+                }
 
                 Spacer(modifier = Modifier.height(16.dp))
 

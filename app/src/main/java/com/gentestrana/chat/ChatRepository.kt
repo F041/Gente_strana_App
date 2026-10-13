@@ -116,6 +116,7 @@ class ChatRepository(
                 val firstPhotoUrl = profilePicList.firstOrNull() ?: ""
 
                 val lastMessageText = lastMessageDoc.getString("message") ?: ""
+                val lastMessageSenderId = lastMessageDoc.getString("sender") ?: ""
                 val timestamp = lastMessageDoc.getTimestamp("timestamp") ?: Timestamp.now()
                 val lastMessageStatus = when (lastMessageDoc.getString("status")) {
                     "DELIVERED" -> MessageStatus.DELIVERED
@@ -129,6 +130,7 @@ class ChatRepository(
                     participantId = otherUserId,
                     participantName = userObj?.username ?: "Sconosciuto",
                     lastMessage = lastMessageText,
+                    lastMessageSenderId = lastMessageSenderId,
                     photoUrl = firstPhotoUrl,
                     lastMessageStatus = lastMessageStatus,
                     timestamp = timestamp,

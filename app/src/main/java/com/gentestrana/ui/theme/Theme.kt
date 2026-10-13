@@ -49,6 +49,23 @@ private val NeuroLightColorScheme = lightColorScheme(
     outlineVariant = Color(0xFFE2E8F0)
 )
 
+private val DyslexiaColorScheme = lightColorScheme(
+    primary = Color(0xFF1E40AF),         // Blu profondo riposante
+    secondary = Color(0xFF0F766E),       // Smeraldo scuro
+    tertiary = Color(0xFFB45309),        // Ambra scuro
+    background = Color(0xFFFAF6EE),      // Sfondo crema anti-stress visivo (evita il bianco accecante)
+    surface = Color(0xFFF2ECE1),         // Superficie crema leggermente più scura
+    onPrimary = Color.White,
+    onSecondary = Color.White,
+    onTertiary = Color.White,
+    onBackground = Color(0xFF1A1A2E),    // Testo scuro opaco (charcoal) ad alto contrasto ma morbido
+    onSurface = Color(0xFF1A1A2E),
+    onSurfaceVariant = Color(0xFF334155),
+    secondaryContainer = Color(0xFFE2E8F0),
+    surfaceVariant = Color(0xFFEADFD0),
+    outlineVariant = Color(0xFFCBD5E1)
+)
+
 val LocalAppTheme = staticCompositionLocalOf<AppTheme> {
     error("No AppTheme provided") // Valore di default (in caso di errore)
     // Nota: potremmo anche usare AppTheme.SYSTEM come default "sicuro"
@@ -64,20 +81,21 @@ fun GenteStranaTheme(
     CompositionLocalProvider(
         LocalAppTheme provides appTheme
     ) {
-        // Calcola il colorScheme in base a LocalAppTheme.current
-        val colorScheme = when (LocalAppTheme.current) {
+        // Calcola il colorScheme e la tipografia in base a LocalAppTheme.current
+        val (colorScheme, typography) = when (LocalAppTheme.current) {
             AppTheme.SYSTEM -> {
                 if (dynamicColor && Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
                     val context = LocalContext.current
-                    if (isSystemInDarkTheme()) dynamicDarkColorScheme(context)
-                    else dynamicLightColorScheme(context)
+                    if (isSystemInDarkTheme()) dynamicDarkColorScheme(context) to Typography
+                    else dynamicLightColorScheme(context) to Typography
                 } else {
-                    if (isSystemInDarkTheme()) NeuroDarkColorScheme else NeuroLightColorScheme
+                    if (isSystemInDarkTheme()) NeuroDarkColorScheme to Typography
+                    else NeuroLightColorScheme to Typography
                 }
             }
-            AppTheme.LIGHT -> NeuroLightColorScheme
-            AppTheme.DARK -> NeuroDarkColorScheme
-            // AppTheme.SPECIAL -> TODO: Define NeuroSpecialColorScheme
+            AppTheme.LIGHT -> NeuroLightColorScheme to Typography
+            AppTheme.DARK -> NeuroDarkColorScheme to Typography
+            AppTheme.DYSLEXIA -> DyslexiaColorScheme to DyslexiaTypography
         }
 
         // Recupera la configurazione del dispositivo
@@ -91,7 +109,7 @@ fun GenteStranaTheme(
         ) {
             MaterialTheme(
                 colorScheme = colorScheme,
-                typography = Typography,
+                typography = typography,
                 content = content
             )
         }

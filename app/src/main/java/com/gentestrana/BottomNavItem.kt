@@ -79,9 +79,10 @@ fun BottomNavigationBar(navController: NavHostController) {
                 label = {
                     Text(
                         text = stringResource(id = item.titleResId),
-                        fontSize = (screenWidthDp * 0.03).sp,
+                        style = androidx.compose.material3.MaterialTheme.typography.labelMedium,
+                        fontSize = (screenWidthDp * 0.026).sp,
+                        maxLines = 1,
                         softWrap = false
-                    // Evita il wrapping per mantenere una riga
                     )
                 },
                 selected = currentRoute == item.route,

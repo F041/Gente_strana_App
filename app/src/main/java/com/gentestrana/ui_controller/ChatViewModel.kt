@@ -22,11 +22,20 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.tasks.await
 // ---> ECCO LA CORREZIONE CHIAVE: L'IMPORT MANCANTE <---
 import com.google.firebase.Timestamp
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.stateIn
 
 sealed class SendMessageEvent {
     data object Success : SendMessageEvent()
     data class Error(val message: String) : SendMessageEvent()
 }
+
+data class ConversationMetrics(
+    val recipientMessageCount: Int = 0,
+    val conversationAgeText: String = "",
+    val startDateText: String = ""
+)
 
 class ChatViewModel(
     private val chatId: String,
@@ -40,11 +49,13 @@ class ChatViewModel(
     val recipientName: StateFlow<String?> = _recipientName
     private val _recipientDocId = MutableStateFlow<String?>(null)
     val recipientDocId: StateFlow<String?> = _recipientDocId
-    // Per Fase 1 — Smart Matching
+    // Per Fase 1 & 2 — Autopilot Smart Matching
     private val _recipientBio = MutableStateFlow<String?>(null)
     val recipientBio: StateFlow<String?> = _recipientBio
     private val _recipientTopics = MutableStateFlow<List<String>>(emptyList())
     val recipientTopics: StateFlow<List<String>> = _recipientTopics
+    private val _recipientAutopilotEnabled = MutableStateFlow<Boolean>(false)
+    val recipientAutopilotEnabled: StateFlow<Boolean> = _recipientAutopilotEnabled
     private val _sendMessageEvent = MutableSharedFlow<SendMessageEvent>()
     val sendMessageEvent = _sendMessageEvent.asSharedFlow()
     private val _messages = MutableStateFlow<List<ChatMessage>>(emptyList())
@@ -55,18 +66,46 @@ class ChatViewModel(
     val hasMoreMessages: StateFlow<Boolean> = _hasMoreMessages
     private var messagesLimit = 20
     private var messageListenerRegistration: ListenerRegistration? = null
-    private var isListenerRunning = false
+    var isListenerRunning = false
+
+    // Metriche conversazione per la top bar (numero messaggi destinatario ed età conversazione)
+    val conversationMetrics: StateFlow<ConversationMetrics> = combine(
+        _messages,
+        _recipientDocId
+    ) { msgList, recipientId ->
+        if (msgList.isEmpty() || recipientId.isNullOrEmpty()) {
+            ConversationMetrics()
+        } else {
+            val count = msgList.count { it.sender == recipientId }
+            val oldestMsg = msgList.minByOrNull { it.timestamp.seconds }
+            val ageText = oldestMsg?.let { com.gentestrana.utils.formatConversationAge(it.timestamp) } ?: ""
+            val startDateText = oldestMsg?.let {
+                java.text.SimpleDateFormat("dd/MM/yyyy", java.util.Locale.getDefault()).format(it.timestamp.toDate())
+            } ?: ""
+            ConversationMetrics(
+                recipientMessageCount = count,
+                conversationAgeText = ageText,
+                startDateText = startDateText
+            )
+        }
+    }.stateIn(
+        scope = viewModelScope,
+        started = SharingStarted.WhileSubscribed(5000),
+        initialValue = ConversationMetrics()
+    )
 
     init {
         fetchCurrentUserId()
         viewModelScope.launch {
             currentUserId.collect { userId ->
                 if (userId != null) {
-                    fetchRecipientInfo(userId)
-                    markMessagesAsDeliveredAndRead(userId)
+                    // Avvia IMMEDIATAMENTE l'ascolto dei messaggi in parallelo per abbattere i tempi di caricamento
                     if (messageListenerRegistration == null) {
                         listenForMessages()
                     }
+                    // Esegui recupero info e mark as read/delivered in coroutine separate in parallelo
+                    viewModelScope.launch { fetchRecipientInfo(userId) }
+                    viewModelScope.launch { markMessagesAsDeliveredAndRead(userId) }
                 } else {
                     stopListeningForMessages()
                     _messages.value = emptyList()
@@ -178,9 +217,10 @@ class ChatViewModel(
                 _recipientDocId.value = otherUserId
                 val userDoc = db.collection("users").document(otherUserId).get().await()
                 _recipientName.value = userDoc.getString("username") ?: "Sconosciuto"
-                // Fase 1 — Smart Matching: recupera bio e topics
+                // Fase 1 & 2 — Smart Matching & Autopilot: recupera bio, topics e stato autopilot
                 _recipientBio.value = userDoc.getString("bio") ?: ""
                 _recipientTopics.value = (userDoc.get("topics") as? List<String>) ?: emptyList()
+                _recipientAutopilotEnabled.value = userDoc.getBoolean("autopilotEnabled") ?: false
             }
         } catch (e: Exception) {
             Log.e("ChatViewModel", "Error fetching recipient info for chat $chatId", e)

@@ -40,3 +40,16 @@ fun getDateSeparator(timestamp: Timestamp): String {
         }
     }
 }
+
+fun formatConversationAge(startTimestamp: Timestamp): String {
+    val now = System.currentTimeMillis()
+    val startMs = startTimestamp.toDate().time
+    val diffMs = maxOf(0L, now - startMs)
+    val diffDays = (diffMs / (1000 * 60 * 60 * 24)).toInt()
+    return when {
+        diffDays < 1 -> "Oggi"
+        diffDays < 30 -> "${diffDays}gg"
+        diffDays < 365 -> "${diffDays / 30}m"
+        else -> "${diffDays / 365}a"
+    }
+}

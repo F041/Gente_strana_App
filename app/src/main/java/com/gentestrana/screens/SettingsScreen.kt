@@ -28,7 +28,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 
-enum class AppTheme { SYSTEM, LIGHT, DARK }
+enum class AppTheme { SYSTEM, LIGHT, DARK, DYSLEXIA }
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -78,6 +78,7 @@ fun SettingsScreen(
             when (sharedPreferences.getString(appThemeKey, "SYSTEM")) {
                 "LIGHT" -> AppTheme.LIGHT
                 "DARK" -> AppTheme.DARK
+                "DYSLEXIA" -> AppTheme.DYSLEXIA
                 else -> AppTheme.SYSTEM
             }
         )
@@ -190,6 +191,20 @@ fun SettingsScreen(
                     }
                 )
                 Text(stringResource(R.string.dark_theme))
+            }
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                RadioButton(
+                    selected = selectedTheme.value == AppTheme.DYSLEXIA,
+                    onClick = {
+                        val newTheme = AppTheme.DYSLEXIA
+                        selectedTheme.value = newTheme
+                        sharedPreferences.edit()
+                            .putString(appThemeKey, "DYSLEXIA")
+                            .apply()
+                        onThemeChange(newTheme)
+                    }
+                )
+                Text(stringResource(R.string.dyslexia_theme))
             }
 
             Spacer(modifier = Modifier.height(16.dp))

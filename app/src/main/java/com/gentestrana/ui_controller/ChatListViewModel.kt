@@ -24,31 +24,53 @@ import kotlinx.coroutines.tasks.await
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.ktx.firestore
 
+enum class ChatFilter { ALL, UNANSWERED, UNREAD }
+
 class ChatListViewModel(
     private val repository: ChatRepository = ChatRepository()
 ) : ViewModel() {
 
-    // Stato per le chat processate dal repository (potrebbe includere temporaneamente utenti bloccati)
+    // Stato per le chat processate dal repository
     private val _processedChats = MutableStateFlow<List<Chat>>(emptyList())
-    // Non esporre direttamente _processedChats
 
     // Stato per gli ID degli utenti bloccati
     private val _blockedUserIds = MutableStateFlow<Set<String>>(emptySet())
 
+    // Filtri e Ricerca per la UI
+    val searchQuery = MutableStateFlow("")
+    val selectedFilter = MutableStateFlow(ChatFilter.ALL)
+
     // Stato finale filtrato per la UI
     val chats: StateFlow<List<Chat>> = combine(
         _processedChats,
-        _blockedUserIds
-    ) { processedList, blockedIds ->
-        processedList.filterNot { chat ->
-            // Filtra la chat se il participantId è nella lista degli ID bloccati
-            blockedIds.contains(chat.participantId)
-        }
-        // L'ordinamento viene già fatto quando si aggiorna _processedChats
+        _blockedUserIds,
+        searchQuery,
+        selectedFilter
+    ) { processedList, blockedIds, query, filter ->
+        processedList
+            .filterNot { chat -> blockedIds.contains(chat.participantId) }
+            .filter { chat ->
+                if (query.isBlank()) true
+                else chat.participantName.contains(query, ignoreCase = true) ||
+                        chat.lastMessage.contains(query, ignoreCase = true)
+            }
+            .filter { chat ->
+                when (filter) {
+                    ChatFilter.ALL -> true
+                    ChatFilter.UNANSWERED -> {
+                        // Senza risposta: l'altro utente ci ha scritto, abbiamo letto ma non abbiamo ancora risposto
+                        chat.lastMessageSenderId != currentUserId && chat.lastMessageStatus == MessageStatus.READ
+                    }
+                    ChatFilter.UNREAD -> {
+                        // Non letti: l'altro utente ci ha scritto e non abbiamo ancora letto il messaggio
+                        chat.lastMessageSenderId != currentUserId && chat.lastMessageStatus != MessageStatus.READ
+                    }
+                }
+            }
     }.stateIn(
         scope = viewModelScope,
         started = SharingStarted.WhileSubscribed(5000),
-        initialValue = emptyList() // Valore iniziale per la UI
+        initialValue = emptyList()
     )
 
     // Mappa dei listener per lo stato dei messaggi (invariata)

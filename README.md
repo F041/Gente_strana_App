@@ -49,11 +49,9 @@ As you read from the name of this repository, Gente Strana becomes the Italian v
      
 
 ### To do:
-- if you hold tap on a conversation from the chat screen, it shows a pop up with "delete", "pin"
-- align language spoken with the bottome of the card of the profile (ask examples)
-- speacial theme for who has dyslexia
-- facebook registration and login
-- fix last message not shown in chat screen right after you sent a message
+- Conversation metrics & "Memorie" (Tandem-style recommendations / review system):
+  - Display conversation metrics in the top right of the Chat screen (e.g. participant message count, conversation age).
+  - Use message counter as a trigger for "Memorie" (recommendations / review system), requiring updates to UserCard, User Profile, and Personal Profile Preview.
 
 ### Customizing the App (For Developers)
 

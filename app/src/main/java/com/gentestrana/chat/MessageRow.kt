@@ -16,13 +16,13 @@ import android.widget.TextView
 import android.widget.Toast
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.gestures.detectHorizontalDragGestures
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
+import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -144,6 +144,28 @@ fun MessageRow(
     val swipeThreshold = 80.dp.value * LocalContext.current.resources.displayMetrics.density
     var showActionsDialog by remember { mutableStateOf(false) }
 
+    var translatedText by remember { mutableStateOf<String?>(null) }
+    var isTranslating by remember { mutableStateOf(false) }
+
+    fun doTranslate() {
+        val targetLang = context.resources.configuration.locales.get(0).language
+        isTranslating = true
+        com.gentestrana.utils.TranslationHelper.translateTextWithDetection(
+            text = chatMessage.message,
+            targetLanguageCode = targetLang,
+            onSuccess = { result ->
+                translatedText = result
+                isTranslating = false
+            },
+            onFailure = {
+                isTranslating = false
+                Toast.makeText(context, "Impossibile tradurre il messaggio", Toast.LENGTH_SHORT).show()
+            },
+            onDownloadStarted = {},
+            onDownloadCompleted = {}
+        )
+    }
+
     LaunchedEffect(chatMessage.sender) {
         val senderId = chatMessage.sender
         var urlToLoad: String?
@@ -242,10 +264,7 @@ fun MessageRow(
                     .combinedClickable(
                         onClick = {},
                         onLongClick = {
-                            // Solo per i propri messaggi: menu Copia / Cancella
-                            if (isCurrentUser && onDelete != null) {
-                                showActionsDialog = true
-                            }
+                            showActionsDialog = true
                         }
                     )
             ) {
@@ -263,18 +282,33 @@ fun MessageRow(
                         Spacer(modifier = Modifier.height(4.dp))
                     }
 
-                    // AndroidView TextView nativo:
-                    // - testo selezionabile (long-press → menu Copia/Condividi)
-                    // - link cliccabili (blu, sottolineati → aprono browser)
+                    // AndroidView TextView nativo per testo originale o tradotto
                     SelectableLinkifiedText(
-                        text = chatMessage.message
+                        text = translatedText ?: chatMessage.message
                     )
 
-                    Spacer(modifier = Modifier.height(4.dp))
+                    Spacer(modifier = Modifier.height(2.dp))
                     Row(
                         modifier = Modifier.align(Alignment.End),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
+                        if (isTranslating) {
+                            CircularProgressIndicator(
+                                modifier = Modifier.size(10.dp),
+                                strokeWidth = 1.5.dp,
+                                color = MaterialTheme.colorScheme.primary
+                            )
+                            Spacer(modifier = Modifier.width(4.dp))
+                        } else if (translatedText != null) {
+                            Text(
+                                text = "🌐 Tradotto ",
+                                style = MaterialTheme.typography.labelSmall,
+                                color = MaterialTheme.colorScheme.primary,
+                                modifier = Modifier
+                                    .clickable { translatedText = null }
+                                    .padding(end = 2.dp)
+                            )
+                        }
                         Text(
                             text = formatTimestamp(chatMessage.timestamp),
                             style = MaterialTheme.typography.bodySmall,
@@ -295,26 +329,40 @@ fun MessageRow(
         }
     }
 
-    // Dialog per i PROPRI messaggi: Copia o Cancella
-    if (showActionsDialog && isCurrentUser) {
-        androidx.compose.material3.AlertDialog(
+    // Dialog opzioni messaggio (Copia, Traduci, Elimina)
+    if (showActionsDialog) {
+        AlertDialog(
             onDismissRequest = { showActionsDialog = false },
-            title = { Text("Azioni") },
-            text = { Text("Scegli cosa fare con questo messaggio:") },
+            title = { Text("Opzioni messaggio") },
+            text = { Text("Scegli un'azione per questo messaggio:") },
             confirmButton = {
-                androidx.compose.material3.TextButton(onClick = {
-                    showActionsDialog = false
-                    copyToClipboard(context, chatMessage.message)
-                }) {
-                    Text("Copia")
+                Row {
+                    TextButton(onClick = {
+                        showActionsDialog = false
+                        copyToClipboard(context, chatMessage.message)
+                    }) {
+                        Text("Copia")
+                    }
+                    TextButton(onClick = {
+                        showActionsDialog = false
+                        if (translatedText != null) {
+                            translatedText = null
+                        } else {
+                            doTranslate()
+                        }
+                    }) {
+                        Text(if (translatedText != null) "Originale" else "Traduci")
+                    }
                 }
             },
             dismissButton = {
-                androidx.compose.material3.TextButton(onClick = {
-                    showActionsDialog = false
-                    onDelete?.invoke()
-                }) {
-                    Text("Cancella")
+                if (isCurrentUser && onDelete != null) {
+                    TextButton(onClick = {
+                        showActionsDialog = false
+                        onDelete.invoke()
+                    }) {
+                        Text("Elimina")
+                    }
                 }
             }
         )

@@ -157,6 +157,10 @@
     </string>
     <string name="icebreaker_header">Break the ice:</string>
     <string name="icebreaker_loading">Looking for the proper question…</string>
+    <string name="autopilot_title">Autopilot</string>
+    <string name="autopilot_description">Allow other users to receive conversation icebreakers when opening a new chat with you</string>
+    <string name="autopilot_enabled_toast">Autopilot enabled</string>
+    <string name="autopilot_disabled_toast">Autopilot disabled</string>
 
     // Zona Utente
     <string name="photos">photos</string>
@@ -222,6 +226,7 @@
     <string name="light_theme">light</string>
     <string name="dark_theme">dark</string>
     <string name="special_theme">special</string>
+    <string name="dyslexia_theme">accessible (dyslexia)</string>
     <string name="info_section">information</string>
     <string name="privacy_policy">privacy policy</string>
     <string name="terms_of_service">terms of service</string>

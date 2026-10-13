@@ -76,6 +76,7 @@ fun ChatScreen(docId: String, navController: NavController) {
     val recipientDocId by viewModel.recipientDocId.collectAsState()
     val recipientBio by viewModel.recipientBio.collectAsState()
     val recipientTopics by viewModel.recipientTopics.collectAsState()
+    val recipientAutopilotEnabled by viewModel.recipientAutopilotEnabled.collectAsState()
     val messages by viewModel.messages.collectAsState()
     val isLoadingOlderMessages by viewModel.isLoadingOlderMessages.collectAsState()
     val hasMoreMessages by viewModel.hasMoreMessages.collectAsState()
@@ -88,30 +89,35 @@ fun ChatScreen(docId: String, navController: NavController) {
     val context = LocalContext.current
     val listState = rememberLazyListState()
 
-    // Stato per gli icebreaker: calcolato solo se la chat è vuota
+    // Stato per gli icebreaker: calcolato solo se la chat è vuota e l'autopilot del destinatario è attivo
     val icebreakerQuestions = remember {
         mutableStateOf<List<String>>(emptyList())
     }
     var isIcebreakerLoading by remember { mutableStateOf(false) }
 
-    // Aggiorna gli icebreaker quando i messaggi cambiano o arrivano bio/topics (solo se vuoti)
-    LaunchedEffect(messages.size, recipientName, recipientBio, recipientTopics) {
+    // Aggiorna gli icebreaker quando i messaggi cambiano o arrivano bio/topics/autopilot (solo se vuoti)
+    LaunchedEffect(messages.size, recipientName, recipientBio, recipientTopics, recipientAutopilotEnabled) {
         if (messages.isEmpty() && recipientName != null) {
-            // Inizia animazione di caricamento
-            isIcebreakerLoading = true
-            icebreakerQuestions.value = emptyList()
+            if (recipientAutopilotEnabled) {
+                // Inizia animazione di caricamento
+                isIcebreakerLoading = true
+                icebreakerQuestions.value = emptyList()
 
-            // Ritardo artificiale di 1.5s per dare feedback visivo
-            delay(1500)
+                // Ritardo artificiale di 1.5s per dare feedback visivo
+                delay(1500)
 
-            icebreakerQuestions.value = IcebreakerUtils.matchIcebreakers(
-                bio = recipientBio,
-                topics = recipientTopics,
-                context = context,
-                count = 3
-            )
-            // Fine caricamento: lo spinner scompare, i chip appaiono con fade-in
-            isIcebreakerLoading = false
+                icebreakerQuestions.value = IcebreakerUtils.matchIcebreakers(
+                    bio = recipientBio,
+                    topics = recipientTopics,
+                    context = context,
+                    count = 3
+                )
+                // Fine caricamento: lo spinner scompare, i chip appaiono con fade-in
+                isIcebreakerLoading = false
+            } else {
+                isIcebreakerLoading = false
+                icebreakerQuestions.value = emptyList()
+            }
         }
     }
     val focusRequester = remember { FocusRequester() }
@@ -243,6 +249,43 @@ fun ChatScreen(docId: String, navController: NavController) {
                     IconButton(onClick = { navController.popBackStack() }) {
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
                     }
+                },
+                actions = {
+                    val metrics by viewModel.conversationMetrics.collectAsState()
+                    if (metrics.recipientMessageCount > 0 || metrics.conversationAgeText.isNotEmpty()) {
+                        Surface(
+                            shape = RoundedCornerShape(12.dp),
+                            color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.7f),
+                            modifier = Modifier
+                                .padding(end = 12.dp)
+                                .clickable {
+                                    val name = recipientName ?: "L'utente"
+                                    val toastMsg = "$name ti ha inviato ${metrics.recipientMessageCount} messaggi • Insieme dal ${metrics.startDateText}"
+                                    Toast.makeText(context, toastMsg, Toast.LENGTH_LONG).show()
+                                }
+                        ) {
+                            Row(
+                                modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(6.dp)
+                            ) {
+                                if (metrics.recipientMessageCount > 0) {
+                                    Text(
+                                        text = "✉️ ${metrics.recipientMessageCount}",
+                                        style = MaterialTheme.typography.labelSmall,
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                                    )
+                                }
+                                if (metrics.conversationAgeText.isNotEmpty()) {
+                                    Text(
+                                        text = "⏳ ${metrics.conversationAgeText}",
+                                        style = MaterialTheme.typography.labelSmall,
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                                    )
+                                }
+                            }
+                        }
+                    }
                 }
             )
         },
@@ -315,9 +358,9 @@ fun ChatScreen(docId: String, navController: NavController) {
                     )
                 }
 
-                // Icebreaker chips: mostrati SOLO quando la chat è vuota
+                // Icebreaker chips: mostrati SOLO quando la chat è vuota E il destinatario ha l'Autopilot attivo
                 // Tre stati: loading (shimmer), pronto (chip con fade-in), nascosto
-                if (messages.isEmpty() && (isIcebreakerLoading || icebreakerQuestions.value.isNotEmpty())) {
+                if (messages.isEmpty() && recipientAutopilotEnabled && (isIcebreakerLoading || icebreakerQuestions.value.isNotEmpty())) {
                     Column(
                         modifier = Modifier
                             .fillMaxWidth()

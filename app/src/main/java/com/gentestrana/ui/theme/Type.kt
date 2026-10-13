@@ -2,9 +2,19 @@ package com.gentestrana.ui.theme
 
 import androidx.compose.material3.Typography
 import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.font.Font
 import androidx.compose.ui.text.font.FontFamily
+import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.sp
+import com.gentestrana.R
+
+val OpenDyslexicFontFamily = FontFamily(
+    Font(R.font.opendyslexic_regular, FontWeight.Normal),
+    Font(R.font.opendyslexic_bold, FontWeight.Bold),
+    Font(R.font.opendyslexic_italic, FontWeight.Normal, FontStyle.Italic),
+    Font(R.font.opendyslexic_bolditalic, FontWeight.Bold, FontStyle.Italic)
+)
 
 // Set of Material typography styles to start with
 val Typography = Typography(
@@ -24,5 +34,72 @@ val Typography = Typography(
         fontSize = 11.sp,
         fontWeight = FontWeight.Medium,
         lineHeight = 16.sp
+    )
+)
+
+/**
+ * Tipografia ad alta leggibilità basata sul font ufficiale OpenDyslexic per utenti con dislessia.
+ *
+ * Caratteristiche principali:
+ * - Forme di lettere con base appesantita (gravity anchors) per evitare l'inversione/rotazione di caratteri speculari (b/d, p/q).
+ * - Spaziatura aumentata tra i caratteri (letterSpacing) per evitare l'effetto affollamento (letter crowding).
+ * - Interlinea (lineHeight) ampiamente distanziata per impedire salti accidentali di riga.
+ */
+val DyslexiaTypography = Typography(
+    bodyLarge = TextStyle(
+        fontFamily = OpenDyslexicFontFamily,
+        fontWeight = FontWeight.Normal,
+        fontSize = 17.sp,
+        lineHeight = 26.sp,
+        letterSpacing = 0.8.sp
+    ),
+    bodyMedium = TextStyle(
+        fontFamily = OpenDyslexicFontFamily,
+        fontWeight = FontWeight.Normal,
+        fontSize = 15.sp,
+        lineHeight = 23.sp,
+        letterSpacing = 0.7.sp
+    ),
+    bodySmall = TextStyle(
+        fontFamily = OpenDyslexicFontFamily,
+        fontWeight = FontWeight.Normal,
+        fontSize = 13.sp,
+        lineHeight = 19.sp,
+        letterSpacing = 0.6.sp
+    ),
+    titleLarge = TextStyle(
+        fontFamily = OpenDyslexicFontFamily,
+        fontWeight = FontWeight.Bold,
+        fontSize = 22.sp,
+        lineHeight = 30.sp,
+        letterSpacing = 0.6.sp
+    ),
+    titleMedium = TextStyle(
+        fontFamily = OpenDyslexicFontFamily,
+        fontWeight = FontWeight.Bold,
+        fontSize = 18.sp,
+        lineHeight = 25.sp,
+        letterSpacing = 0.6.sp
+    ),
+    labelSmall = TextStyle(
+        fontFamily = OpenDyslexicFontFamily,
+        fontWeight = FontWeight.Normal,
+        fontSize = 12.sp,
+        lineHeight = 17.sp,
+        letterSpacing = 0.5.sp
+    ),
+    labelMedium = TextStyle(
+        fontFamily = OpenDyslexicFontFamily,
+        fontWeight = FontWeight.Normal,
+        fontSize = 11.sp,
+        lineHeight = 15.sp,
+        letterSpacing = 0.sp
+    ),
+    labelLarge = TextStyle(
+        fontFamily = OpenDyslexicFontFamily,
+        fontWeight = FontWeight.Bold,
+        fontSize = 14.sp,
+        lineHeight = 20.sp,
+        letterSpacing = 0.5.sp
     )
 )
