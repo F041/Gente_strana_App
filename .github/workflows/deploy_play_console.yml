@@ -28,8 +28,10 @@ jobs:
         run: chmod +x gradlew
 
       - name: Create google-services.json from Secret
+        env:
+          G_SERVICES_CONTENT: ${{ secrets.GOOGLE_SERVICES_JSON }}
         run: |
-          echo "${{ secrets.GOOGLE_SERVICES_JSON }}" > app/google-services.json
+          echo "$G_SERVICES_CONTENT" | base64 --decode > app/google-services.json 2>/dev/null || echo "$G_SERVICES_CONTENT" > app/google-services.json
 
       - name: Build Android App Bundle (AAB) with Auto-Incremented VersionCode
         run: |
