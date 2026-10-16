@@ -18,9 +18,9 @@ import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asSharedFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.tasks.await
-// ---> ECCO LA CORREZIONE CHIAVE: L'IMPORT MANCANTE <---
 import com.google.firebase.Timestamp
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.SharingStarted
@@ -34,7 +34,9 @@ sealed class SendMessageEvent {
 data class ConversationMetrics(
     val recipientMessageCount: Int = 0,
     val conversationAgeText: String = "",
-    val startDateText: String = ""
+    val startDateText: String = "",
+    val avgWordsPerMessage: Int = 0,
+    val isMemoryUnlocked: Boolean = false
 )
 
 class ChatViewModel(
@@ -68,31 +70,9 @@ class ChatViewModel(
     private var messageListenerRegistration: ListenerRegistration? = null
     var isListenerRunning = false
 
-    // Metriche conversazione per la top bar (numero messaggi destinatario ed età conversazione)
-    val conversationMetrics: StateFlow<ConversationMetrics> = combine(
-        _messages,
-        _recipientDocId
-    ) { msgList, recipientId ->
-        if (msgList.isEmpty() || recipientId.isNullOrEmpty()) {
-            ConversationMetrics()
-        } else {
-            val count = msgList.count { it.sender == recipientId }
-            val oldestMsg = msgList.minByOrNull { it.timestamp.seconds }
-            val ageText = oldestMsg?.let { com.gentestrana.utils.formatConversationAge(it.timestamp) } ?: ""
-            val startDateText = oldestMsg?.let {
-                java.text.SimpleDateFormat("dd/MM/yyyy", java.util.Locale.getDefault()).format(it.timestamp.toDate())
-            } ?: ""
-            ConversationMetrics(
-                recipientMessageCount = count,
-                conversationAgeText = ageText,
-                startDateText = startDateText
-            )
-        }
-    }.stateIn(
-        scope = viewModelScope,
-        started = SharingStarted.WhileSubscribed(5000),
-        initialValue = ConversationMetrics()
-    )
+    // Metriche conversazione indipendenti dallo scroll (totale messaggi, età, metrica neurodivergente e trigger memorie a 50)
+    private val _conversationMetrics = MutableStateFlow(ConversationMetrics())
+    val conversationMetrics: StateFlow<ConversationMetrics> = _conversationMetrics.asStateFlow()
 
     init {
         fetchCurrentUserId()
@@ -221,9 +201,60 @@ class ChatViewModel(
                 _recipientBio.value = userDoc.getString("bio") ?: ""
                 _recipientTopics.value = (userDoc.get("topics") as? List<String>) ?: emptyList()
                 _recipientAutopilotEnabled.value = userDoc.getBoolean("autopilotEnabled") ?: false
+
+                // Calcola le metriche della conversazione in background
+                viewModelScope.launch { fetchConversationMetrics(otherUserId) }
             }
         } catch (e: Exception) {
             Log.e("ChatViewModel", "Error fetching recipient info for chat $chatId", e)
+        }
+    }
+
+    private suspend fun fetchConversationMetrics(otherUserId: String) {
+        try {
+            // Usa query aggregata Firestore SERVER count() per esecuzione istantanea e costo zero
+            val countSnapshot = db.collection("chats")
+                .document(chatId)
+                .collection("messages")
+                .whereEqualTo("sender", otherUserId)
+                .count()
+                .get(com.google.firebase.firestore.AggregateSource.SERVER)
+                .await()
+
+            val count = countSnapshot.count.toInt()
+
+            // Calcolo veloce della media parole dai messaggi caricati
+            val loadedMsgs = _messages.value.filter { it.sender == otherUserId }
+            val avgWords = if (loadedMsgs.isNotEmpty()) {
+                val totalWords = loadedMsgs.sumOf { msg ->
+                    msg.message.split("\\s+".toRegex()).count { it.isNotBlank() }
+                }
+                totalWords / loadedMsgs.size
+            } else 0
+
+            val oldestDocQuery = db.collection("chats")
+                .document(chatId)
+                .collection("messages")
+                .orderBy("timestamp", Query.Direction.ASCENDING)
+                .limit(1)
+                .get()
+                .await()
+
+            val oldestTimestamp = oldestDocQuery.documents.firstOrNull()?.getTimestamp("timestamp")
+            val ageText = oldestTimestamp?.let { com.gentestrana.utils.formatConversationAge(it) } ?: "Oggi"
+            val startDateText = oldestTimestamp?.let {
+                java.text.SimpleDateFormat("dd/MM/yyyy", java.util.Locale.getDefault()).format(it.toDate())
+            } ?: ""
+
+            _conversationMetrics.value = ConversationMetrics(
+                recipientMessageCount = count,
+                conversationAgeText = ageText,
+                startDateText = startDateText,
+                avgWordsPerMessage = avgWords,
+                isMemoryUnlocked = count >= 50
+            )
+        } catch (e: Exception) {
+            Log.e("ChatViewModel", "Error fetching conversation metrics for chat $chatId", e)
         }
     }
 

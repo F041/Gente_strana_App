@@ -41,6 +41,29 @@ fun UserProfileCard(
     val context = LocalContext.current
     val dimensions = LocalDimensions.current
 
+    val isNewUser = remember(user.registrationDate) {
+        val regTime = user.registrationDate?.toDate()?.time ?: 0L
+        val now = System.currentTimeMillis()
+        regTime > 0L && (now - regTime) < 24 * 60 * 60 * 1000L
+    }
+
+    val isHotUser = user.isHot
+
+    val isNightOwl = remember(user.lastActive) {
+        if (user.lastActive == null) false
+        else {
+            // Usa il fuso orario locale dell'utente
+            val cal = java.util.Calendar.getInstance(java.util.TimeZone.getDefault())
+            cal.time = user.lastActive.toDate()
+            val hour = cal.get(java.util.Calendar.HOUR_OF_DAY)
+            hour in 0..5
+        }
+    }
+
+    val isInfodumper = remember(user.bio) {
+        user.bio.length >= 400
+    }
+
     Card(
         modifier = modifier
             .fillMaxWidth()
@@ -79,20 +102,118 @@ fun UserProfileCard(
                 verticalArrangement = Arrangement.SpaceBetween
             ) {
                 Column {
-                    val nameAndAgeText = if (displayedAge > 0) {
-                        "${user.username.uppercase()}, $displayedAge"
-                    } else {
-                        user.username.uppercase()
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        val nameAndAgeText = if (displayedAge > 0) {
+                            "${user.username.uppercase()}, $displayedAge"
+                        } else {
+                            user.username.uppercase()
+                        }
+
+                        Text(
+                            text = nameAndAgeText,
+                            style = MaterialTheme.typography.titleLarge,
+                            color = MaterialTheme.colorScheme.onSurface,
+                            fontSize = 15.sp,
+                            maxLines = 1,
+                            overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis,
+                            modifier = Modifier.weight(1f, fill = false)
+                        )
+
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            if (isNewUser) {
+                                Surface(
+                                    shape = RoundedCornerShape(8.dp),
+                                    color = androidx.compose.ui.graphics.Color(0xFF4CAF50),
+                                    modifier = Modifier.padding(end = 3.dp)
+                                ) {
+                                    Text(
+                                        text = stringResource(R.string.badge_new),
+                                        style = MaterialTheme.typography.labelSmall,
+                                        color = androidx.compose.ui.graphics.Color.White,
+                                        fontWeight = androidx.compose.ui.text.font.FontWeight.Bold,
+                                        fontSize = 9.sp,
+                                        modifier = Modifier.padding(horizontal = 5.dp, vertical = 2.dp)
+                                    )
+                                }
+                            } else if (isHotUser) {
+                                Surface(
+                                    shape = RoundedCornerShape(8.dp),
+                                    color = androidx.compose.ui.graphics.Color(0xFFFF5722),
+                                    modifier = Modifier.padding(end = 3.dp)
+                                ) {
+                                    Text(
+                                        text = stringResource(R.string.badge_hot),
+                                        style = MaterialTheme.typography.labelSmall,
+                                        color = androidx.compose.ui.graphics.Color.White,
+                                        fontWeight = androidx.compose.ui.text.font.FontWeight.Bold,
+                                        fontSize = 9.sp,
+                                        modifier = Modifier.padding(horizontal = 5.dp, vertical = 2.dp)
+                                    )
+                                }
+                            }
+
+                            if (isNightOwl && !isNewUser) {
+                                Surface(
+                                    shape = RoundedCornerShape(8.dp),
+                                    color = androidx.compose.ui.graphics.Color(0xFF673AB7),
+                                    modifier = Modifier.padding(end = 3.dp)
+                                ) {
+                                    Text(
+                                        text = stringResource(R.string.badge_night_owl),
+                                        style = MaterialTheme.typography.labelSmall,
+                                        color = androidx.compose.ui.graphics.Color.White,
+                                        fontWeight = androidx.compose.ui.text.font.FontWeight.Bold,
+                                        fontSize = 9.sp,
+                                        modifier = Modifier.padding(horizontal = 5.dp, vertical = 2.dp)
+                                    )
+                                }
+                            } else if (isInfodumper) {
+                                Surface(
+                                    shape = RoundedCornerShape(8.dp),
+                                    color = androidx.compose.ui.graphics.Color(0xFFE91E63),
+                                    modifier = Modifier.padding(end = 3.dp)
+                                ) {
+                                    Text(
+                                        text = stringResource(R.string.badge_infodumper),
+                                        style = MaterialTheme.typography.labelSmall,
+                                        color = androidx.compose.ui.graphics.Color.White,
+                                        fontWeight = androidx.compose.ui.text.font.FontWeight.Bold,
+                                        fontSize = 9.sp,
+                                        modifier = Modifier.padding(horizontal = 5.dp, vertical = 2.dp)
+                                    )
+                                }
+                            }
+
+                            if (user.memories.isNotEmpty()) {
+                                Surface(
+                                    shape = RoundedCornerShape(12.dp),
+                                    color = androidx.compose.ui.graphics.Color(0xFF00BCD4),
+                                    modifier = Modifier.padding(start = 2.dp)
+                                ) {
+                                    Row(
+                                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 3.dp),
+                                        verticalAlignment = Alignment.CenterVertically
+                                    ) {
+                                        Text(
+                                            text = "${user.memories.size} ",
+                                            style = MaterialTheme.typography.labelSmall,
+                                            color = androidx.compose.ui.graphics.Color.White,
+                                            fontWeight = androidx.compose.ui.text.font.FontWeight.Bold
+                                        )
+                                        Text(
+                                            text = "💬",
+                                            fontSize = 11.sp
+                                        )
+                                    }
+                                }
+                            }
+                        }
                     }
 
-                    Text(
-                        text = nameAndAgeText,
-                        style = MaterialTheme.typography.titleLarge,
-                        color = MaterialTheme.colorScheme.onSurface,
-                        fontSize = 15.sp,
-                        maxLines = 1,
-                        overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis
-                    )
                     Spacer(modifier = Modifier.height(dimensions.smallPadding))
                     Text(
                         text = user.topics.firstOrNull() ?: stringResource(R.string.no_topics_defined),

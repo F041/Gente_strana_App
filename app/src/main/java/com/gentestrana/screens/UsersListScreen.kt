@@ -35,6 +35,7 @@ fun UsersListScreen(navController: NavHostController) {
     val isLoading by viewModel.isLoading.collectAsState()
     val hasError by viewModel.hasError.collectAsState()
     val hasMoreData by viewModel.hasMoreData.collectAsState()
+    val totalUserServerCount by viewModel.totalUserServerCount.collectAsState()
 
     val context = LocalContext.current
     var filterState by remember { mutableStateOf(FilterState()) }
@@ -174,7 +175,7 @@ fun UsersListScreen(navController: NavHostController) {
             }
 
 
-            // Contatore utenti trovati
+            // Contatore utenti trovati (usa il totale aggregato dal server quando non ci sono filtri)
             Text(
                 text = if (filterState.filterType == FilterType.SIMILARITY && currentUserProfile == null) {
                     stringResource(R.string.loading_default)
@@ -182,8 +183,10 @@ fun UsersListScreen(navController: NavHostController) {
                 } else if (filterState.searchQuery.length == 1) {
                     "\uD83D\uDD0D️2\uFE0F⃣"
                 // Icona se la ricerca è di un solo carattere
+                } else if (filterState.filterType == FilterType.ALL && filterState.searchQuery.isEmpty() && totalUserServerCount > 0) {
+                    "$totalUserServerCount ${stringResource(R.string.users_found)}" // Totale reale server
                 } else {
-                    "${filteredUsers.size} ${stringResource(R.string.users_found)}" // Conteggio normale
+                    "${filteredUsers.size} ${stringResource(R.string.users_found)}" // Conteggio filtrato
                 },
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,

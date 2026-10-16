@@ -38,11 +38,11 @@ fun ProfileContent(
     padding: PaddingValues,
     navController: NavHostController,
     onProfileImageClick: () -> Unit,
-    // se lo tolgo ho problemi in UserProfileScreen
     onStartChat: () -> Unit,
-    showChatButton: Boolean
-)
-{
+    showChatButton: Boolean,
+    onWriteRecommendationClick: (() -> Unit)? = null,
+    onEditMemoryClick: ((com.gentestrana.users.Memory) -> Unit)? = null
+) {
     val currentUser = FirebaseAuth.getInstance().currentUser
     LaunchedEffect(user.docId) {
         if (currentUser?.uid != user.docId) {
@@ -153,6 +153,14 @@ fun ProfileContent(
                 }
             }
         }
+
+        // Sezione Memorie (Stile Tandem)
+        MemoriesSection(
+            memories = user.memories,
+            targetUserName = user.username,
+            onWriteClick = if (currentUser?.uid != user.docId) onWriteRecommendationClick else null,
+            onEditMemory = onEditMemoryClick
+        )
 
         // Pulsante "Chatta"
         // TODO: deactivate if user received 100 messages in day?

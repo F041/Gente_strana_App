@@ -14,6 +14,7 @@ local.properties
 /plan_release_guide.md
 /plan_porting_a_ios.md
 /firestore_rules.md
+/cialdini_analysis.md
 
 # Scripts per gestione utenti
 /scripts/venv

@@ -28,12 +28,15 @@ android {
         }
     }
 
+    val vCode = project.findProperty("versionCode")?.toString()?.toIntOrNull() ?: 27
+    val vName = project.findProperty("versionName")?.toString() ?: "1.0.27"
+
     defaultConfig {
         applicationId = "com.gentestrana"
         minSdk = 24
         targetSdk = 36
-        versionCode = 27
-        versionName = "1.0.27"
+        versionCode = vCode
+        versionName = vName
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }

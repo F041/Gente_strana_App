@@ -170,6 +170,17 @@
     <string name="autopilot_description">Permetti agli altri utenti di ricevere domande guida quando aprono una nuova chat con te</string>
     <string name="autopilot_enabled_toast">Autopilot attivato</string>
     <string name="autopilot_disabled_toast">Autopilot disattivato</string>
+    <string name="memories_title">Memorie</string>
+    <string name="no_memories_yet">%s non ha ancora ricevuto memorie.</string>
+    <string name="leave_memory_for_user">Lascia la tua memoria per %s</string>
+    <string name="leave_a_memory">Lascia una memoria</string>
+    <string name="write_memory_dialog_title">✍️ Scrivi una memoria per %s</string>
+    <string name="write_memory_placeholder">Condividi la tua esperienza positiva...</string>
+    <string name="memory_published_toast">Memoria pubblicata con successo! 🎉</string>
+    <string name="badge_new">🆕 NUOVO</string>
+    <string name="badge_hot">🔥 HOT</string>
+    <string name="badge_night_owl">🦉 NOTTULONE</string>
+    <string name="badge_infodumper">🗑️ INFODUMPER</string>
 
 
     // Zona Utente

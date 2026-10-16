@@ -26,6 +26,7 @@ import com.gentestrana.users.User
 import com.gentestrana.users.UserPicsGallery
 import com.gentestrana.users.UserRepository
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.tasks.await
 import androidx.compose.material.icons.filled.WarningAmber
 import androidx.compose.ui.platform.LocalContext
 import com.gentestrana.users.ReportReason
@@ -49,6 +50,24 @@ fun UserProfileScreen(
     var isBlocked by remember { mutableStateOf(false) }
     var showBlockDialog by remember { mutableStateOf(false) }
     var showUnblockDialog by remember { mutableStateOf(false)}
+    var showWriteRecommendationDialog by remember { mutableStateOf(false) }
+    var recommendationText by remember { mutableStateOf("") }
+    var isMemoryUnlockedForProfile by remember { mutableStateOf(false) }
+    var memoriesList by remember { mutableStateOf<List<com.gentestrana.users.Memory>>(emptyList()) }
+    var editingMemory by remember { mutableStateOf<com.gentestrana.users.Memory?>(null) }
+    var editText by remember { mutableStateOf("") }
+
+    fun refreshMemories() {
+        userRepository.getMemories(
+            targetUserId = docId,
+            onSuccess = { recs -> memoriesList = recs },
+            onFailure = { /* ignore */ }
+        )
+    }
+
+    LaunchedEffect(docId) {
+        refreshMemories()
+    }
 
         // Stato per gestire il caricamento delle immagini
     val userState = produceState<User?>(initialValue = null) {
@@ -58,16 +77,28 @@ fun UserProfileScreen(
         )
     }
 
-    LaunchedEffect(key1 = docId, key2 = currentUserId) {
-        // Si attiva quando docId o currentUserId cambiano
-        if (currentUserId != null && docId != currentUserId) {
-            // Controlla solo se non è il profilo personale
+    LaunchedEffect(docId, currentUserId, userState.value) {
+        val loadedUser = userState.value
+        if (currentUserId != null && docId != currentUserId && loadedUser != null) {
             userRepository.isUserBlocked(docId) { result ->
                 isBlocked = result
                 Log.d("UserProfileScreen", "Utente $docId è bloccato? $result")
             }
+            try {
+                val chatId = chatRepository.createNewChat(loadedUser)
+                val countSnapshot = com.google.firebase.firestore.FirebaseFirestore.getInstance().collection("chats")
+                    .document(chatId)
+                    .collection("messages")
+                    .count()
+                    .get(com.google.firebase.firestore.AggregateSource.SERVER)
+                    .await()
+                isMemoryUnlockedForProfile = countSnapshot.count >= 50L
+            } catch (e: Exception) {
+                isMemoryUnlockedForProfile = false
+            }
         } else {
-            isBlocked = false // Non si può bloccare se stessi
+            isBlocked = false
+            isMemoryUnlockedForProfile = false
         }
     }
 
@@ -138,8 +169,10 @@ fun UserProfileScreen(
         {
             Log.d("UserProfileScreen", "docId: $docId, currentUserId: $currentUserId")
 
+            val hasUserAlreadyWrittenMemory = memoriesList.any { it.authorId == currentUserId }
+            val displayUser = user.copy(memories = memoriesList)
             ProfileContent(
-                user = user,
+                user = displayUser,
                 padding = padding,
                 //scrollState = scrollState,
                 onProfileImageClick = { showGallery = true },
@@ -158,7 +191,16 @@ fun UserProfileScreen(
                 } else {
                     {} // Lambda vuota: NON fare nulla se è il profilo personale
                 },
-                showChatButton = (docId != currentUserId && !isBlocked)
+                showChatButton = (docId != currentUserId && !isBlocked),
+                onWriteRecommendationClick = if (isMemoryUnlockedForProfile && !hasUserAlreadyWrittenMemory) {
+                    { showWriteRecommendationDialog = true }
+                } else {
+                    null
+                },
+                onEditMemoryClick = { mem ->
+                    editingMemory = mem
+                    editText = mem.text
+                }
             )
         }
     }
@@ -300,6 +342,97 @@ fun UserProfileScreen(
             dismissButton = {
                 TextButton(onClick = { showUnblockDialog = false }) {
                     Text(stringResource(R.string.cancel))
+                }
+            }
+        )
+    }
+
+    if (showWriteRecommendationDialog) {
+        AlertDialog(
+            onDismissRequest = { showWriteRecommendationDialog = false },
+            title = { Text("✍️ Scrivi una memoria per ${user.username}") },
+            text = {
+                OutlinedTextField(
+                    value = recommendationText,
+                    onValueChange = { recommendationText = it },
+                    placeholder = { Text("Condividi la tua esperienza positiva con ${user.username}...") },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(120.dp)
+                )
+            },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        if (recommendationText.isNotBlank()) {
+                            userRepository.addMemory(
+                                targetUserId = user.docId,
+                                text = recommendationText.trim(),
+                                onSuccess = {
+                                    showWriteRecommendationDialog = false
+                                    recommendationText = ""
+                                    refreshMemories()
+                                    Toast.makeText(context, "Memoria pubblicata con successo! 🎉", Toast.LENGTH_SHORT).show()
+                                },
+                                onFailure = { err ->
+                                    Toast.makeText(context, "Errore: $err", Toast.LENGTH_SHORT).show()
+                                }
+                            )
+                        }
+                    }
+                ) {
+                    Text("Pubblica")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showWriteRecommendationDialog = false }) {
+                    Text("Annulla")
+                }
+            }
+        )
+    }
+
+    if (editingMemory != null) {
+        val targetMem = editingMemory!!
+        AlertDialog(
+            onDismissRequest = { editingMemory = null },
+            title = { Text("✏️ Modifica la tua memoria per ${user.username}") },
+            text = {
+                OutlinedTextField(
+                    value = editText,
+                    onValueChange = { editText = it },
+                    placeholder = { Text("Modifica il testo...") },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(120.dp)
+                )
+            },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        if (editText.isNotBlank()) {
+                            userRepository.updateMemory(
+                                memoryId = targetMem.id,
+                                targetUserId = user.docId,
+                                newText = editText.trim(),
+                                onSuccess = {
+                                    editingMemory = null
+                                    refreshMemories()
+                                    Toast.makeText(context, "Memoria aggiornata con successo! 🎉", Toast.LENGTH_SHORT).show()
+                                },
+                                onFailure = { err ->
+                                    Toast.makeText(context, "Errore: $err", Toast.LENGTH_SHORT).show()
+                                }
+                            )
+                        }
+                    }
+                ) {
+                    Text("Aggiorna")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { editingMemory = null }) {
+                    Text("Annulla")
                 }
             }
         )

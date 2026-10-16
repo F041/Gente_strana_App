@@ -161,6 +161,17 @@
     <string name="autopilot_description">Allow other users to receive conversation icebreakers when opening a new chat with you</string>
     <string name="autopilot_enabled_toast">Autopilot enabled</string>
     <string name="autopilot_disabled_toast">Autopilot disabled</string>
+    <string name="memories_title">Memories</string>
+    <string name="no_memories_yet">%s has not received any memories yet.</string>
+    <string name="leave_memory_for_user">Leave a memory for %s</string>
+    <string name="leave_a_memory">Leave a memory</string>
+    <string name="write_memory_dialog_title">✍️ Write a memory for %s</string>
+    <string name="write_memory_placeholder">Share your positive experience...</string>
+    <string name="memory_published_toast">Memory published successfully! 🎉</string>
+    <string name="badge_new">🆕 NEW</string>
+    <string name="badge_hot">🔥 HOT</string>
+    <string name="badge_night_owl">🦉 NIGHT OWL</string>
+    <string name="badge_infodumper">🗑️ INFODUMPER</string>
 
     // Zona Utente
     <string name="photos">photos</string>

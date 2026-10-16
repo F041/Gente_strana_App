@@ -123,5 +123,12 @@ fun PersonalProfilePreviewCard(
                 }
             }
         }
+
+        // Sezione Memorie (Anteprima)
+        MemoriesSection(
+            memories = user.memories,
+            targetUserName = user.username,
+            modifier = Modifier.fillMaxWidth(0.8f)
+        )
     }
 }

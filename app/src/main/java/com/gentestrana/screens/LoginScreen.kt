@@ -95,7 +95,9 @@ fun LoginScreen(
         Spacer(modifier = Modifier.height(16.dp))
         Button(
             onClick = {
-                if (email.isBlank() || password.isBlank()) {
+                val cleanEmail = email.trim()
+                val cleanPassword = password.trim()
+                if (cleanEmail.isBlank() || cleanPassword.isBlank()) {
                     Toast.makeText(context, context.getString(R.string.login_fill_fields), Toast.LENGTH_SHORT).show()
                     return@Button
                 }
@@ -103,8 +105,8 @@ fun LoginScreen(
                 isLoading = true
 
                 UserRepository().loginAndCheckEmail(
-                    email = email,
-                    password = password,
+                    email = cleanEmail,
+                    password = cleanPassword,
                     onVerified = {
                         val firebaseUser = FirebaseAuth.getInstance().currentUser
                         if (firebaseUser != null) {

@@ -27,6 +27,15 @@ quindi andrà gestita a livello di UI o logica di business.
 
 [location] rappresenta il paese (o una stringa simile) ottenuta, ad esempio, dal GPS al primo utilizzo.
  */
+data class Memory(
+    @PropertyName("id") val id: String = "",
+    @PropertyName("authorId") val authorId: String = "",
+    @PropertyName("authorName") val authorName: String = "",
+    @PropertyName("authorPhotoUrl") val authorPhotoUrl: String = "",
+    @PropertyName("text") val text: String = "",
+    @PropertyName("timestamp") val timestamp: Timestamp? = null
+)
+
 data class User(
      @PropertyName("username")
     val username: String = "",
@@ -51,7 +60,11 @@ data class User(
     val lastActive: Timestamp? = null,
     val blockedUsers: List<String> = emptyList(),
     @PropertyName("autopilotEnabled")
-    val autopilotEnabled: Boolean = false
+    val autopilotEnabled: Boolean = false,
+    @PropertyName("memories")
+    val memories: List<Memory> = emptyList(),
+    @PropertyName("isHot")
+    val isHot: Boolean = false
 ) {
 
     // Proprietà calcolata per ottenere il timestamp in millisecondi

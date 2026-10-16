@@ -112,8 +112,17 @@ class ChatRepository(
 
                 // --- ELABORA I RISULTATI ---
                 val userObj = otherUserSnapshot.toObject(User::class.java)
-                val profilePicList = otherUserSnapshot["profilePicUrl"] as? List<String> ?: emptyList()
-                val firstPhotoUrl = profilePicList.firstOrNull() ?: ""
+                val photoUrlFromUser = userObj?.profilePicUrl?.firstOrNull { it.isNotBlank() } ?: ""
+                val rawPhotoData = otherUserSnapshot.get("profilePicUrl")
+                val firstPhotoUrl = if (photoUrlFromUser.isNotBlank()) {
+                    photoUrlFromUser
+                } else if (rawPhotoData is String && rawPhotoData.isNotBlank()) {
+                    rawPhotoData
+                } else if (rawPhotoData is List<*>) {
+                    (rawPhotoData.firstOrNull() as? String) ?: ""
+                } else {
+                    ""
+                }
 
                 val lastMessageText = lastMessageDoc.getString("message") ?: ""
                 val lastMessageSenderId = lastMessageDoc.getString("sender") ?: ""

@@ -16,6 +16,7 @@ import android.widget.TextView
 import android.widget.Toast
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.gestures.detectHorizontalDragGestures
@@ -27,7 +28,9 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.unit.sp
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
@@ -55,29 +58,25 @@ private val profilePicCache = mutableMapOf<String, String>()
 @Composable
 private fun SelectableLinkifiedText(
     text: String,
+    textColor: androidx.compose.ui.graphics.Color = MaterialTheme.colorScheme.onSurface,
     modifier: Modifier = Modifier
 ) {
     val context = LocalContext.current
+    val textColorArgb = textColor.toArgb()
     AndroidView(
         modifier = modifier,
         factory = { ctx ->
             TextView(ctx).apply {
-                // Abilita la selezione del testo (long-press → seleziona → menu copia)
                 this.setTextIsSelectable(true)
-                // Movimento per link cliccabili
                 this.movementMethod = LinkMovementMethod.getInstance()
-                // Link con colore blu
                 this.setLinkTextColor(android.graphics.Color.parseColor("#1976D2"))
-                // Testo a capo
                 this.maxLines = Int.MAX_VALUE
             }
         },
         update = { textView ->
-            // Costruisce SpannableString con link cliccabili
             val spannable = makeLinkSpannable(text, context)
             textView.text = spannable
-            // Colore testo dal tema
-            textView.setTextColor(android.graphics.Color.parseColor("#1C1B1F")) // Default onSurface
+            textView.setTextColor(textColorArgb)
         }
     )
 }
@@ -136,6 +135,15 @@ fun MessageRow(
     onDelete: (() -> Unit)?,
     onReplySwipe: (() -> Unit)?
 ) {
+    if (chatMessage.message.startsWith("MEMORY_CARD|") || chatMessage.message.startsWith("RECOMMENDATION_CARD|")) {
+        RecommendationSystemMessageBubble(
+            cardMessage = chatMessage.message,
+            isCurrentUser = (chatMessage.sender == currentUserId),
+            recipientName = recipientName
+        )
+        return
+    }
+
     val isCurrentUser = (chatMessage.sender == currentUserId)
     val context = LocalContext.current
     val avatarDataState = remember { mutableStateOf<Any?>(null) }
@@ -178,15 +186,10 @@ fun MessageRow(
                     .document(senderId)
                     .get()
                     .await()
-                val profilePicData = userDoc.get("profilePicUrl")
-                var picList: List<String>? = null
-
-                if (profilePicData is List<*>) {
-                    @Suppress("UNCHECKED_CAST")
-                    picList = profilePicData as? List<String>
-                }
-
-                val originalUrl = picList?.firstOrNull() ?: ""
+                val userObj = userDoc.toObject(com.gentestrana.users.User::class.java)
+                val originalUrl = userObj?.profilePicUrl?.firstOrNull { it.isNotBlank() }
+                    ?: (userDoc.get("profilePicUrl") as? String)?.takeIf { it.isNotBlank() }
+                    ?: ""
                 profilePicCache[senderId] = originalUrl
                 urlToLoad = originalUrl
 
@@ -282,9 +285,15 @@ fun MessageRow(
                         Spacer(modifier = Modifier.height(4.dp))
                     }
 
-                    // AndroidView TextView nativo per testo originale o tradotto
+                    // AndroidView TextView nativo con colore testo adattivo dal tema
+                    val messageTextColor = if (isCurrentUser)
+                        MaterialTheme.colorScheme.onSecondaryContainer
+                    else
+                        MaterialTheme.colorScheme.onSurfaceVariant
+
                     SelectableLinkifiedText(
-                        text = translatedText ?: chatMessage.message
+                        text = translatedText ?: chatMessage.message,
+                        textColor = messageTextColor
                     )
 
                     Spacer(modifier = Modifier.height(2.dp))
@@ -421,6 +430,67 @@ private fun QuotedMessage(
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis
             )
+        }
+    }
+}
+
+@Composable
+fun RecommendationSystemMessageBubble(
+    cardMessage: String,
+    isCurrentUser: Boolean = false,
+    recipientName: String = "Utente"
+) {
+    val parts = cardMessage.split("|")
+    val authorName = if (parts.size > 1) parts[1] else "Utente"
+    val reviewText = if (parts.size > 2) parts[2] else ""
+
+    val cardTitle = if (isCurrentUser) {
+        "Hai lasciato una memoria a $recipientName"
+    } else {
+        "$authorName ti ha lasciato una memoria"
+    }
+
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = 8.dp),
+        contentAlignment = Alignment.Center
+    ) {
+        Surface(
+            shape = RoundedCornerShape(16.dp),
+            color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.9f),
+            modifier = Modifier
+                .widthIn(max = 320.dp)
+                .border(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f), RoundedCornerShape(16.dp))
+        ) {
+            Row(
+                modifier = Modifier.padding(14.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                Surface(
+                    shape = CircleShape,
+                    color = MaterialTheme.colorScheme.primary.copy(alpha = 0.2f),
+                    modifier = Modifier.size(40.dp)
+                ) {
+                    Box(contentAlignment = Alignment.Center) {
+                        Text("💬", fontSize = 18.sp)
+                    }
+                }
+                Column(modifier = Modifier.weight(1f)) {
+                    Text(
+                        text = cardTitle,
+                        style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
+                        color = MaterialTheme.colorScheme.onSurface
+                    )
+                    Spacer(modifier = Modifier.height(2.dp))
+                    Text(
+                        text = reviewText,
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+            }
         }
     }
 }

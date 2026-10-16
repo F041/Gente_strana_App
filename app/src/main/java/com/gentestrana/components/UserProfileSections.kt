@@ -6,6 +6,7 @@ import androidx.compose.animation.animateContentSize
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material3.Icon
@@ -19,6 +20,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.res.stringResource
 
@@ -470,6 +472,196 @@ fun ReadOnlyBioBox(
                 color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.8f),
                 modifier = Modifier.fillMaxWidth()
             )
+        }
+    }
+}
+
+@Composable
+fun MemoriesSection(
+    memories: List<com.gentestrana.users.Memory>,
+    targetUserName: String = "",
+    onWriteClick: (() -> Unit)? = null,
+    onEditMemory: ((com.gentestrana.users.Memory) -> Unit)? = null,
+    modifier: Modifier = Modifier
+) {
+    val context = LocalContext.current
+    val targetLanguageCode = context.resources.configuration.locales.get(0).language
+
+    Column(
+        modifier = modifier
+            .fillMaxWidth()
+            .padding(16.dp)
+    ) {
+        Text(
+            text = "Memorie",
+            style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold),
+            color = MaterialTheme.colorScheme.onSurface
+        )
+
+        Spacer(modifier = Modifier.height(4.dp))
+
+        if (memories.isEmpty()) {
+            Text(
+                text = if (targetUserName.isNotBlank()) "$targetUserName non ha ancora ricevuto memorie." else "Nessuna memoria ricevuta finora.",
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+        } else {
+            Column(
+                verticalArrangement = Arrangement.spacedBy(12.dp),
+                modifier = Modifier.padding(top = 8.dp)
+            ) {
+                memories.forEach { mem ->
+                    MemoryCard(mem = mem, targetLanguageCode = targetLanguageCode, onEditClick = onEditMemory)
+                }
+            }
+        }
+
+        // Card di invito per lasciare la memoria (Stile Tandem) - Nascosto se l'utente ha GIÀ lasciato una memoria!
+        val currentUserId = com.google.firebase.auth.FirebaseAuth.getInstance().currentUser?.uid
+        val hasAlreadyWritten = memories.any { it.authorId == currentUserId }
+
+        if (onWriteClick != null && !hasAlreadyWritten) {
+            Spacer(modifier = Modifier.height(12.dp))
+            Surface(
+                shape = RoundedCornerShape(16.dp),
+                color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.6f),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clickable { onWriteClick() }
+            ) {
+                Row(
+                    modifier = Modifier.padding(16.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Surface(
+                        shape = CircleShape,
+                        color = MaterialTheme.colorScheme.primary.copy(alpha = 0.15f),
+                        modifier = Modifier.size(40.dp)
+                    ) {
+                        Box(contentAlignment = Alignment.Center) {
+                            Text("💬", fontSize = 18.sp)
+                        }
+                    }
+                    Spacer(modifier = Modifier.width(12.dp))
+                    Text(
+                        text = if (targetUserName.isNotBlank()) "Lascia la tua memoria per $targetUserName" else "Lascia una memoria",
+                        style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
+                        color = MaterialTheme.colorScheme.onSurface,
+                        modifier = Modifier.weight(1f)
+                    )
+                    Icon(
+                        imageVector = Icons.AutoMirrored.Filled.ArrowForward,
+                        contentDescription = "Scrivi memoria",
+                        tint = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+            }
+        }
+    }
+}
+
+@Composable
+fun MemoryCard(
+    mem: com.gentestrana.users.Memory,
+    targetLanguageCode: String,
+    onEditClick: ((com.gentestrana.users.Memory) -> Unit)? = null
+) {
+    val context = LocalContext.current
+    val currentUserId = com.google.firebase.auth.FirebaseAuth.getInstance().currentUser?.uid
+    var translatedText by remember { mutableStateOf<String?>(null) }
+    var isTranslating by remember { mutableStateOf(false) }
+
+    Surface(
+        shape = RoundedCornerShape(12.dp),
+        color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f),
+        modifier = Modifier.fillMaxWidth()
+    ) {
+        Column(modifier = Modifier.padding(12.dp)) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Image(
+                        painter = rememberAsyncImagePainter(
+                            model = mem.authorPhotoUrl.ifEmpty { R.drawable.random_user }
+                        ),
+                        contentDescription = "Author Avatar",
+                        modifier = Modifier
+                            .size(36.dp)
+                            .clip(CircleShape),
+                        contentScale = ContentScale.Crop
+                    )
+                    Spacer(modifier = Modifier.width(10.dp))
+                    Column {
+                        Text(
+                            text = mem.authorName,
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.Bold
+                        )
+                        mem.timestamp?.let { ts ->
+                            Text(
+                                text = com.gentestrana.utils.getDateSeparator(ts),
+                                style = MaterialTheme.typography.labelSmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
+                    }
+                }
+                if (mem.authorId == currentUserId && onEditClick != null) {
+                    androidx.compose.material3.TextButton(onClick = { onEditClick(mem) }) {
+                        Text("✏️ Modifica", style = MaterialTheme.typography.labelSmall)
+                    }
+                }
+            }
+
+            Spacer(modifier = Modifier.height(8.dp))
+
+            Text(
+                text = translatedText ?: mem.text,
+                style = MaterialTheme.typography.bodyMedium
+            )
+
+            Spacer(modifier = Modifier.height(4.dp))
+
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.End,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                if (isTranslating) {
+                    CircularProgressIndicator(modifier = Modifier.size(12.dp), strokeWidth = 1.5.dp)
+                } else {
+                    Text(
+                        text = if (translatedText != null) "Mostra originale" else "Traduci",
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.primary,
+                        modifier = Modifier.clickable {
+                            if (translatedText != null) {
+                                translatedText = null
+                            } else {
+                                isTranslating = true
+                                TranslationHelper.translateTextWithDetection(
+                                    text = mem.text,
+                                    targetLanguageCode = targetLanguageCode,
+                                    onSuccess = { result ->
+                                        translatedText = result
+                                        isTranslating = false
+                                    },
+                                    onFailure = {
+                                        isTranslating = false
+                                        Toast.makeText(context, "Traduzione fallita", Toast.LENGTH_SHORT).show()
+                                    },
+                                    onDownloadStarted = {},
+                                    onDownloadCompleted = {}
+                                )
+                            }
+                        }
+                    )
+                }
+            }
         }
     }
 }

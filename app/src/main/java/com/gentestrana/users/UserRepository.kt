@@ -85,6 +85,7 @@ class UserRepository(
                     .set(userData)
                     .addOnSuccessListener {
                         retrieveAndSaveFcmToken(uid)
+                        incrementCommunityUserStats()
 
                         // FIX: l'email di verifica parte solo DOPO il salvataggio del profilo,
                         // cosi' non arriva mai per un account che viene poi cancellato.
@@ -231,8 +232,9 @@ class UserRepository(
                                 userDocRef.set(googleUserData)
                                     .addOnSuccessListener {
                                         Log.d("UserRepository", "Documento Firestore creato con successo per l'utente $uid.")
-                                        retrieveAndSaveFcmToken(uid) // Chiama la funzione helper -
-                                        onSuccess() // Chiama onSuccess SOLO DOPO aver creato il documento
+                                        retrieveAndSaveFcmToken(uid)
+                                        incrementCommunityUserStats()
+                                        onSuccess()
                                     }
                                     .addOnFailureListener { e ->
                                         Log.e("UserRepository", "Errore nella creazione del documento Firestore per l'utente $uid", e)
@@ -761,6 +763,184 @@ class UserRepository(
         } catch (e: Exception) {
             Log.e("UserRepository", "Errore recuperando lista utenti bloccati per $currentUserId: ${e.message}")
             onFailure(e.message)
+        }
+    }
+
+    fun hasUserWrittenMemory(
+        targetUserId: String,
+        onResult: (Memory?) -> Unit
+    ) {
+        val currentUserId = auth.currentUser?.uid ?: run {
+            onResult(null)
+            return
+        }
+        firestore.collection("memories")
+            .whereEqualTo("targetUserId", targetUserId)
+            .whereEqualTo("authorId", currentUserId)
+            .get()
+            .addOnSuccessListener { snapshot ->
+                val existing = snapshot.documents.firstOrNull()?.let { doc ->
+                    val mem = doc.toObject(Memory::class.java)
+                    mem?.copy(id = doc.id)
+                }
+                onResult(existing)
+            }
+            .addOnFailureListener {
+                onResult(null)
+            }
+    }
+
+    fun addMemory(
+        targetUserId: String,
+        text: String,
+        chatId: String? = null,
+        onSuccess: () -> Unit,
+        onFailure: (String) -> Unit
+    ) {
+        val currentUserId = auth.currentUser?.uid ?: run {
+            onFailure("Utente non autenticato")
+            return
+        }
+
+        // Se l'utente ha già scritto una memoria per questo destinatario, aggiorna quella esistente
+        hasUserWrittenMemory(targetUserId) { existing ->
+            if (existing != null && existing.id.isNotBlank()) {
+                updateMemory(existing.id, targetUserId, text, onSuccess, onFailure)
+                return@hasUserWrittenMemory
+            }
+
+            val userDocRef = firestore.collection("users").document(currentUserId)
+            userDocRef.get().addOnSuccessListener { authorDoc ->
+                val authorObj = authorDoc.toObject(User::class.java)
+                val authorName = authorObj?.username ?: "Utente"
+                val authorPhotoUrl = authorObj?.profilePicUrl?.firstOrNull { it.isNotBlank() } ?: ""
+
+                val memoryData = mapOf(
+                    "targetUserId" to targetUserId,
+                    "authorId" to currentUserId,
+                    "authorName" to authorName,
+                    "authorPhotoUrl" to authorPhotoUrl,
+                    "text" to text,
+                    "timestamp" to com.google.firebase.Timestamp.now()
+                )
+
+                firestore.collection("memories")
+                    .add(memoryData)
+                    .addOnSuccessListener {
+                        val sysMsg = mapOf(
+                            "sender" to currentUserId,
+                            "message" to "MEMORY_CARD|$authorName|$text",
+                            "timestamp" to com.google.firebase.Timestamp.now(),
+                            "status" to "SENT"
+                        )
+
+                        fun sendToChat(cId: String) {
+                            firestore.collection("chats").document(cId).collection("messages").add(sysMsg)
+                            firestore.collection("chats").document(cId).update("hasMessages", true, "timestamp", com.google.firebase.Timestamp.now())
+                            onSuccess()
+                        }
+
+                        if (!chatId.isNullOrEmpty()) {
+                            sendToChat(chatId)
+                        } else {
+                            firestore.collection("chats")
+                                .whereArrayContains("participants", currentUserId)
+                                .get()
+                                .addOnSuccessListener { chatsSnap ->
+                                    val chatDoc = chatsSnap.documents.firstOrNull { doc ->
+                                        val participants = doc.get("participants") as? List<*>? ?: emptyList<Any>()
+                                        participants.contains(targetUserId)
+                                    }
+                                    if (chatDoc != null) {
+                                        sendToChat(chatDoc.id)
+                                    } else {
+                                        onSuccess()
+                                    }
+                                }
+                                .addOnFailureListener { onSuccess() }
+                        }
+                    }
+                    .addOnFailureListener { err ->
+                        onFailure(err.localizedMessage ?: "Errore salvataggio memoria")
+                    }
+            }.addOnFailureListener { e ->
+                onFailure(e.localizedMessage ?: "Errore recupero utente")
+            }
+        }
+    }
+
+    fun updateMemory(
+        memoryId: String,
+        targetUserId: String,
+        newText: String,
+        onSuccess: () -> Unit,
+        onFailure: (String) -> Unit
+    ) {
+        val currentUserId = auth.currentUser?.uid ?: run {
+            onFailure("Utente non autenticato")
+            return
+        }
+        firestore.collection("memories").document(memoryId)
+            .update("text", newText)
+            .addOnSuccessListener {
+                firestore.collection("users").document(currentUserId).get().addOnSuccessListener { authorDoc ->
+                    val authorName = authorDoc.getString("username") ?: "Utente"
+                    val sysMsg = mapOf(
+                        "sender" to currentUserId,
+                        "message" to "MEMORY_CARD|$authorName|$newText",
+                        "timestamp" to com.google.firebase.Timestamp.now(),
+                        "status" to "SENT"
+                    )
+                    firestore.collection("chats")
+                        .whereArrayContains("participants", currentUserId)
+                        .get()
+                        .addOnSuccessListener { chatsSnap ->
+                            val chatDoc = chatsSnap.documents.firstOrNull { doc ->
+                                val participants = doc.get("participants") as? List<*>? ?: emptyList<Any>()
+                                participants.contains(targetUserId)
+                            }
+                            if (chatDoc != null) {
+                                firestore.collection("chats").document(chatDoc.id).collection("messages").add(sysMsg)
+                                firestore.collection("chats").document(chatDoc.id).update("hasMessages", true, "timestamp", com.google.firebase.Timestamp.now())
+                            }
+                            onSuccess()
+                        }
+                        .addOnFailureListener { onSuccess() }
+                }.addOnFailureListener { onSuccess() }
+            }
+            .addOnFailureListener { err ->
+                onFailure(err.localizedMessage ?: "Errore aggiornamento memoria")
+            }
+    }
+
+    fun getMemories(
+        targetUserId: String,
+        onSuccess: (List<Memory>) -> Unit,
+        onFailure: (String) -> Unit
+    ) {
+        firestore.collection("memories")
+            .whereEqualTo("targetUserId", targetUserId)
+            .get()
+            .addOnSuccessListener { snapshot ->
+                val list = snapshot.documents.mapNotNull { doc ->
+                    val mem = doc.toObject(Memory::class.java)
+                    mem?.copy(id = doc.id)
+                }.sortedByDescending { it.timestamp?.seconds ?: 0L }
+                onSuccess(list)
+            }
+            .addOnFailureListener { e ->
+                Log.e("UserRepository", "Errore getMemories: ${e.message}", e)
+                onFailure(e.localizedMessage ?: "Errore caricamento memorie")
+            }
+    }
+
+    fun incrementCommunityUserStats() {
+        val statsRef = firestore.collection("stats").document("community")
+        statsRef.set(
+            mapOf("totalUsers" to com.google.firebase.firestore.FieldValue.increment(1)),
+            com.google.firebase.firestore.SetOptions.merge()
+        ).addOnFailureListener { e ->
+            Log.e("UserRepository", "Errore incremento contatore community", e)
         }
     }
 

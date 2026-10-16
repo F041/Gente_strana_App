@@ -41,6 +41,10 @@ class UserListViewModel : ViewModel() {
     private val _currentUserProfile = MutableStateFlow<User?>(null)
     val currentUserProfile: StateFlow<User?> get() = _currentUserProfile
 
+    // Conteggio totale aggregato dal server (costo 1 lettura)
+    private val _totalUserServerCount = MutableStateFlow(0)
+    val totalUserServerCount: StateFlow<Int> get() = _totalUserServerCount
+
     private val userRepository = UserRepository() // Aggiungiamo un'istanza del repository
     private val currentUserId = FirebaseAuth.getInstance().currentUser?.uid
     private val firestore: FirebaseFirestore = Firebase.firestore
@@ -66,6 +70,21 @@ class UserListViewModel : ViewModel() {
         loadUsers()
         loadCurrentUserProfile()
         registerBlockedUsersListener()
+        fetchTotalUserServerCount()
+    }
+
+    fun fetchTotalUserServerCount() {
+        viewModelScope.launch {
+            try {
+                val snapshot = firestore.collection("users")
+                    .count()
+                    .get(com.google.firebase.firestore.AggregateSource.SERVER)
+                    .await()
+                _totalUserServerCount.value = snapshot.count.toInt()
+            } catch (e: Exception) {
+                Log.e("UserListVM", "Error fetching total user count from server", e)
+            }
+        }
     }
 
     private fun registerBlockedUsersListener() {
@@ -130,12 +149,12 @@ class UserListViewModel : ViewModel() {
                         doc.toObject(User::class.java)?.copy(docId = doc.id)
                     }
 
-                    // Escludi subito l'utente corrente dalla lista raw.
-                    // FIX: distinctBy evita duplicati. La paginazione e' ordinata per lastActive:
-                    // un utente che torna attivo tra una pagina e l'altra puo' riapparire,
-                    // e una key duplicata nella LazyColumn farebbe crashare la lista.
+                    // Escludi subito l'utente corrente dalla lista raw (costo = 0 letture extra!).
                     _rawUsers.value = (_rawUsers.value + newUsers.filterNot { it.docId == currentUserId })
                         .distinctBy { it.docId }
+
+                    _hasMoreData.value = result.documents.size >= pageSize
+                    Log.d("UserListVM", "Caricati ${newUsers.size} nuovi utenti raw. HasMoreData: ${_hasMoreData.value}")
 
                     _hasMoreData.value = result.documents.size >= pageSize
                     Log.d("UserListVM", "Caricati ${newUsers.size} nuovi utenti raw. HasMoreData: ${_hasMoreData.value}")

@@ -12,11 +12,13 @@ import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.ArrowForward
 import androidx.compose.material.icons.automirrored.filled.Send
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Info
@@ -46,6 +48,7 @@ import com.gentestrana.chat.DateSeparatorRow
 import com.gentestrana.chat.MessageRow
 import com.gentestrana.ui_controller.ChatViewModel
 import com.gentestrana.ui_controller.SendMessageEvent
+import com.gentestrana.users.UserRepository
 import com.gentestrana.utils.IcebreakerUtils
 import com.gentestrana.utils.getDateSeparator
 import com.google.firebase.Firebase
@@ -99,20 +102,14 @@ fun ChatScreen(docId: String, navController: NavController) {
     LaunchedEffect(messages.size, recipientName, recipientBio, recipientTopics, recipientAutopilotEnabled) {
         if (messages.isEmpty() && recipientName != null) {
             if (recipientAutopilotEnabled) {
-                // Inizia animazione di caricamento
+                // Calcola subito gli icebreaker senza ritardi artificiali
                 isIcebreakerLoading = true
-                icebreakerQuestions.value = emptyList()
-
-                // Ritardo artificiale di 1.5s per dare feedback visivo
-                delay(1500)
-
                 icebreakerQuestions.value = IcebreakerUtils.matchIcebreakers(
                     bio = recipientBio,
                     topics = recipientTopics,
                     context = context,
                     count = 3
                 )
-                // Fine caricamento: lo spinner scompare, i chip appaiono con fade-in
                 isIcebreakerLoading = false
             } else {
                 isIcebreakerLoading = false
@@ -200,6 +197,117 @@ fun ChatScreen(docId: String, navController: NavController) {
         }
     }
 
+    var showMetricsDialog by remember { mutableStateOf(false) }
+    var showWriteRecommendationDialog by remember { mutableStateOf(false) }
+    var recommendationText by remember { mutableStateOf("") }
+    var myExistingMemoryInChat by remember { mutableStateOf<com.gentestrana.users.Memory?>(null) }
+    val userRepository = remember { UserRepository() }
+
+    LaunchedEffect(recipientDocId) {
+        if (!recipientDocId.isNullOrEmpty()) {
+            userRepository.hasUserWrittenMemory(recipientDocId!!) { existing ->
+                myExistingMemoryInChat = existing
+            }
+        }
+    }
+
+    if (showMetricsDialog) {
+        val metrics by viewModel.conversationMetrics.collectAsState()
+        val name = recipientName ?: "L'utente"
+        AlertDialog(
+            onDismissRequest = { showMetricsDialog = false },
+            title = { Text("📊 Metriche Conversazione") },
+            text = {
+                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Text("• Messaggi inviati da $name: ${metrics.recipientMessageCount}")
+                    Text("• Anzianità conversazione: ${metrics.conversationAgeText} (dal ${metrics.startDateText})")
+                    Text("• Infodump Index: ~${metrics.avgWordsPerMessage} parole per messaggio")
+                    if (metrics.isMemoryUnlocked) {
+                        Text(
+                            text = "✨ Trigger Memorie: SBLOCCATO (soglia di 50 messaggi raggiunta!)",
+                            color = MaterialTheme.colorScheme.primary,
+                            fontWeight = FontWeight.Bold
+                        )
+                    } else {
+                        Text(
+                            text = "🔒 Trigger Memorie: in corso (${metrics.recipientMessageCount}/50 messaggi)",
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                }
+            },
+            confirmButton = {
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    if (metrics.isMemoryUnlocked) {
+                        Button(onClick = {
+                            showMetricsDialog = false
+                            if (myExistingMemoryInChat != null) {
+                                recommendationText = myExistingMemoryInChat!!.text
+                            } else {
+                                recommendationText = ""
+                            }
+                            showWriteRecommendationDialog = true
+                        }) {
+                            Text(if (myExistingMemoryInChat != null) "✏️ Modifica memoria" else "✍️ Scrivi memoria")
+                        }
+                    }
+                    TextButton(onClick = { showMetricsDialog = false }) {
+                        Text("OK")
+                    }
+                }
+            }
+        )
+    }
+
+    if (showWriteRecommendationDialog) {
+        AlertDialog(
+            onDismissRequest = { showWriteRecommendationDialog = false },
+            title = { Text(if (myExistingMemoryInChat != null) "✏️ Modifica la tua memoria per ${recipientName ?: "L'utente"}" else "✍️ Scrivi una memoria per ${recipientName ?: "L'utente"}") },
+            text = {
+                OutlinedTextField(
+                    value = recommendationText,
+                    onValueChange = { recommendationText = it },
+                    placeholder = { Text("Condividi la tua esperienza positiva...") },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(120.dp)
+                )
+            },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        val targetId = recipientDocId
+                        if (!targetId.isNullOrEmpty() && recommendationText.isNotBlank()) {
+                            userRepository.addMemory(
+                                targetUserId = targetId,
+                                text = recommendationText.trim(),
+                                chatId = docId,
+                                onSuccess = {
+                                    showWriteRecommendationDialog = false
+                                    recommendationText = ""
+                                    userRepository.hasUserWrittenMemory(targetId) { existing ->
+                                        myExistingMemoryInChat = existing
+                                    }
+                                    Toast.makeText(context, "Memoria salvata con successo! 🎉", Toast.LENGTH_SHORT).show()
+                                },
+                                onFailure = { err ->
+                                    Toast.makeText(context, "Errore: $err", Toast.LENGTH_SHORT).show()
+                                }
+                            )
+                        }
+                    }
+                ) {
+                    Text("Pubblica")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showWriteRecommendationDialog = false }) {
+                    Text("Annulla")
+                }
+            }
+        )
+    }
+
     Scaffold(
         topBar = {
             TopAppBar(
@@ -255,27 +363,33 @@ fun ChatScreen(docId: String, navController: NavController) {
                     if (metrics.recipientMessageCount > 0 || metrics.conversationAgeText.isNotEmpty()) {
                         Surface(
                             shape = RoundedCornerShape(12.dp),
-                            color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.7f),
+                            color = if (metrics.isMemoryUnlocked)
+                                MaterialTheme.colorScheme.primaryContainer
+                            else
+                                MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.8f),
                             modifier = Modifier
                                 .padding(end = 12.dp)
-                                .clickable {
-                                    val name = recipientName ?: "L'utente"
-                                    val toastMsg = "$name ti ha inviato ${metrics.recipientMessageCount} messaggi • Insieme dal ${metrics.startDateText}"
-                                    Toast.makeText(context, toastMsg, Toast.LENGTH_LONG).show()
-                                }
+                                .clickable { showMetricsDialog = true }
                         ) {
                             Row(
                                 modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
                                 verticalAlignment = Alignment.CenterVertically,
                                 horizontalArrangement = Arrangement.spacedBy(6.dp)
                             ) {
-                                if (metrics.recipientMessageCount > 0) {
+                                Text(
+                                    text = if (metrics.isMemoryUnlocked) "✉️ ${metrics.recipientMessageCount} ✨" else "✉️ ${metrics.recipientMessageCount}",
+                                    style = MaterialTheme.typography.labelSmall,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+
+                                if (metrics.avgWordsPerMessage > 0) {
                                     Text(
-                                        text = "✉️ ${metrics.recipientMessageCount}",
+                                        text = "📊 ${metrics.avgWordsPerMessage}w",
                                         style = MaterialTheme.typography.labelSmall,
                                         color = MaterialTheme.colorScheme.onSurfaceVariant
                                     )
                                 }
+
                                 if (metrics.conversationAgeText.isNotEmpty()) {
                                     Text(
                                         text = "⏳ ${metrics.conversationAgeText}",

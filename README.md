@@ -49,9 +49,7 @@ As you read from the name of this repository, Gente Strana becomes the Italian v
      
 
 ### To do:
-- Conversation metrics & "Memorie" (Tandem-style recommendations / review system):
-  - Display conversation metrics in the top right of the Chat screen (e.g. participant message count, conversation age).
-  - Use message counter as a trigger for "Memorie" (recommendations / review system), requiring updates to UserCard, User Profile, and Personal Profile Preview.
+
 
 ### Customizing the App (For Developers)
 
