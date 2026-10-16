@@ -26,6 +26,10 @@ jobs:
       - name: Grant Execute Permission to Gradle Wrapper
         run: chmod +x gradlew
 
+      - name: Create google-services.json from Secret
+        run: |
+          echo "${{ secrets.GOOGLE_SERVICES_JSON }}" > app/google-services.json
+
       - name: Build Android App Bundle (AAB) with Auto-Incremented VersionCode
         run: |
           BUILD_NUMBER=${{ github.run_number }}
