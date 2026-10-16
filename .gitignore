@@ -17,6 +17,12 @@ local.properties
 /cialdini_analysis.md
 
 # Scripts per gestione utenti
-/scripts/venv
-/scripts/__pycache__
-*.pyc
+/scripts/
+fix_limbo_user.py
+
+# Sensitive / Build artifacts
+google-services.json
+app/google-services.json
+*.aab
+*.apk
+
