@@ -124,29 +124,23 @@ fun UserProfileCard(
                         )
 
                         Row(verticalAlignment = Alignment.CenterVertically) {
-                            if (isNewUser) {
+                            // Seleziona AL MASSIMO 1 badge di tratto caratteristico in base alla priorità
+                            val traitBadge = when {
+                                isNewUser -> Pair(stringResource(R.string.badge_new), androidx.compose.ui.graphics.Color(0xFF4CAF50))
+                                isHotUser -> Pair(stringResource(R.string.badge_hot), androidx.compose.ui.graphics.Color(0xFFFF5722))
+                                isNightOwl -> Pair(stringResource(R.string.badge_night_owl), androidx.compose.ui.graphics.Color(0xFF673AB7))
+                                isInfodumper -> Pair(stringResource(R.string.badge_infodumper), androidx.compose.ui.graphics.Color(0xFFE91E63))
+                                else -> null
+                            }
+
+                            if (traitBadge != null) {
                                 Surface(
                                     shape = RoundedCornerShape(8.dp),
-                                    color = androidx.compose.ui.graphics.Color(0xFF4CAF50),
-                                    modifier = Modifier.padding(end = 3.dp)
+                                    color = traitBadge.second,
+                                    modifier = Modifier.padding(end = 4.dp)
                                 ) {
                                     Text(
-                                        text = stringResource(R.string.badge_new),
-                                        style = MaterialTheme.typography.labelSmall,
-                                        color = androidx.compose.ui.graphics.Color.White,
-                                        fontWeight = androidx.compose.ui.text.font.FontWeight.Bold,
-                                        fontSize = 9.sp,
-                                        modifier = Modifier.padding(horizontal = 5.dp, vertical = 2.dp)
-                                    )
-                                }
-                            } else if (isHotUser) {
-                                Surface(
-                                    shape = RoundedCornerShape(8.dp),
-                                    color = androidx.compose.ui.graphics.Color(0xFFFF5722),
-                                    modifier = Modifier.padding(end = 3.dp)
-                                ) {
-                                    Text(
-                                        text = stringResource(R.string.badge_hot),
+                                        text = traitBadge.first,
                                         style = MaterialTheme.typography.labelSmall,
                                         color = androidx.compose.ui.graphics.Color.White,
                                         fontWeight = androidx.compose.ui.text.font.FontWeight.Bold,
@@ -156,38 +150,7 @@ fun UserProfileCard(
                                 }
                             }
 
-                            if (isNightOwl && !isNewUser) {
-                                Surface(
-                                    shape = RoundedCornerShape(8.dp),
-                                    color = androidx.compose.ui.graphics.Color(0xFF673AB7),
-                                    modifier = Modifier.padding(end = 3.dp)
-                                ) {
-                                    Text(
-                                        text = stringResource(R.string.badge_night_owl),
-                                        style = MaterialTheme.typography.labelSmall,
-                                        color = androidx.compose.ui.graphics.Color.White,
-                                        fontWeight = androidx.compose.ui.text.font.FontWeight.Bold,
-                                        fontSize = 9.sp,
-                                        modifier = Modifier.padding(horizontal = 5.dp, vertical = 2.dp)
-                                    )
-                                }
-                            } else if (isInfodumper) {
-                                Surface(
-                                    shape = RoundedCornerShape(8.dp),
-                                    color = androidx.compose.ui.graphics.Color(0xFFE91E63),
-                                    modifier = Modifier.padding(end = 3.dp)
-                                ) {
-                                    Text(
-                                        text = stringResource(R.string.badge_infodumper),
-                                        style = MaterialTheme.typography.labelSmall,
-                                        color = androidx.compose.ui.graphics.Color.White,
-                                        fontWeight = androidx.compose.ui.text.font.FontWeight.Bold,
-                                        fontSize = 9.sp,
-                                        modifier = Modifier.padding(horizontal = 5.dp, vertical = 2.dp)
-                                    )
-                                }
-                            }
-
+                            // Badge Memorie: Sempre visibile se l'utente ha memorie
                             if (user.memories.isNotEmpty()) {
                                 Surface(
                                     shape = RoundedCornerShape(12.dp),
