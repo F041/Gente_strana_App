@@ -376,4 +376,10 @@
     <string name="location_permission_denied">Location permission denied</string>
     <string name="location_error">Location error: %1$s</string>
 
+    <string name="unblock_user_dialog_title">Unblock User</string>
+    <string name="unblock_user_dialog_text">Are you sure you want to unblock this user?</string>
+    <string name="unblock_user_dialog_confirm">Unblock</string>
+    <string name="unblock_user_success_toast">User unblocked.</string>
+    <string name="report_sent_success">Report sent, thank you.</string>
+
 </resources>

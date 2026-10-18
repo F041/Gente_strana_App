@@ -381,4 +381,10 @@
     <string name="location_permission_denied">Permesso di localizzazione negato</string>
     <string name="location_error">Errore localizzazione: %1$s</string>
 
+    <string name="unblock_user_dialog_title">Sblocca Utente</string>
+    <string name="unblock_user_dialog_text">Sei sicuro di voler sbloccare questo utente?</string>
+    <string name="unblock_user_dialog_confirm">Sblocca</string>
+    <string name="unblock_user_success_toast">Utente sbloccato.</string>
+    <string name="report_sent_success">Segnalazione inviata, grazie.</string>
+
 </resources>

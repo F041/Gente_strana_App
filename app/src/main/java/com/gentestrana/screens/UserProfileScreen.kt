@@ -160,7 +160,6 @@ fun UserProfileScreen(
             )
         }
     ) { padding ->
-        {
             Log.d("UserProfileScreen", "docId: $docId, currentUserId: $currentUserId")
 
             val hasUserAlreadyWrittenMemory = memoriesList.any { it.authorId == currentUserId }
@@ -195,7 +194,6 @@ fun UserProfileScreen(
                     editText = mem.text
                 }
             )
-        }
     }
 
     if (showReportDialog) {
