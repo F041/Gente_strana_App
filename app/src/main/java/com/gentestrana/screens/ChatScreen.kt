@@ -136,7 +136,8 @@ fun ChatScreen(docId: String, navController: NavController) {
     val isKeyboardVisible = imeInsets.getBottom(LocalDensity.current) > 0
 
     LaunchedEffect(isKeyboardVisible) {
-        if (!isKeyboardVisible && messages.isNotEmpty()) {
+        if (isKeyboardVisible && messages.isNotEmpty()) {
+            delay(150) // Aspetta che la tastiera completi l'animazione di apertura
             listState.animateScrollToItem(messages.size - 1)
         }
     }
@@ -418,8 +419,8 @@ fun ChatScreen(docId: String, navController: NavController) {
             Column(
                 modifier = Modifier
                     .fillMaxSize()
-                    .imePadding()
                     .padding(paddingValues)
+                    .imePadding()
             ) {
                 LazyColumn(
                     state = listState,

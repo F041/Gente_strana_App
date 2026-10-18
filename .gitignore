@@ -17,6 +17,7 @@ local.properties
 /firestore_rules.md
 /cialdini_analysis.md
 /github_actions_cicd_guide.md
+/handover_pwa.md
 
 # Scripts per gestione utenti
 /scripts/
