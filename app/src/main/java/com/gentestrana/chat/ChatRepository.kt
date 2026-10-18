@@ -40,8 +40,14 @@ class ChatRepository(
                 participants.contains(user.docId)
             }
 
-        // If a chat already exists, return its ID
+        // If a chat already exists, return its ID and unhide if deletedFor contains currentUserId
         if (existingChat != null) {
+            val deletedFor = existingChat.get("deletedFor") as? List<String> ?: emptyList()
+            if (deletedFor.contains(currentUserId)) {
+                db.collection("chats").document(existingChat.id)
+                    .update("deletedFor", FieldValue.arrayRemove(currentUserId))
+                    .await()
+            }
             return existingChat.id
         }
 
@@ -133,6 +139,11 @@ class ChatRepository(
                     else -> MessageStatus.SENT
                 }
 
+                // Online status: lastActive entro 5 minuti e mezzo (330.000 ms)
+                val lastActiveMs = userObj?.lastActive?.toDate()?.time ?: 0L
+                val nowMs = System.currentTimeMillis()
+                val isOnline = (nowMs - lastActiveMs) in 0..330_000L
+
                 // --- CREA E RESTITUISCI L'OGGETTO CHAT ---
                 Chat(
                     id = doc.id,
@@ -143,6 +154,7 @@ class ChatRepository(
                     photoUrl = firstPhotoUrl,
                     lastMessageStatus = lastMessageStatus,
                     timestamp = timestamp,
+                    isOnline = isOnline,
                     isPinned = isPinned,
                 )
             }
@@ -286,10 +298,15 @@ class ChatRepository(
 
             val chatDocSnapshot = chatDocRef.get().await()
             val currentlyHasMessages = chatDocSnapshot.getBoolean("hasMessages") ?: false
+            val deletedFor = chatDocSnapshot.get("deletedFor") as? List<String> ?: emptyList()
 
-            if (!currentlyHasMessages) {
-                chatDocRef.update("hasMessages", true).await()
-                Log.d("ChatRepository", "Flag 'hasMessages' impostato a true per chat $chatId")
+            if (!currentlyHasMessages || deletedFor.isNotEmpty()) {
+                val updates = hashMapOf<String, Any>("hasMessages" to true)
+                if (deletedFor.isNotEmpty()) {
+                    updates["deletedFor"] = FieldValue.delete()
+                }
+                chatDocRef.update(updates).await()
+                Log.d("ChatRepository", "Flag 'hasMessages' e 'deletedFor' aggiornati per chat $chatId")
             }
 
             val sanitizedMessage = sanitizeInput(removeSpaces(message))
@@ -378,13 +395,13 @@ class ChatRepository(
                 .await()
                 .documents
 
-            // Se non ci sono più messaggi, elimina l'intero documento chat
+            // Se non ci sono più messaggi, imposta hasMessages = false anziché cancellare la chat
             if (remainingMessages.isEmpty()) {
                 db.collection("chats")
                     .document(chatId)
-                    .delete()
+                    .update("hasMessages", false)
                     .await()
-                Log.d("ChatRepository", "Chat $chatId eliminata: ultimo messaggio rimosso")
+                Log.d("ChatRepository", "Chat $chatId aggiornata: hasMessages = false")
             }
         } catch (e: Exception) {
             Log.e("ChatRepository", "Errore durante l'eliminazione del messaggio", e)

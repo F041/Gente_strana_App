@@ -1,7 +1,9 @@
 package com.gentestrana.screens
 
 import android.content.Context
+import android.content.Intent
 import android.content.pm.PackageManager
+import android.net.Uri
 import android.os.Build
 
 import android.widget.Toast
@@ -86,6 +88,10 @@ fun SettingsScreen(
 
     var showDeleteConfirmationDialog by remember { mutableStateOf(false) }
 
+    val isEmailPasswordUser = remember {
+        auth.currentUser?.providerData?.any { it.providerId == "password" } == true
+    }
+
     Scaffold(
         topBar = {
             TopAppBar(
@@ -104,10 +110,12 @@ fun SettingsScreen(
                 style = MaterialTheme.typography.titleMedium
             )
             HorizontalDivider()
-            ListItem(
-                headlineContent = { Text(stringResource(R.string.change_password)) },
-                modifier = Modifier.clickable { navController.navigate("changePassword") }
-            )
+            if (isEmailPasswordUser) {
+                ListItem(
+                    headlineContent = { Text(stringResource(R.string.change_password)) },
+                    modifier = Modifier.clickable { navController.navigate("changePassword") }
+                )
+            }
 
             ListItem(
                 headlineContent = { Text(stringResource(R.string.blocked_users_navigation_title)) },
@@ -215,7 +223,14 @@ fun SettingsScreen(
             )
             HorizontalDivider()
             ListItem(
-                headlineContent = { Text(stringResource(R.string.privacy_policy)) }
+                headlineContent = { Text(stringResource(R.string.privacy_policy)) },
+                modifier = Modifier.clickable {
+                    val intent = Intent(
+                        Intent.ACTION_VIEW,
+                        Uri.parse("https://appgentestrana.wordpress.com/trattamento-dati-personali/")
+                    )
+                    context.startActivity(intent)
+                }
             )
             ListItem(
                 headlineContent = { Text(stringResource(R.string.terms_of_service)) },

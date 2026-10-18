@@ -75,14 +75,16 @@ fun ProfileTextField(
         if (!hasInteracted) {
             hasInteracted = true
         }
-        // Usa la funzione utility se removeSpaces è true
+        // Durante la digitazione non usiamo trim() per permettere nomi doppi (es. "Anna Maria")
         val processedText = if (removeSpaces) {
-            removeSpaces(newText)
+            newText.replace(Regex("[\\r\\n]+"), " ").replace(Regex("\\s{2,}"), " ")
         } else {
             newText
         }
         if (maxLength != null) {
-            if (processedText.length <= maxLength) {
+            if (processedText.trim().length <= maxLength) {
+                onValueChange(processedText)
+            } else if (processedText.length <= maxLength) {
                 onValueChange(processedText)
             } else {
                 onValueChange(processedText.substring(0, maxLength))

@@ -13,8 +13,10 @@ local.properties
 /plan_icebreaker_autopilot.md
 /plan_release_guide.md
 /plan_porting_a_ios.md
+/CLAUDE.local.md
 /firestore_rules.md
 /cialdini_analysis.md
+/github_actions_cicd_guide.md
 
 # Scripts per gestione utenti
 /scripts/
@@ -25,4 +27,6 @@ google-services.json
 app/google-services.json
 *.aab
 *.apk
+*.jks
+keystore_base64.txt
 

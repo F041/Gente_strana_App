@@ -278,8 +278,8 @@
     <string name="translate">translate</string>
     <string name="translation_failed">translation failed</string>
     <string name="reset">reset</string>
-    <string name="apply">apply</string>">
-    <string name="enter_location">insert country</string>">
+    <string name=\"apply\">apply</string>
+    <string name=\"enter_location\">insert country</string>
     <string name="notification_new_user_title">New arrival! 🎉</string>
     <string name="notification_new_user_body">%1$s joined the community!</string>
     <string name="default_notification_title">New message</string>

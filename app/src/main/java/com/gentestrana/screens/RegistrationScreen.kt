@@ -36,6 +36,7 @@ import com.gentestrana.components.GenericLoadingScreen
 import com.gentestrana.components.ProfileCompletionFields
 import com.gentestrana.users.UserRepository
 import com.gentestrana.utils.missingRequiredProfileFields
+import com.gentestrana.utils.removeSpaces
 import com.google.firebase.ktx.Firebase
 import com.google.firebase.remoteconfig.ktx.remoteConfig
 
@@ -227,7 +228,11 @@ fun RegistrationScreen(
                 // Campo username
                 OutlinedTextField(
                     value = username,
-                    onValueChange = { username = it },
+                    onValueChange = { newText ->
+                        if (removeSpaces(newText).length <= 13) {
+                            username = newText
+                        }
+                    },
                     label = { Text(stringResource(R.string.registration_firstname_label)) },
                     placeholder = { Text(stringResource(R.string.registration_firstname_placeholder)) },
                     modifier = Modifier.fillMaxWidth(),
@@ -341,8 +346,13 @@ fun RegistrationScreen(
             Spacer(modifier = Modifier.height(4.dp))
             Button(
                 onClick = {
-                    if (normalizedEmail.isBlank() || password.isBlank() || username.isBlank()) {
+                    val cleanedUsername = removeSpaces(username)
+                    if (normalizedEmail.isBlank() || password.isBlank() || cleanedUsername.isBlank()) {
                         errorMessage = context.getString(R.string.login_fill_fields)
+                        return@Button
+                    }
+                    if (cleanedUsername.length < 2 || cleanedUsername.length > 13) {
+                        errorMessage = "Il nome deve contenere tra 2 e 13 caratteri"
                         return@Button
                     }
                     if (isEmailError) {
@@ -368,7 +378,7 @@ fun RegistrationScreen(
                     userRepository.registerUserAndUploadImage(
                         email = normalizedEmail,
                         password = password,
-                        username = username.trim(),
+                        username = cleanedUsername,
                         sex = sex,
                         bio = bio,
                         topics = topics,

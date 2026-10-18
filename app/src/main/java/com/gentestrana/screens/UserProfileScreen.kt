@@ -40,7 +40,6 @@ fun UserProfileScreen(
     navController: NavHostController,) {
     val userRepository = remember { UserRepository() }
     val chatRepository = remember { ChatRepository() }
-    var showGallery by remember { mutableStateOf(false) }
     var showReportDialog by remember { mutableStateOf(false) }
     val currentUserId = FirebaseAuth.getInstance().currentUser?.uid
 
@@ -161,11 +160,6 @@ fun UserProfileScreen(
             )
         }
     ) { padding ->
-        BoxWithOverlay(
-            showGallery = showGallery,
-            images = user.profilePicUrl,
-            onCloseGallery = { showGallery = false }
-        )
         {
             Log.d("UserProfileScreen", "docId: $docId, currentUserId: $currentUserId")
 
@@ -175,7 +169,6 @@ fun UserProfileScreen(
                 user = displayUser,
                 padding = padding,
                 //scrollState = scrollState,
-                onProfileImageClick = { showGallery = true },
                 navController = navController,
                 onStartChat = if (docId != currentUserId && !isBlocked)  {
                     { // Lambda per avviare la chat (solo se NON è il profilo personale)
@@ -254,10 +247,19 @@ fun UserProfileScreen(
                             additionalComments = additionalComments,
                             onSuccess = {
                                 showReportDialog = false
-                                // Eventuale feedback all'utente (es. Snackbar)
+                                Toast.makeText(
+                                    context,
+                                    context.getString(R.string.report_sent_success),
+                                    Toast.LENGTH_SHORT
+                                ).show()
                             },
                             onFailure = {
-                                // Mostra un messaggio d'errore
+                                showReportDialog = false
+                                Toast.makeText(
+                                    context,
+                                    "Errore durante l'invio della segnalazione",
+                                    Toast.LENGTH_SHORT
+                                ).show()
                             }
                         )
                     }
@@ -314,8 +316,8 @@ fun UserProfileScreen(
     if (showUnblockDialog) {
         AlertDialog(
             onDismissRequest = { showUnblockDialog = false },
-            title = { Text("Sblocca Utente") }, // TODO: String resource
-            text = { Text("Sei sicuro di voler sbloccare questo utente?") }, // TODO: String resource
+            title = { Text(stringResource(R.string.unblock_user_dialog_title)) },
+            text = { Text(stringResource(R.string.unblock_user_dialog_text)) },
             confirmButton = {
                 Button(
                     onClick = {
@@ -325,7 +327,11 @@ fun UserProfileScreen(
                                 onSuccess = {
                                     isBlocked = false // Aggiorna lo stato locale
                                     showUnblockDialog = false
-                                    Toast.makeText(context, "Utente sbloccato.", Toast.LENGTH_SHORT).show() // Feedback
+                                    Toast.makeText(
+                                        context,
+                                        context.getString(R.string.unblock_user_success_toast),
+                                        Toast.LENGTH_SHORT
+                                    ).show()
                                 },
                                 onFailure = { errorMsg ->
                                     showUnblockDialog = false
@@ -334,9 +340,8 @@ fun UserProfileScreen(
                             )
                         }
                     }
-                    // Non servono colori speciali qui
                 ) {
-                    Text("Sblocca") // TODO: String resource
+                    Text(stringResource(R.string.unblock_user_dialog_confirm))
                 }
             },
             dismissButton = {
@@ -443,47 +448,5 @@ fun UserProfileScreen(
 private fun CircularProgressCentered() {
     Box(Modifier.fillMaxSize(), Alignment.Center) {
         CircularProgressIndicator()
-    }
-}
-//TODO: rimovibile e usare Generic etc
-
-@Composable
-private fun BoxWithOverlay(
-    showGallery: Boolean,
-    images: List<String>,
-    onCloseGallery: () -> Unit,
-    content: @Composable () -> Unit
-) {
-    Box(Modifier.fillMaxSize()) {
-        content()
-        if (showGallery) {
-            GalleryOverlay(images, onCloseGallery)
-        }
-    }
-}
-
-@Composable
-private fun GalleryOverlay(images: List<String>, onClose: () -> Unit) {
-    Box(
-        Modifier
-            .fillMaxSize()
-            .background(MaterialTheme.colorScheme.surface.copy(alpha = 0.95f))
-            .clickable(onClick = onClose)
-    ) {
-        Column(Modifier.padding(16.dp)) {
-            Row(Modifier.fillMaxWidth(), Arrangement.SpaceBetween) {
-                Text(stringResource(R.string.photos), style = MaterialTheme.typography.headlineSmall)
-                IconButton(onClick = onClose) {
-                    Icon(Icons.Default.Close, stringResource(R.string.close))
-                }
-            }
-            Spacer(Modifier.height(16.dp))
-            UserPicsGallery(
-                imageUrls = images,
-                modifier = Modifier.fillMaxSize(),
-                imageSize = 300,
-                // TODO: HARDCODED, to modify with dp or % of screen
-            )
-        }
     }
 }

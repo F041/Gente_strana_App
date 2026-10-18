@@ -37,7 +37,6 @@ fun ProfileContent(
     user: User,
     padding: PaddingValues,
     navController: NavHostController,
-    onProfileImageClick: () -> Unit,
     onStartChat: () -> Unit,
     showChatButton: Boolean,
     onWriteRecommendationClick: (() -> Unit)? = null,
@@ -78,15 +77,7 @@ fun ProfileContent(
                 // Forza aspect ratio 1:1 (quadrato)
                 .clip(RoundedCornerShape(8.dp))
                 .background(MaterialTheme.colorScheme.surfaceVariant)
-                .align(Alignment.CenterHorizontally)
-                .clickable {
-                    // <--- Mantieni il comportamento clickable
-                    navController.currentBackStackEntry?.savedStateHandle?.set(
-                        "imageUrls",
-                        user.profilePicUrl
-                    )
-                    navController.navigate("profile_pictures_screen")
-                },
+                .align(Alignment.CenterHorizontally),
             contentAlignment = Alignment.Center
         ) {
             val imageUrlToLoad: String = if (user.profilePicUrl.isEmpty()) {

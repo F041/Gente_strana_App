@@ -21,6 +21,7 @@ import kotlinx.coroutines.launch
 import com.google.firebase.firestore.FirebaseFirestore
 import kotlinx.coroutines.tasks.await
 import com.gentestrana.utils.normalizeUrl
+import com.gentestrana.utils.removeSpaces
 import com.gentestrana.utils.saveByteArrayToTempFile
 import com.gentestrana.utils.uploadMultipleImages
 import com.google.firebase.firestore.FieldValue
@@ -158,20 +159,24 @@ class ProfileViewModel : ViewModel() {
             return
         }
 
+        val cleanedUsername = removeSpaces(updatedUsername)
+        if (cleanedUsername.length < 2 || cleanedUsername.length > 13) {
+            onFailure("Il nome utente deve contenere tra 2 e 13 caratteri")
+            return
+        }
+
         val updates = hashMapOf<String, Any>().apply {
-            put("username", updatedUsername)
+            put("username", cleanedUsername)
             put("bio", updatedBio)
-            put("topics", updatedTopics.split(",").map { it.trim() })
+            put("topics", updatedTopics.split(",").map { it.trim() }.filter { it.isNotBlank() })
             put("profilePicUrl", updatedProfilePicUrl)
 
             updatedBirthTimestamp?.let { ts ->
                 // Conversione corretta a Firestore Timestamp
                 val seconds = ts / 1000
                 val nanoseconds = (ts % 1000) * 1_000_000
-                // Converti millisecondi a nanosecondi ma perché?
                 put("rawBirthTimestamp", com.google.firebase.Timestamp(seconds, nanoseconds.toInt()))
             } ?: run {
-                // Se null, rimuovi il campo (opzionale)
                 put("rawBirthTimestamp", FieldValue.delete())
             }
         }
@@ -432,10 +437,11 @@ class ProfileViewModel : ViewModel() {
     fun setSpokenLanguages(languages: String) {
         _spokenLanguages.value = languages
         val uid = getUid() ?: return // FIX: uid reattivo
+        val list = languages.split(",").map { it.trim() }.filter { it.isNotBlank() }
         viewModelScope.launch {
             try {
                 db.collection("users").document(uid)
-                    .update("spokenLanguages", languages.split(","))
+                    .update("spokenLanguages", list)
                     .await()
             } catch (e: Exception) {
 //                println("Lingue caricate: ${_spokenLanguages.value}")

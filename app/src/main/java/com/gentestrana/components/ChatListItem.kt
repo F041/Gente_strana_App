@@ -172,10 +172,19 @@ fun ChatListItem(
 
                     Spacer(modifier = Modifier.height(dimensions.smallPadding))
 
+                    // Anteprima card ricordo: mostra "💬 testo" invece del prefisso grezzo "MEMORY_CARD|…"
+                    val lastMessageDisplay = when {
+                        chat.lastMessage.startsWith("MEMORY_CARD|") || chat.lastMessage.startsWith("RECOMMENDATION_CARD|") -> {
+                            val parts = chat.lastMessage.split("|")
+                            if (parts.size > 2) "💬 ${parts.drop(2).joinToString("|")}" else chat.lastMessage
+                        }
+                        else -> chat.lastMessage
+                    }
+
                     // Ultimo messaggio e stato
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         Text(
-                            text = chat.lastMessage,
+                            text = lastMessageDisplay,
                             style = MaterialTheme.typography.bodyMedium,
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                             maxLines = 1,

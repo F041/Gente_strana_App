@@ -442,7 +442,7 @@ fun RecommendationSystemMessageBubble(
 ) {
     val parts = cardMessage.split("|")
     val authorName = if (parts.size > 1) parts[1] else "Utente"
-    val reviewText = if (parts.size > 2) parts[2] else ""
+    val reviewText = if (parts.size > 2) parts.drop(2).joinToString("|") else ""
 
     val cardTitle = if (isCurrentUser) {
         "Hai lasciato una memoria a $recipientName"

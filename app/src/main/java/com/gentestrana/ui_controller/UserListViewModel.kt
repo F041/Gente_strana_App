@@ -149,20 +149,26 @@ class UserListViewModel : ViewModel() {
                         doc.toObject(User::class.java)?.copy(docId = doc.id)
                     }
 
-                    // Carica le memorie pubbliche per mostrare il badge ciano (1 💬) sulla card Community
-                    val usersWithMemories = newUsers.map { user ->
-                        val memories = try {
+                    // Carica le memorie pubbliche in un'unica query whereIn (max 30 uid per volta)
+                    // per mostrare il badge ciano (1 💬) sulla card Community, invece di una query per utente.
+                    val uids = newUsers.map { it.docId }
+                    val memoriesByUser = mutableMapOf<String, MutableList<com.gentestrana.users.Memory>>()
+                    if (uids.isNotEmpty()) {
+                        try {
                             val memSnap = firestore.collection("memories")
-                                .whereEqualTo("targetUserId", user.docId)
+                                .whereIn("targetUserId", uids)
                                 .get()
                                 .await()
-                            memSnap.documents.mapNotNull { doc ->
-                                doc.toObject(com.gentestrana.users.Memory::class.java)?.copy(id = doc.id)
+                            for (doc in memSnap.documents) {
+                                val mem = doc.toObject(com.gentestrana.users.Memory::class.java)?.copy(id = doc.id) ?: continue
+                                memoriesByUser.getOrPut(mem.targetUserId) { mutableListOf() }.add(mem)
                             }
                         } catch (e: Exception) {
-                            emptyList<com.gentestrana.users.Memory>()
+                            Log.e("UserListVM", "Errore caricamento memorie batch: ${e.message}")
                         }
-                        user.copy(memories = memories)
+                    }
+                    val usersWithMemories = newUsers.map { user ->
+                        user.copy(memories = memoriesByUser[user.docId] ?: emptyList())
                     }
 
                     // Escludi subito l'utente corrente dalla lista raw

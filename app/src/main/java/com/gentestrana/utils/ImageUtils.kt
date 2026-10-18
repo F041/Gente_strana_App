@@ -40,8 +40,19 @@ fun uploadMainProfileImage(
         return
     }
 
+    // Conversione a WebP se possibile per risparmiare spazio e banda
+    val webpBytes = convertImageUriToWebP(context, imageUri)
+    val uploadUri: Uri
+    if (webpBytes != null) {
+        val tempFileName = "main_profile_${System.currentTimeMillis()}.webp"
+        val tempUri = saveByteArrayToTempFile(context, webpBytes, tempFileName)
+        uploadUri = tempUri ?: imageUri
+    } else {
+        uploadUri = imageUri
+    }
+
     // 1. Genera l'hash MD5 dall'URI dell'immagine
-    val md5Hash = generateMD5HashFromUri(context, imageUri)
+    val md5Hash = generateMD5HashFromUri(context, uploadUri)
     val filename = if (md5Hash != null) {
         "$md5Hash.webp"  // Usa l'hash MD5 come nome del file
     } else {
@@ -56,9 +67,13 @@ fun uploadMainProfileImage(
     val storagePath = "users/$uid/gallery/$filename"
     Log.d("ImageUpload", "Percorso di storage: $storagePath")
 
-    // 3. Carica l'immagine su Firebase Storage
+    // 3. Carica l'immagine su Firebase Storage specificando il contentType
     val storageRef = Firebase.storage.reference.child(storagePath)
-    storageRef.putFile(imageUri)
+    val metadata = com.google.firebase.storage.StorageMetadata.Builder()
+        .setContentType("image/webp")
+        .build()
+
+    storageRef.putFile(uploadUri, metadata)
         .addOnSuccessListener { taskSnapshot ->
             // 4. Recupera l'URL di download dopo il caricamento
             storageRef.downloadUrl.addOnSuccessListener { downloadUri ->
@@ -78,7 +93,7 @@ fun uploadMainProfileImage(
 
 /**
  * Costruisce l'URL di una miniatura ridimensionata dall'URL originale.
- * Si aspetta che le miniature siano in una cartella "_resized"
+ * Si aspetta che le miniature siano in una cartella "gallery_resized"
  * e abbiano un suffisso tipo "_200x200" prima dell'estensione.
  *
  * @param originalUrl L'URL completo dell'immagine originale su Firebase Storage.
@@ -86,69 +101,36 @@ fun uploadMainProfileImage(
  * @return L'URL della miniatura o null se l'URL originale non è valido o la costruzione fallisce.
  */
 fun getThumbnailUrl(originalUrl: String?, size: String = "200x200"): String? {
-    if (originalUrl.isNullOrBlank() || !originalUrl.contains("/users%2F")) {
-        // Se l'URL è nullo, vuoto o non sembra un URL di storage valido per le gallerie utente
-        return originalUrl // Restituisci l'originale (o null se era null)
-    }
+    if (originalUrl.isNullOrBlank()) return originalUrl
+    if (!originalUrl.contains("/gallery") && !originalUrl.contains("%2Fgallery")) return originalUrl
 
     return try {
-        // 1. Decodifica l'URL per lavorare con i path normali
-        val decodedUrl = URLDecoder.decode(originalUrl, "UTF-8")
+        val oIndex = originalUrl.indexOf("/o/")
+        if (oIndex == -1) return originalUrl
 
-        // 2. Trova l'ultima occorrenza di "/" per separare percorso e nome file
-        val lastSlashIndex = decodedUrl.lastIndexOf('/')
-        if (lastSlashIndex == -1 || lastSlashIndex == decodedUrl.length - 1) {
-            return originalUrl // Non c'è nome file? Restituisci originale
-        }
-        val filePath = decodedUrl.substring(0, lastSlashIndex)
-        val fullFileName = decodedUrl.substring(lastSlashIndex + 1)
+        val baseUrl = originalUrl.substring(0, oIndex + 3) // include ".../o/"
+        val rest = originalUrl.substring(oIndex + 3)
 
-        // 3. Trova l'ultima occorrenza di "." per separare nome e estensione
-        val lastDotIndex = fullFileName.lastIndexOf('.')
-        val fileName = if (lastDotIndex != -1) fullFileName.substring(0, lastDotIndex) else fullFileName
-        val extension = if (lastDotIndex != -1) fullFileName.substring(lastDotIndex) else "" // include il "."
+        val queryIndex = rest.indexOf('?')
+        val objectPathEncoded = if (queryIndex != -1) rest.substring(0, queryIndex) else rest
+        val queryParams = if (queryIndex != -1) rest.substring(queryIndex) else ""
 
-        // 4. Modifica il percorso inserendo "_resized" prima del nome file
-        // Assumiamo che il percorso originale sia tipo ".../gallery/nomefile.ext"
-        // e vogliamo ".../gallery_resized/nomefile_sizexsize.ext"
-        val resizedFilePath = filePath.replace("/gallery", "/gallery_resized", ignoreCase = true)
+        val objectPathDecoded = URLDecoder.decode(objectPathEncoded, "UTF-8")
+        if (!objectPathDecoded.contains("/gallery/")) return originalUrl
 
-        // 5. Costruisci il nuovo nome file con il suffisso della dimensione
-        val resizedFileName = "${fileName}_${size}${extension}"
-
-        // 6. Ricodifica le parti del percorso e nome file separatamente per sicurezza
-        //    (Anche se gli hash MD5 non dovrebbero contenere caratteri speciali, è più robusto)
-        //    Prima dividiamo il percorso in segmenti
-        val pathSegments = resizedFilePath.split('/')
-        val encodedPathSegments = pathSegments.map { URLEncoder.encode(it, "UTF-8") }
-        //    Ricostruiamo il percorso codificato, gestendo gli slash iniziali/doppi
-        val encodedResizedPath = encodedPathSegments.joinToString("/")
-            .replace("%2F", "/") // Assicura che gli slash rimangano slash
-            .replace("//", "/") // Evita slash doppi
-
-        val encodedResizedFileName = URLEncoder.encode(resizedFileName, "UTF-8")
-
-        // 7. Ricostruisci l'URL completo, trovando la parte base prima di "/users%2F"
-        val baseUrlEndIndex = originalUrl.indexOf("/users%2F")
-        if (baseUrlEndIndex == -1) return originalUrl // Se non troviamo "/users%2F", qualcosa è strano
-
-        val baseUrl = originalUrl.substring(0, baseUrlEndIndex)
-
-        // 8. Combina base URL, percorso codificato e nome file codificato
-        //    Assicurati che ci sia uno e un solo slash tra base e percorso
-        val finalThumbnailUrl = "${baseUrl.removeSuffix("/")}/${encodedResizedPath.removePrefix("/")}/${encodedResizedFileName}"
-
-        // 9. Recupera eventuali token dall'URL originale
-        val tokenPart = originalUrl.substringAfter("?", "")
-        if (tokenPart.isNotEmpty()) {
-            "$finalThumbnailUrl?$tokenPart"
+        val newObjectPath = objectPathDecoded.replace("/gallery/", "/gallery_resized/")
+        val lastDotIndex = newObjectPath.lastIndexOf('.')
+        val pathWithSuffix = if (lastDotIndex != -1) {
+            "${newObjectPath.substring(0, lastDotIndex)}_${size}${newObjectPath.substring(lastDotIndex)}"
         } else {
-            finalThumbnailUrl
+            "${newObjectPath}_${size}"
         }
 
+        val reEncodedPath = Uri.encode(pathWithSuffix)
+        "$baseUrl$reEncodedPath$queryParams"
     } catch (e: Exception) {
         Log.e("getThumbnailUrl", "Errore costruzione URL thumbnail per: $originalUrl", e)
-        originalUrl // In caso di errore, restituisci l'URL originale
+        originalUrl
     }
 }
 
@@ -160,6 +142,9 @@ suspend fun uploadMultipleImages(
 ): List<Pair<String, String?>> {
     val storage = Firebase.storage
     val results = mutableListOf<Pair<String, String?>>()
+    val metadata = com.google.firebase.storage.StorageMetadata.Builder()
+        .setContentType("image/webp")
+        .build()
 
     uris.forEach { uri ->
         // Calcola l'hash MD5 per l'immagine
@@ -169,7 +154,7 @@ suspend fun uploadMultipleImages(
         // Usa il filename generato
         val imageRef = storage.reference.child("users/$uid/gallery/$filename")
 
-        val downloadUrl = imageRef.putFile(uri)
+        val downloadUrl = imageRef.putFile(uri, metadata)
             .await()
             .storage
             .downloadUrl

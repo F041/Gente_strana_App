@@ -4,7 +4,6 @@ import android.content.Context
 import android.net.Uri
 import android.util.Log
 import com.gentestrana.R
-import com.gentestrana.utils.FirestoreDeletionUtils
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.FirebaseAuthException
 import com.google.firebase.auth.GoogleAuthProvider
@@ -527,7 +526,7 @@ class UserRepository(
         )
 
         firestore.collection("users").document(uid)
-            .set(userData)
+            .set(userData, com.google.firebase.firestore.SetOptions.merge())
             .addOnSuccessListener {
                 Log.d("UserRepository", "createMissingUserDocument: Documento Firestore ricreato con successo per $uid")
                 retrieveAndSaveFcmToken(uid)
@@ -595,15 +594,14 @@ class UserRepository(
             user.reload().await()
             user.getIdToken(true).await()
 
-            // Elimina dati Firestore
-            FirestoreDeletionUtils.deleteUserDataFromFirestore(user.uid)
-
-            // Elimina utente Auth
+            // Elimina utente Auth (la Cloud Function cleanupDeletedUser provvederà a cancellare dati Firestore, Storage e chat)
             user.delete().await()
 
             onSuccess()
+        } catch (e: com.google.firebase.auth.FirebaseAuthRecentLoginRequiredException) {
+            onFailure("Per motivi di sicurezza, effettua nuovamente l'accesso prima di eliminare l'account.")
         } catch (e: Exception) {
-            onFailure("Errore: ${e.message}")
+            onFailure("Errore durante l'eliminazione dell'account: ${e.message}")
         }
     }
 

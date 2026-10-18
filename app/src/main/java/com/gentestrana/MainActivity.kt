@@ -21,10 +21,15 @@ import androidx.navigation.NavHostController
 import com.gentestrana.ui.theme.LocalAppTheme
 import com.gentestrana.utils.forceTokenRefreshIfNeeded
 import com.google.firebase.auth.FirebaseAuth
+import androidx.lifecycle.lifecycleScope
 import com.gentestrana.utils.updateUserLastActive
 import com.google.firebase.ktx.Firebase
 import com.google.firebase.remoteconfig.ktx.remoteConfig
 import com.google.firebase.remoteconfig.ktx.remoteConfigSettings
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.isActive
+import kotlinx.coroutines.launch
 
 class MainActivity : ComponentActivity() {
 
@@ -256,9 +261,23 @@ class MainActivity : ComponentActivity() {
         }
     }
 
+    private var lastActiveJob: Job? = null
+
     override fun onResume() {
         super.onResume()
         updateUserLastActive()
+        lastActiveJob?.cancel()
+        lastActiveJob = lifecycleScope.launch {
+            while (isActive) {
+                delay(4 * 60 * 1000L) // 4 minuti
+                updateUserLastActive()
+            }
+        }
+    }
+
+    override fun onPause() {
+        super.onPause()
+        lastActiveJob?.cancel()
     }
 
     private fun isOnboardingCompleted(): Boolean {
