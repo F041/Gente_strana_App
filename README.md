@@ -49,6 +49,7 @@ As you read from the name of this repository, Gente Strana becomes the Italian v
      
 
 ### To do:
+- add the emojis as reaction to messages. Does it require a new write or field for the chat data model?
 
 
 ### Customizing the App (For Developers)

@@ -13,6 +13,7 @@ import android.util.Log
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
 import androidx.core.content.ContextCompat
+import com.gentestrana.utils.ActiveChatTracker
 import com.gentestrana.utils.NotificationChannels
 import com.google.firebase.auth.ktx.auth
 import com.google.firebase.firestore.ktx.firestore
@@ -104,6 +105,13 @@ class MyFirebaseMessagingService : FirebaseMessagingService() {
             Log.w(TAG, "Notification body was blank, using default.")
         }
 
+        // Se l'utente ha già la chat aperta sullo schermo, salta la notifica
+        val chatId = dataPayload["chatId"]
+        if (!chatId.isNullOrEmpty() && chatId == ActiveChatTracker.activeChatId) {
+            Log.d(TAG, "Chat $chatId è attualmente aperta sul telefono. Notifica FCM saltata.")
+            return
+        }
+
         // --- Mostra la notifica ---
         // Lo facciamo sempre qui per coerenza, sia in foreground che background
         Log.d(TAG, "Preparing to show notification: Title='$notificationTitle', Channel='$targetChannelId'")
@@ -174,7 +182,12 @@ class MyFirebaseMessagingService : FirebaseMessagingService() {
 
         // Mostra la notifica
         with(NotificationManagerCompat.from(this)) {
-            val notificationId = System.currentTimeMillis().toInt() // ID univoco per la notifica
+            val chatId = data["chatId"]
+            if (!chatId.isNullOrEmpty() && chatId == ActiveChatTracker.activeChatId) {
+                Log.d(TAG, "showNotification: Chat $chatId è attiva. Annullato.")
+                return
+            }
+            val notificationId = if (!chatId.isNullOrEmpty()) chatId.hashCode() else System.currentTimeMillis().toInt()
             Log.d(TAG, "Notifying with ID: $notificationId on Channel: $channelId")
             try {
                 notify(notificationId, notificationBuilder.build())

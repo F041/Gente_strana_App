@@ -159,6 +159,20 @@ class ChatViewModel(
 
                     if (listChanged) {
                         _hasMoreMessages.value = snapshot.documents.size >= messagesLimit
+
+                        val userId = _currentUserId.value
+                        if (userId != null) {
+                            val hasUnreadFromOther = snapshot.documents.any { doc ->
+                                val sender = doc.getString("sender") ?: ""
+                                val status = doc.getString("status") ?: ""
+                                sender != userId && status != "READ"
+                            }
+                            if (hasUnreadFromOther) {
+                                viewModelScope.launch {
+                                    markMessagesAsDeliveredAndRead(userId)
+                                }
+                            }
+                        }
                     }
                 }
             }

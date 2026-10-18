@@ -227,57 +227,51 @@ class ChatRepository(
     suspend fun markMessagesAsRead(chatId: String) {
         try {
             val currentUserId = auth.currentUser?.uid ?: return
-            Log.d("DEBUG", "UserID: $currentUserId - ChatID: $chatId")
 
             val messagesRef = db.collection("chats/$chatId/messages")
             val query = messagesRef
                 .whereEqualTo("status", "DELIVERED")
                 .get()
                 .await()
-            Log.d("DEBUG", "Trovati ${query.documents.size} messaggi da aggiornare")
 
-            // Verifica che ci siano documenti da aggiornare
             if (query.isEmpty) return
 
             val batch = db.batch()
+            var count = 0
             query.documents.forEach { doc ->
-                // Aggiungi controllo per evitare aggiornamenti non necessari
                 if (doc.getString("sender") != currentUserId) {
                     batch.update(doc.reference, "status", "READ")
+                    count++
                 }
             }
-            batch.commit().await()
-
+            if (count > 0) {
+                batch.commit().await()
+            }
         } catch (e: Exception) {
-            Log.e("DEBUG", "ERRORE in markMessagesAsRead: ${e.message}")
-            throw e
+            Log.e("ChatRepository", "Error in markMessagesAsRead: ${e.message}")
         }
     }
 
     suspend fun markMessagesAsDelivered(chatId: String, currentUserId: String) {
-        val messagesRef = db.collection("chats/$chatId/messages")
+        try {
+            val messagesRef = db.collection("chats/$chatId/messages")
 
-        // Cerca SOLO i messaggi dell'altro utente con status SENT
-        val query = messagesRef
-            .whereEqualTo("status", "SENT")
-            .whereNotEqualTo("sender", currentUserId)
-            .get()
-            .await()
+            val query = messagesRef
+                .whereEqualTo("status", "SENT")
+                .whereNotEqualTo("sender", currentUserId)
+                .get()
+                .await()
 
-        // Controllo aggiuntivo
-//        val validDocs = query.documents.filter { doc ->
-//            val participants = db.collection("chats").document(chatId).get().await()
-//                .get("participants") as? List<String> ?: emptyList()
-//            participants.contains(currentUserId)
-//        }
+            if (query.isEmpty) return
 
-        val batch = db.batch()
-        // ---> Usiamo direttamente i documenti della query originale <---
-        query.documents.forEach { doc ->
-            batch.update(doc.reference, "status", "DELIVERED")
+            val batch = db.batch()
+            query.documents.forEach { doc ->
+                batch.update(doc.reference, "status", "DELIVERED")
+            }
+            batch.commit().await()
+        } catch (e: Exception) {
+            Log.e("ChatRepository", "Error in markMessagesAsDelivered: ${e.message}")
         }
-        batch.commit().await()
-        Log.d("Repo", "${query.documents.size} messaggi marcati come DELIVERED")
     }
 
     suspend fun sendMessage(

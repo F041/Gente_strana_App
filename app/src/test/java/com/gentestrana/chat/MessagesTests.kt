@@ -43,7 +43,7 @@ class MessagesLocalUnitTests {
             )
 
             // 2. Configura i mock
-            val (queryMock, batchMock) = configureFirestoreMocks(
+            val (collectionMock, queryMock, batchMock) = configureFirestoreMocks(
                 chatId = chatId,
                 expectedStatus = "SENT",
                 mockMessages = messages
@@ -53,7 +53,7 @@ class MessagesLocalUnitTests {
             chatRepository.markMessagesAsDelivered(chatId, currentUserId)
 
             // 4. Verifica
-            verify(queryMock).whereEqualTo("status", "SENT")
+            verify(collectionMock).whereEqualTo("status", "SENT")
             verify(queryMock).whereNotEqualTo("sender", currentUserId)
 
             // Verifica che solo il messaggio 1 sia stato aggiornato
@@ -74,7 +74,7 @@ class MessagesLocalUnitTests {
                 createMockMessage("msg3", "SENT", "otherUser") // Stato errato
             )
 
-            val (queryMock, batchMock) = configureFirestoreMocks(
+            val (collectionMock, queryMock, batchMock) = configureFirestoreMocks(
                 chatId = chatId,
                 expectedStatus = "DELIVERED",
                 mockMessages = messages
@@ -82,8 +82,7 @@ class MessagesLocalUnitTests {
 
             chatRepository.markMessagesAsRead(chatId)
 
-            verify(queryMock).whereEqualTo("status", "DELIVERED")
-            verify(queryMock).whereNotEqualTo("sender", currentUserId)
+            verify(collectionMock).whereEqualTo("status", "DELIVERED")
 
             // Verifica l'update esatto
             verify(batchMock, times(1)).update(any(), eq("status"), eq("READ"))
@@ -94,9 +93,12 @@ class MessagesLocalUnitTests {
         chatId: String,
         expectedStatus: String,
         mockMessages: List<Map<String, Any>>
-    ): Pair<Query, WriteBatch> {
-        // 1. Mock dei documenti
-        val documents = mockMessages.map { mockDocument(it) }
+    ): Triple<CollectionReference, Query, WriteBatch> {
+        // 1. Mock dei documenti filtrati per status e mittente
+        val filteredMessages = mockMessages
+            .filter { it["status"] == expectedStatus }
+            .filter { it["sender"] != "testUser" }
+        val documents = filteredMessages.map { mockDocument(it) }
 
         // 2. Mock QuerySnapshot
         val querySnapshot = mock<QuerySnapshot>().apply {
@@ -107,7 +109,7 @@ class MessagesLocalUnitTests {
         // 3. Mock Query
         val queryMock = mock<Query>().apply {
             whenever(whereEqualTo("status", expectedStatus)).thenReturn(this)
-            whenever(whereNotEqualTo("sender", any())).thenReturn(this)
+            whenever(whereNotEqualTo(eq("sender"), any())).thenReturn(this)
             whenever(get()).thenReturn(task)
         }
 
@@ -115,13 +117,20 @@ class MessagesLocalUnitTests {
         val collectionMock = mock<CollectionReference>().apply {
             whenever(whereEqualTo("status", expectedStatus)).thenReturn(queryMock)
         }
+        val chatsCollMock = mock<CollectionReference>()
+        val chatDocMock = mock<DocumentReference>()
+        whenever(mockFirestore.collection("chats")).thenReturn(chatsCollMock)
+        whenever(chatsCollMock.document(chatId)).thenReturn(chatDocMock)
+        whenever(chatDocMock.collection("messages")).thenReturn(collectionMock)
         whenever(mockFirestore.collection("chats/$chatId/messages")).thenReturn(collectionMock)
 
         // 5. Mock Batch
-        val batchMock = mock<WriteBatch>()
+        val batchMock = mock<WriteBatch>().apply {
+            whenever(commit()).thenReturn(Tasks.forResult(null))
+        }
         whenever(mockFirestore.batch()).thenReturn(batchMock)
 
-        return Pair(queryMock, batchMock)
+        return Triple(collectionMock, queryMock, batchMock)
     }
 
     private fun createMockMessage(

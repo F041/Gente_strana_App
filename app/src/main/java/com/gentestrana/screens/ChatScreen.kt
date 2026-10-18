@@ -38,6 +38,7 @@ import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import com.gentestrana.utils.ActiveChatTracker
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -91,6 +92,16 @@ fun ChatScreen(docId: String, navController: NavController) {
 
     val context = LocalContext.current
     val listState = rememberLazyListState()
+
+    DisposableEffect(docId) {
+        ActiveChatTracker.activeChatId = docId
+        ActiveChatTracker.clearNotificationForChat(context, docId)
+        onDispose {
+            if (ActiveChatTracker.activeChatId == docId) {
+                ActiveChatTracker.activeChatId = null
+            }
+        }
+    }
 
     // Stato per gli icebreaker: calcolato solo se la chat è vuota e l'autopilot del destinatario è attivo
     val icebreakerQuestions = remember {

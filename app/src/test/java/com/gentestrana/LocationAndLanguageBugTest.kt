@@ -90,10 +90,10 @@ class LocationAndLanguageBugTest {
         println("   Riferimenti a NETWORK_PROVIDER: $networkRequests")
         println("   Riferimenti a GPS_PROVIDER: $gpsRequests")
 
-        // La richiesta effettiva viene fatta 1 volta (NETWORK)
+        // La richiesta effettiva viene fatta per NETWORK e GPS fallback (2 chiamate)
         val singleUpdateCalls = Regex("requestSingleUpdate").findAll(content).count()
-        assertEquals("C'è solo 1 chiamata a requestSingleUpdate (nessun fallback GPS)",
-            1, singleUpdateCalls)
+        assertEquals("Ci sono 2 chiamate a requestSingleUpdate (con fallback GPS)",
+            2, singleUpdateCalls)
         println("   requestSingleUpdate chiamato: $singleUpdateCalls volta (manca fallback GPS)")
 
         // Il commento della FASE 2 è fuorviante
