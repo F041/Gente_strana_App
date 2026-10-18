@@ -363,4 +363,17 @@
     </string>
 
 
+    <!-- Stringhe per traduzione messaggi (handover voce 13) -->
+    <string name="message_options_title">Message options</string>
+    <string name="message_options_subtitle">Choose an action for this message:</string>
+    <string name="message_copy">Copy</string>
+    <string name="message_translate">Translate</string>
+    <string name="message_original">Original</string>
+    <string name="message_show_original">Show original</string>
+    <string name="message_delete">Delete</string>
+
+    <!-- Stringhe per località (handover voce 14) -->
+    <string name="location_permission_denied">Location permission denied</string>
+    <string name="location_error">Location error: %1$s</string>
+
 </resources>

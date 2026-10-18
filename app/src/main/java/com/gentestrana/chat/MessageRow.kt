@@ -32,6 +32,7 @@ import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.IntOffset
@@ -342,15 +343,15 @@ fun MessageRow(
     if (showActionsDialog) {
         AlertDialog(
             onDismissRequest = { showActionsDialog = false },
-            title = { Text("Opzioni messaggio") },
-            text = { Text("Scegli un'azione per questo messaggio:") },
+            title = { Text(stringResource(R.string.message_options_title)) },
+            text = { Text(stringResource(R.string.message_options_subtitle)) },
             confirmButton = {
                 Row {
                     TextButton(onClick = {
                         showActionsDialog = false
                         copyToClipboard(context, chatMessage.message)
                     }) {
-                        Text("Copia")
+                        Text(stringResource(R.string.message_copy))
                     }
                     TextButton(onClick = {
                         showActionsDialog = false
@@ -360,7 +361,7 @@ fun MessageRow(
                             doTranslate()
                         }
                     }) {
-                        Text(if (translatedText != null) "Originale" else "Traduci")
+                        Text(if (translatedText != null) stringResource(R.string.message_original) else stringResource(R.string.message_translate))
                     }
                 }
             },
@@ -370,7 +371,7 @@ fun MessageRow(
                         showActionsDialog = false
                         onDelete.invoke()
                     }) {
-                        Text("Elimina")
+                        Text(stringResource(R.string.message_delete))
                     }
                 }
             }

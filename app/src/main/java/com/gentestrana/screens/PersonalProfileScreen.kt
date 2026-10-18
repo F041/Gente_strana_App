@@ -110,7 +110,7 @@ fun PersonalProfileScreen(
                 is OperationResult.Error -> {
                     Toast.makeText(
                         context,
-                        "Errore localizzazione: ${locationResult.message}",
+                        stringResource(R.string.location_error, locationResult.message ?: ""),
                         Toast.LENGTH_LONG
                     ).show() // Mostra errore (se ENTRAMBI i provider falliscono)
                     Log.w(
@@ -131,7 +131,7 @@ fun PersonalProfileScreen(
             getLocation(context)
         } else {
             // Permesso negato, gestisci la situazione (es. mostra un messaggio)
-            Toast.makeText(context, "Permesso di localizzazione negato", Toast.LENGTH_SHORT).show()
+            Toast.makeText(context, stringResource(R.string.location_permission_denied), Toast.LENGTH_SHORT).show()
         }
     }
 

@@ -61,7 +61,8 @@ object LocationUtils {
             if (addresses != null && addresses.isNotEmpty()) {
                 val address = addresses[0]
                 val city = address.locality ?: address.subAdminArea ?: address.adminArea ?: "" // Get city, fallback to subAdminArea, then adminArea
-                val country = address.countryName ?: "" // Get country name
+                val countryCode = address.countryCode ?: ""
+                val country = if (countryCode.isNotBlank()) Locale("", countryCode).getDisplayCountry(Locale.ENGLISH) else "" // Country name in English (handover voce 14)
                 val locationName = if (city.isNotBlank()) "$city, $country" else country // Format location name
                 Log.d("LocationUtils", "Location trovata tramite Geocoding: $locationName") // LOG: Location trovata
                 return OperationResult.Success(locationName) // Return success with location name
@@ -171,7 +172,8 @@ object LocationUtils {
             if (addresses != null && addresses.isNotEmpty()) {
                 val address = addresses[0]
                 val city = address.locality ?: address.subAdminArea ?: address.adminArea ?: ""
-                val country = address.countryName ?: ""
+                val countryCode = address.countryCode ?: ""
+                val country = if (countryCode.isNotBlank()) Locale("", countryCode).getDisplayCountry(Locale.ENGLISH) else "" // Country name in English (handover voce 14)
                 val locationName = if (city.isNotBlank()) "$city, $country" else country
                 Log.d("LocationUtils", "resolveLocationName: Location trovata: $locationName") // LOG
                 onLocationResult(OperationResult.Success(locationName)) // Callback con Success

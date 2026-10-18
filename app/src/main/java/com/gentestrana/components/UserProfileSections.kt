@@ -635,7 +635,7 @@ fun MemoryCard(
                     CircularProgressIndicator(modifier = Modifier.size(12.dp), strokeWidth = 1.5.dp)
                 } else {
                     Text(
-                        text = if (translatedText != null) "Mostra originale" else "Traduci",
+                        text = if (translatedText != null) stringResource(R.string.message_show_original) else stringResource(R.string.message_translate),
                         style = MaterialTheme.typography.labelSmall,
                         color = MaterialTheme.colorScheme.primary,
                         modifier = Modifier.clickable {
