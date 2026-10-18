@@ -370,7 +370,7 @@
 
     <!-- Stringhe per traduzione messaggi (handover voce 13) -->
     <string name="message_options_title">Opzioni messaggio</string>
-    <string name="message_options_subtitle">Scegli un'azione per questo messaggio:</string>
+    <string name="message_options_subtitle">Scegli un\'azione per questo messaggio:</string>
     <string name="message_copy">Copia</string>
     <string name="message_translate">Traduci</string>
     <string name="message_original">Originale</string>
