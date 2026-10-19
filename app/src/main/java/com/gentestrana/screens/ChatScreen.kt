@@ -469,7 +469,10 @@ fun ChatScreen(docId: String, navController: NavController) {
                                 } else null,
                                 onReplySwipe = if (message.sender != currentUid) {
                                     { replyingToMessage = message }
-                                } else null
+                                } else null,
+                                onToggleReaction = { messageId, emoji ->
+                                    viewModel.toggleReaction(messageId, emoji)
+                                }
                             )
                         }
                     }

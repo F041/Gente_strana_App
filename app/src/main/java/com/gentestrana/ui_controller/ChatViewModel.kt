@@ -129,6 +129,9 @@ class ChatViewModel(
                         val changedDoc = change.document
                         val data = change.document.data
 
+                        @Suppress("UNCHECKED_CAST")
+                        val reactionsMap = data["reactions"] as? Map<String, String> ?: emptyMap()
+
                         // ---> COSTRUZIONE MANUALE CORRETTA <---
                         val message = ChatMessage(
                             id = changedDoc.id,
@@ -138,7 +141,8 @@ class ChatViewModel(
                             status = data["status"] as? String ?: "SENT",
                             isReply = data["isReply"] as? Boolean ?: false,
                             replyToMessageText = data["replyToMessageText"] as? String ?: "",
-                            replyToMessageSender = data["replyToMessageSender"] as? String ?: ""
+                            replyToMessageSender = data["replyToMessageSender"] as? String ?: "",
+                            reactions = reactionsMap
                         )
 
                         listChanged = true
@@ -292,6 +296,17 @@ class ChatViewModel(
             } catch (e: Exception) {
                 Log.e("ChatViewModel", "Error sending message in chat $chatId", e)
                 _sendMessageEvent.emit(SendMessageEvent.Error(e.message ?: "Errore sconosciuto"))
+            }
+        }
+    }
+
+    fun toggleReaction(messageId: String, emoji: String) {
+        val userId = _currentUserId.value ?: return
+        viewModelScope.launch {
+            try {
+                repository.toggleMessageReaction(chatId, messageId, userId, emoji)
+            } catch (e: Exception) {
+                Log.e("ChatViewModel", "Error toggling reaction for message $messageId", e)
             }
         }
     }

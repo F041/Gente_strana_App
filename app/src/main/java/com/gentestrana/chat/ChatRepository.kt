@@ -335,6 +335,24 @@ class ChatRepository(
         }
     }
 
+    suspend fun toggleMessageReaction(chatId: String, messageId: String, userId: String, emoji: String) {
+        try {
+            val messageRef = db.collection("chats/$chatId/messages").document(messageId)
+            val snapshot = messageRef.get().await()
+            @Suppress("UNCHECKED_CAST")
+            val currentReactions = snapshot.get("reactions") as? Map<String, String> ?: emptyMap()
+
+            if (currentReactions[userId] == emoji) {
+                messageRef.update("reactions.$userId", FieldValue.delete()).await()
+            } else {
+                messageRef.update("reactions.$userId", emoji).await()
+            }
+            Log.d("ChatRepository", "Reazione $emoji aggiornata per messaggio $messageId da $userId")
+        } catch (e: Exception) {
+            Log.e("ChatRepository", "Errore durante l'aggiornamento della reazione", e)
+        }
+    }
+
 
 
     /**

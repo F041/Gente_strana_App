@@ -28,8 +28,15 @@ android {
         }
     }
 
-    val vCode = project.findProperty("versionCode")?.toString()?.toIntOrNull() ?: 112
-    val vName = project.findProperty("versionName")?.toString() ?: "1.0.112"
+    val gitCommitCount = try {
+        val process = ProcessBuilder("git", "rev-list", "--count", "HEAD").start()
+        process.inputStream.bufferedReader().readText().trim().toIntOrNull() ?: 12
+    } catch (_: Exception) {
+        12
+    }
+    val calculatedVersionCode = 100 + gitCommitCount
+    val vCode = project.findProperty("versionCode")?.toString()?.toIntOrNull() ?: calculatedVersionCode
+    val vName = project.findProperty("versionName")?.toString() ?: "1.0.$vCode"
 
     defaultConfig {
         applicationId = "com.gentestrana"

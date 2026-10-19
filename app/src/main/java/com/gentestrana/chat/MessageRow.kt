@@ -14,6 +14,7 @@ import android.text.style.UnderlineSpan
 import android.view.View
 import android.widget.TextView
 import android.widget.Toast
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -134,7 +135,8 @@ fun MessageRow(
     recipientName: String,
     showAvatar: Boolean,
     onDelete: (() -> Unit)?,
-    onReplySwipe: (() -> Unit)?
+    onReplySwipe: (() -> Unit)?,
+    onToggleReaction: ((String, String) -> Unit)? = null
 ) {
     if (chatMessage.message.startsWith("MEMORY_CARD|") || chatMessage.message.startsWith("RECOMMENDATION_CARD|")) {
         RecommendationSystemMessageBubble(
@@ -275,7 +277,7 @@ fun MessageRow(
                 Column {
                     if (chatMessage.isReply) {
                         val senderNameToDisplay = if (chatMessage.replyToMessageSender == currentUserId) {
-                            currentUserName
+                            stringResource(R.string.you)
                         } else {
                             recipientName
                         }
@@ -336,14 +338,70 @@ fun MessageRow(
                     }
                 }
             }
+
+            // Badge Reazioni sotto la bolla
+            if (chatMessage.reactions.isNotEmpty()) {
+                val reactionCounts = chatMessage.reactions.values.groupingBy { it }.eachCount()
+                val hasUserReacted = chatMessage.reactions[currentUserId] != null
+                Surface(
+                    shape = RoundedCornerShape(12.dp),
+                    color = if (hasUserReacted)
+                        MaterialTheme.colorScheme.primaryContainer
+                    else
+                        MaterialTheme.colorScheme.surfaceVariant,
+                    border = if (hasUserReacted)
+                        BorderStroke(1.dp, MaterialTheme.colorScheme.primary)
+                    else
+                        null,
+                    modifier = Modifier
+                        .padding(top = 2.dp)
+                        .clickable { showActionsDialog = true }
+                ) {
+                    Row(
+                        modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp),
+                        horizontalArrangement = Arrangement.spacedBy(4.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        reactionCounts.forEach { (emoji, count) ->
+                            Text(
+                                text = if (count > 1) "$emoji $count" else emoji,
+                                style = MaterialTheme.typography.labelSmall
+                            )
+                        }
+                    }
+                }
+            }
         }
     }
 
-    // Dialog opzioni messaggio (Copia, Traduci, Elimina)
+    // Dialog opzioni messaggio (Copia, Traduci, Elimina + Reazioni Emoji)
     if (showActionsDialog) {
+        val popularEmojis = listOf("❤️", "👍", "😂", "😮", "😢", "🙏")
         AlertDialog(
             onDismissRequest = { showActionsDialog = false },
-            title = { Text(stringResource(R.string.message_options_title)) },
+            title = {
+                Column {
+                    Text(stringResource(R.string.message_options_title))
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceAround
+                    ) {
+                        popularEmojis.forEach { emoji ->
+                            Text(
+                                text = emoji,
+                                fontSize = 24.sp,
+                                modifier = Modifier
+                                    .clickable {
+                                        showActionsDialog = false
+                                        onToggleReaction?.invoke(chatMessage.id, emoji)
+                                    }
+                                    .padding(4.dp)
+                            )
+                        }
+                    }
+                }
+            },
             text = { Text(stringResource(R.string.message_options_subtitle)) },
             confirmButton = {
                 Row {

@@ -364,6 +364,7 @@
 
 
     <!-- Stringhe per traduzione messaggi (handover voce 13) -->
+    <string name="you">You</string>
     <string name="message_options_title">Message options</string>
     <string name="message_options_subtitle">Choose an action for this message:</string>
     <string name="message_copy">Copy</string>

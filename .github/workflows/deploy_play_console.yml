@@ -66,5 +66,6 @@ jobs:
           serviceAccountJsonPlainText: ${{ secrets.PLAY_CONSOLE_SERVICE_ACCOUNT_JSON }}
           packageName: com.gentestrana
           releaseFiles: app/build/outputs/bundle/release/app-release.aab
-          track: internal
+          tracks: internal
           status: completed
+          changesNotSentForReview: true
