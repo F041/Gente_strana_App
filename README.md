@@ -50,7 +50,7 @@ As you read from the name of this repository, Gente Strana becomes the Italian v
 
 ### To do:
 - add the emojis as reaction to messages. Does it require a new write or field for the chat data model?
-
+- nel quote del messaggio salta fuori il cognome, non serve, capire la causa
 
 ### Customizing the App (For Developers)
 

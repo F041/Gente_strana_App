@@ -2,6 +2,7 @@ package com.gentestrana
 
 import android.os.Bundle
 import androidx.activity.ComponentActivity
+import androidx.activity.enableEdgeToEdge
 import androidx.activity.compose.setContent
 import androidx.compose.material3.Surface
 import androidx.navigation.compose.rememberNavController
@@ -42,6 +43,7 @@ class MainActivity : ComponentActivity() {
     private val pendingOobCode = mutableStateOf<String?>(null)
 
     override fun onCreate(savedInstanceState: Bundle?) {
+        enableEdgeToEdge()
         super.onCreate(savedInstanceState)
 
         val remoteConfig = Firebase.remoteConfig

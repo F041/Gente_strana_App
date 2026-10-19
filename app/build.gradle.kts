@@ -28,8 +28,8 @@ android {
         }
     }
 
-    val vCode = project.findProperty("versionCode")?.toString()?.toIntOrNull() ?: 109
-    val vName = project.findProperty("versionName")?.toString() ?: "1.0.109"
+    val vCode = project.findProperty("versionCode")?.toString()?.toIntOrNull() ?: 112
+    val vName = project.findProperty("versionName")?.toString() ?: "1.0.112"
 
     defaultConfig {
         applicationId = "com.gentestrana"
