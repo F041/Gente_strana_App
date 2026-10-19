@@ -39,6 +39,7 @@ The visual design of the app, as shown in the screenshots, might change as I dev
 * Multilingual support: app available in both Italian and English (default).
 * Themes: dark, white, system (white) and "special".
 * You can report and or block users. This can happen in such community too. 
+* Emoji reactions: react to any chat message with quick emojis (❤️, 👍, 😂, 😮, 😢, 🙏) with real-time updates and reaction badges.
 * Icebreaker suggestions (Phase 0): when you open an empty chat, the app shows 3 random "break the ice" questions (localized in IT/EN) as tappable chips. Tapping a chip fills the message box so you can send it immediately. Chips disappear as soon as the first message is sent.
 
 ### Known Limitations / Not Yet Implemented
@@ -47,10 +48,6 @@ The visual design of the app, as shown in the screenshots, might change as I dev
 ## Why "GS" as logo?
 As you read from the name of this repository, Gente Strana becomes the Italian version of Quirky People. The infinite became the symbol of neurodiverse people, hence the logo that reminds that symbol. A bit more difficult to create that with the initials Q and P of Quirky People. The dots inside the letters represent a social network. 
      
-
-### To do:
-- add the emojis as reaction to messages. Does it require a new write or field for the chat data model?
-- nel quote del messaggio salta fuori il cognome, non serve, capire la causa
 
 ### Customizing the App (For Developers)
 
