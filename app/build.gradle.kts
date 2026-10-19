@@ -125,6 +125,10 @@ dependencies {
 
     implementation ("com.android.billingclient:billing-ktx:8.0.0")
 
+    // In-App Updates per notifiche aggiornamento automatico
+    implementation("com.google.android.play:app-update:2.1.0")
+    implementation("com.google.android.play:app-update-ktx:2.1.0")
+
     testImplementation ("org.mockito:mockito-core:5.3.1")  // Per creare oggetti "finti" (mock)
     testImplementation ("org.mockito.kotlin:mockito-kotlin:4.1.0") // Estensioni Kotlin per Mockito
     testImplementation ("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.7.3") // Test per coroutine

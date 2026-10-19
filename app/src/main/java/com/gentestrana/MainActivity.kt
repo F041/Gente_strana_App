@@ -20,6 +20,7 @@ import com.gentestrana.screens.AppTheme
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.navigation.NavHostController
 import com.gentestrana.ui.theme.LocalAppTheme
+import com.gentestrana.utils.InAppUpdateUtils
 import com.gentestrana.utils.forceTokenRefreshIfNeeded
 import com.google.firebase.auth.FirebaseAuth
 import androidx.lifecycle.lifecycleScope
@@ -45,6 +46,7 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         enableEdgeToEdge()
         super.onCreate(savedInstanceState)
+        InAppUpdateUtils.checkForUpdate(this)
 
         val remoteConfig = Firebase.remoteConfig
         val configSettings = remoteConfigSettings {
@@ -268,6 +270,7 @@ class MainActivity : ComponentActivity() {
     override fun onResume() {
         super.onResume()
         updateUserLastActive()
+        InAppUpdateUtils.checkResumeUpdate(this)
         lastActiveJob?.cancel()
         lastActiveJob = lifecycleScope.launch {
             while (isActive) {
