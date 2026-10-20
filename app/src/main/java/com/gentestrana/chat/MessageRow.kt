@@ -256,117 +256,121 @@ fun MessageRow(
                 Spacer(modifier = Modifier.width(40.dp + 8.dp))
             }
 
-            Box(
-                modifier = Modifier
-                    .widthIn(max = 280.dp)
-                    .background(
-                        color = if (isCurrentUser)
-                            MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.8f)
-                        else
-                            MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.8f),
-                        shape = RoundedCornerShape(12.dp)
-                    )
-                    .padding(8.dp)
-                    .combinedClickable(
-                        onClick = {},
-                        onLongClick = {
-                            showActionsDialog = true
-                        }
-                    )
+            Column(
+                horizontalAlignment = if (isCurrentUser) Alignment.End else Alignment.Start
             ) {
-                Column {
-                    if (chatMessage.isReply) {
-                        val senderNameToDisplay = if (chatMessage.replyToMessageSender == currentUserId) {
-                            stringResource(R.string.you)
-                        } else {
-                            recipientName
-                        }
-                        QuotedMessage(
-                            senderName = senderNameToDisplay,
-                            text = chatMessage.replyToMessageText
+                Box(
+                    modifier = Modifier
+                        .widthIn(max = 280.dp)
+                        .background(
+                            color = if (isCurrentUser)
+                                MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.8f)
+                            else
+                                MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.8f),
+                            shape = RoundedCornerShape(12.dp)
                         )
-                        Spacer(modifier = Modifier.height(4.dp))
-                    }
-
-                    // AndroidView TextView nativo con colore testo adattivo dal tema
-                    val messageTextColor = if (isCurrentUser)
-                        MaterialTheme.colorScheme.onSecondaryContainer
-                    else
-                        MaterialTheme.colorScheme.onSurfaceVariant
-
-                    SelectableLinkifiedText(
-                        text = translatedText ?: chatMessage.message,
-                        textColor = messageTextColor
-                    )
-
-                    Spacer(modifier = Modifier.height(2.dp))
-                    Row(
-                        modifier = Modifier.align(Alignment.End),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        if (isTranslating) {
-                            CircularProgressIndicator(
-                                modifier = Modifier.size(10.dp),
-                                strokeWidth = 1.5.dp,
-                                color = MaterialTheme.colorScheme.primary
-                            )
-                            Spacer(modifier = Modifier.width(4.dp))
-                        } else if (translatedText != null) {
-                            Text(
-                                text = "🌐 Tradotto ",
-                                style = MaterialTheme.typography.labelSmall,
-                                color = MaterialTheme.colorScheme.primary,
-                                modifier = Modifier
-                                    .clickable { translatedText = null }
-                                    .padding(end = 2.dp)
-                            )
-                        }
-                        Text(
-                            text = formatTimestamp(chatMessage.timestamp),
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                        if (isCurrentUser) {
-                            Spacer(modifier = Modifier.width(4.dp))
-                            val statusEnum = try {
-                                MessageStatus.valueOf(chatMessage.status.uppercase())
-                            } catch (e: IllegalArgumentException) {
-                                MessageStatus.SENT
+                        .padding(8.dp)
+                        .combinedClickable(
+                            onClick = {},
+                            onLongClick = {
+                                showActionsDialog = true
                             }
-                            MessageStatusIcon(status = statusEnum)
+                        )
+                ) {
+                    Column {
+                        if (chatMessage.isReply) {
+                            val senderNameToDisplay = if (chatMessage.replyToMessageSender == currentUserId) {
+                                stringResource(R.string.you)
+                            } else {
+                                recipientName
+                            }
+                            QuotedMessage(
+                                senderName = senderNameToDisplay,
+                                text = chatMessage.replyToMessageText
+                            )
+                            Spacer(modifier = Modifier.height(4.dp))
+                        }
+
+                        // AndroidView TextView nativo con colore testo adattivo dal tema
+                        val messageTextColor = if (isCurrentUser)
+                            MaterialTheme.colorScheme.onSecondaryContainer
+                        else
+                            MaterialTheme.colorScheme.onSurfaceVariant
+
+                        SelectableLinkifiedText(
+                            text = translatedText ?: chatMessage.message,
+                            textColor = messageTextColor
+                        )
+
+                        Spacer(modifier = Modifier.height(2.dp))
+                        Row(
+                            modifier = Modifier.align(Alignment.End),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            if (isTranslating) {
+                                CircularProgressIndicator(
+                                    modifier = Modifier.size(10.dp),
+                                    strokeWidth = 1.5.dp,
+                                    color = MaterialTheme.colorScheme.primary
+                                )
+                                Spacer(modifier = Modifier.width(4.dp))
+                            } else if (translatedText != null) {
+                                Text(
+                                    text = "🌐 Tradotto ",
+                                    style = MaterialTheme.typography.labelSmall,
+                                    color = MaterialTheme.colorScheme.primary,
+                                    modifier = Modifier
+                                        .clickable { translatedText = null }
+                                        .padding(end = 2.dp)
+                                )
+                            }
+                            Text(
+                                text = formatTimestamp(chatMessage.timestamp),
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                            if (isCurrentUser) {
+                                Spacer(modifier = Modifier.width(4.dp))
+                                val statusEnum = try {
+                                    MessageStatus.valueOf(chatMessage.status.uppercase())
+                                } catch (e: IllegalArgumentException) {
+                                    MessageStatus.SENT
+                                }
+                                MessageStatusIcon(status = statusEnum)
+                            }
                         }
                     }
                 }
-            }
 
-            // Badge Reazioni sotto la bolla
-            if (chatMessage.reactions.isNotEmpty()) {
-                val reactionCounts = chatMessage.reactions.values.groupingBy { it }.eachCount()
-                val hasUserReacted = chatMessage.reactions[currentUserId] != null
-                Surface(
-                    shape = RoundedCornerShape(12.dp),
-                    color = if (hasUserReacted)
-                        MaterialTheme.colorScheme.primaryContainer
-                    else
-                        MaterialTheme.colorScheme.surfaceVariant,
-                    border = if (hasUserReacted)
-                        BorderStroke(1.dp, MaterialTheme.colorScheme.primary)
-                    else
-                        null,
-                    modifier = Modifier
-                        .padding(top = 2.dp)
-                        .clickable { showActionsDialog = true }
-                ) {
-                    Row(
-                        modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp),
-                        horizontalArrangement = Arrangement.spacedBy(4.dp),
-                        verticalAlignment = Alignment.CenterVertically
+                // Badge Reazioni sotto la bolla
+                if (chatMessage.reactions.isNotEmpty()) {
+                    val reactionCounts = chatMessage.reactions.values.groupingBy { it }.eachCount()
+                    val hasUserReacted = chatMessage.reactions[currentUserId] != null
+                    Surface(
+                        shape = RoundedCornerShape(12.dp),
+                        color = if (hasUserReacted)
+                            MaterialTheme.colorScheme.primaryContainer
+                        else
+                            MaterialTheme.colorScheme.surfaceVariant,
+                        border = if (hasUserReacted)
+                            BorderStroke(1.dp, MaterialTheme.colorScheme.primary)
+                        else
+                            null,
+                        modifier = Modifier
+                            .padding(top = 2.dp)
+                            .clickable { showActionsDialog = true }
                     ) {
-                        reactionCounts.forEach { (emoji, count) ->
-                            Text(
-                                text = if (count > 1) "$emoji $count" else emoji,
-                                style = MaterialTheme.typography.labelSmall
-                            )
+                        Row(
+                            modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp),
+                            horizontalArrangement = Arrangement.spacedBy(4.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            reactionCounts.forEach { (emoji, count) ->
+                                Text(
+                                    text = if (count > 1) "$emoji $count" else emoji,
+                                    style = MaterialTheme.typography.labelSmall
+                                )
+                            }
                         }
                     }
                 }

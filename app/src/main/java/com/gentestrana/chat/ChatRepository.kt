@@ -342,12 +342,14 @@ class ChatRepository(
             @Suppress("UNCHECKED_CAST")
             val currentReactions = snapshot.get("reactions") as? Map<String, String> ?: emptyMap()
 
-            if (currentReactions[userId] == emoji) {
-                messageRef.update("reactions.$userId", FieldValue.delete()).await()
+            val newReactions = currentReactions.toMutableMap()
+            if (newReactions[userId] == emoji) {
+                newReactions.remove(userId)
             } else {
-                messageRef.update("reactions.$userId", emoji).await()
+                newReactions[userId] = emoji
             }
-            Log.d("ChatRepository", "Reazione $emoji aggiornata per messaggio $messageId da $userId")
+            messageRef.update("reactions", newReactions).await()
+            Log.d("ChatRepository", "Reazione $emoji aggiornata per messaggio $messageId da $userId. Nuova mappa: $newReactions")
         } catch (e: Exception) {
             Log.e("ChatRepository", "Errore durante l'aggiornamento della reazione", e)
         }
