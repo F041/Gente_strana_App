@@ -133,10 +133,7 @@ fun ChatScreen(docId: String, navController: NavController) {
     val initialScrollDone = remember { mutableStateOf(false) }
     val textFieldIsFocused = remember { mutableStateOf(false) }
     val density = LocalDensity.current
-    val imeBottom = WindowInsets.ime.getBottom(density)
-    val navBottom = WindowInsets.navigationBars.getBottom(density)
-    val bottomInsetDp = with(density) { maxOf(imeBottom, navBottom).toDp() }
-    val isKeyboardVisible = imeBottom > 0
+    val isKeyboardVisible = WindowInsets.ime.getBottom(density) > 0
 
     LaunchedEffect(isKeyboardVisible) {
         if (isKeyboardVisible && messages.isNotEmpty()) {
@@ -423,10 +420,9 @@ fun ChatScreen(docId: String, navController: NavController) {
             Column(
                 modifier = Modifier
                     .fillMaxSize()
-                    .padding(
-                        top = paddingValues.calculateTopPadding(),
-                        bottom = bottomInsetDp
-                    )
+                    .padding(top = paddingValues.calculateTopPadding())
+                    .imePadding()
+                    .navigationBarsPadding()
             ) {
                 LazyColumn(
                     state = listState,

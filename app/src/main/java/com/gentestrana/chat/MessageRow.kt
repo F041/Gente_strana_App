@@ -256,8 +256,9 @@ fun MessageRow(
                 Spacer(modifier = Modifier.width(40.dp + 8.dp))
             }
 
-            Column(
-                horizontalAlignment = if (isCurrentUser) Alignment.End else Alignment.Start
+            Box(
+                contentAlignment = Alignment.BottomEnd,
+                modifier = Modifier.padding(bottom = if (chatMessage.reactions.isNotEmpty()) 6.dp else 0.dp)
             ) {
                 Box(
                     modifier = Modifier
@@ -342,7 +343,7 @@ fun MessageRow(
                     }
                 }
 
-                // Badge Reazioni sotto la bolla
+                // Badge Reazioni posizionato nell'angolo in basso a destra della bolla
                 if (chatMessage.reactions.isNotEmpty()) {
                     val reactionCounts = chatMessage.reactions.values.groupingBy { it }.eachCount()
                     val hasUserReacted = chatMessage.reactions[currentUserId] != null
@@ -352,12 +353,13 @@ fun MessageRow(
                             MaterialTheme.colorScheme.primaryContainer
                         else
                             MaterialTheme.colorScheme.surfaceVariant,
-                        border = if (hasUserReacted)
-                            BorderStroke(1.dp, MaterialTheme.colorScheme.primary)
-                        else
-                            null,
+                        border = BorderStroke(
+                            1.dp,
+                            if (hasUserReacted) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outlineVariant
+                        ),
+                        shadowElevation = 2.dp,
                         modifier = Modifier
-                            .padding(top = 2.dp)
+                            .offset(x = 4.dp, y = 8.dp)
                             .clickable { showActionsDialog = true }
                     ) {
                         Row(
