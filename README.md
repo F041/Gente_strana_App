@@ -48,7 +48,8 @@ The visual design of the app, as shown in the screenshots, might change as I dev
 ## Why "GS" as logo?
 As you read from the name of this repository, Gente Strana becomes the Italian version of Quirky People. The infinite became the symbol of neurodiverse people, hence the logo that reminds that symbol. A bit more difficult to create that with the initials Q and P of Quirky People. The dots inside the letters represent a social network. 
      
-### To do: 
+### To do:
+- fix keyboard white space gap above text input field in chat screen on 21:9 devices (e.g. Sony Xperia 10 VI)
 
 ### Customizing the App (For Developers)
 
