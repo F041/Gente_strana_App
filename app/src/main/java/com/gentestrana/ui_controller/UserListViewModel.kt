@@ -160,8 +160,9 @@ class UserListViewModel : ViewModel() {
                                 .get()
                                 .await()
                             for (doc in memSnap.documents) {
+                                val targetUid = doc.getString("targetUserId") ?: continue
                                 val mem = doc.toObject(com.gentestrana.users.Memory::class.java)?.copy(id = doc.id) ?: continue
-                                memoriesByUser.getOrPut(mem.authorId) { mutableListOf() }.add(mem)
+                                memoriesByUser.getOrPut(targetUid) { mutableListOf() }.add(mem)
                             }
                         } catch (e: Exception) {
                             Log.e("UserListVM", "Errore caricamento memorie batch: ${e.message}")

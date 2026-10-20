@@ -321,6 +321,7 @@ fun ChatScreen(docId: String, navController: NavController) {
     }
 
     Scaffold(
+        contentWindowInsets = WindowInsets(0, 0, 0, 0),
         topBar = {
             TopAppBar(
                 title = {
@@ -419,8 +420,9 @@ fun ChatScreen(docId: String, navController: NavController) {
             Column(
                 modifier = Modifier
                     .fillMaxSize()
-                    .padding(paddingValues)
+                    .padding(top = paddingValues.calculateTopPadding())
                     .imePadding()
+                    .navigationBarsPadding()
             ) {
                 LazyColumn(
                     state = listState,
