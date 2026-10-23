@@ -86,6 +86,12 @@ class MyFirebaseMessagingService : FirebaseMessagingService() {
             targetChannelId = NEW_USERS_CHANNEL_ID
             // clickActionData già contiene userId e userName
         }
+        else if (dataPayload["type"] == "requests_digest") {
+            Log.d(TAG, "Type: Requests Digest Notification")
+            notificationTitle = notificationPayload?.title ?: dataPayload["title"] ?: getString(R.string.app_name)
+            notificationBody = notificationPayload?.body ?: dataPayload["body"] ?: "Hai nuove richieste di conversazione."
+            targetChannelId = DEFAULT_MESSAGES_CHANNEL_ID
+        }
         // 3. Notifica Chat o Altro (Default)
         else {
             Log.d(TAG, "Type: Default/Chat Notification")

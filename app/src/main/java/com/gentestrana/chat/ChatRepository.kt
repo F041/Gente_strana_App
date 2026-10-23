@@ -293,14 +293,22 @@ class ChatRepository(
             val chatDocSnapshot = chatDocRef.get().await()
             val currentlyHasMessages = chatDocSnapshot.getBoolean("hasMessages") ?: false
             val deletedFor = chatDocSnapshot.get("deletedFor") as? List<String> ?: emptyList()
+            val firstMessageAtMap = chatDocSnapshot.get("firstMessageAt") as? Map<*, *> ?: emptyMap<String, Any>()
 
-            if (!currentlyHasMessages || deletedFor.isNotEmpty()) {
-                val updates = hashMapOf<String, Any>("hasMessages" to true)
-                if (deletedFor.isNotEmpty()) {
-                    updates["deletedFor"] = FieldValue.delete()
-                }
+            val updates = hashMapOf<String, Any>()
+            if (!currentlyHasMessages) {
+                updates["hasMessages"] = true
+            }
+            if (deletedFor.isNotEmpty()) {
+                updates["deletedFor"] = FieldValue.delete()
+            }
+            if (firstMessageAtMap[sender] == null) {
+                updates["firstMessageAt.$sender"] = FieldValue.serverTimestamp()
+            }
+
+            if (updates.isNotEmpty()) {
                 chatDocRef.update(updates).await()
-                Log.d("ChatRepository", "Flag 'hasMessages' e 'deletedFor' aggiornati per chat $chatId")
+                Log.d("ChatRepository", "Updates $updates applicati per chat $chatId")
             }
 
             val sanitizedMessage = sanitizeInput(removeSpaces(message))
@@ -342,16 +350,73 @@ class ChatRepository(
             @Suppress("UNCHECKED_CAST")
             val currentReactions = snapshot.get("reactions") as? Map<String, String> ?: emptyMap()
 
-            val newReactions = currentReactions.toMutableMap()
-            if (newReactions[userId] == emoji) {
-                newReactions.remove(userId)
-            } else {
-                newReactions[userId] = emoji
-            }
-            messageRef.update("reactions", newReactions).await()
-            Log.d("ChatRepository", "Reazione $emoji aggiornata per messaggio $messageId da $userId. Nuova mappa: $newReactions")
+            val isRemoving = (currentReactions[userId] == emoji)
+            val updateValue = if (isRemoving) FieldValue.delete() else emoji
+
+            messageRef.update("reactions.$userId", updateValue).await()
+            Log.d("ChatRepository", "Reazione $emoji aggiornata per messaggio $messageId da $userId.")
         } catch (e: Exception) {
             Log.e("ChatRepository", "Errore durante l'aggiornamento della reazione", e)
+        }
+    }
+
+    suspend fun getNewConversationsCountInLast24Hours(userId: String): Int {
+        try {
+            val nowSec = Timestamp.now().seconds
+            val cutoffSec = nowSec - 86400
+
+            val chatDocs = db.collection("chats")
+                .whereArrayContains("participants", userId)
+                .get()
+                .await()
+
+            return chatDocs.documents.count { doc ->
+                val firstMessageAtMap = doc.get("firstMessageAt") as? Map<*, *> ?: return@count false
+                val userFirstMsg = firstMessageAtMap[userId]
+                val timestampSec = when (userFirstMsg) {
+                    is Timestamp -> userFirstMsg.seconds
+                    is Long -> userFirstMsg / 1000
+                    is Number -> userFirstMsg.toLong() / 1000
+                    else -> 0L
+                }
+                timestampSec > cutoffSec
+            }
+        } catch (e: Exception) {
+            Log.e("ChatRepository", "Error counting new conversations in 24h", e)
+            return 0
+        }
+    }
+
+    suspend fun checkCanSendFirstMessage(sender: com.gentestrana.users.User, receiver: com.gentestrana.users.User, chatId: String? = null): Pair<Boolean, String?> {
+        try {
+            if (chatId != null) {
+                val chatDoc = db.collection("chats").document(chatId).get().await()
+                val firstMessageAtMap = chatDoc.get("firstMessageAt") as? Map<*, *> ?: emptyMap<String, Any>()
+                if (firstMessageAtMap[sender.docId] != null) {
+                    return Pair(true, null)
+                }
+            }
+
+            val receiverBattery = receiver.socialBatteryLevel
+            if (receiverBattery == com.gentestrana.users.SocialBatteryLevel.RECHARGING ||
+                receiverBattery == com.gentestrana.users.SocialBatteryLevel.FOCUS_ONLY) {
+                return Pair(false, "Per ora ${receiver.username} non accetta nuove conversazioni. Riprova più tardi.")
+            }
+
+            val limit = sender.socialBatteryLevel.maxNewConversations24h
+            if (limit == 0) {
+                return Pair(false, "Il tuo livello di batteria sociale non ti permette di avviare nuove conversazioni.")
+            }
+
+            val count24h = getNewConversationsCountInLast24Hours(sender.docId)
+            if (count24h >= limit) {
+                return Pair(false, "Hai raggiunto il limite di nuove conversazioni ($limit nelle ultime 24 ore) per la tua batteria sociale.")
+            }
+
+            return Pair(true, null)
+        } catch (e: Exception) {
+            Log.e("ChatRepository", "Error checking social battery limits", e)
+            return Pair(true, null)
         }
     }
 

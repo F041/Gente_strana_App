@@ -313,17 +313,17 @@
     <string name="email_body_3">Su Gente Strana, avere una diagnosi verificata (in futuro farò di più per favorirlo) aumenta la qualità della comunità.</string>
     <string name="email_footer">Se hai domande o vuoi saperne di più su come ottenere una diagnosi, rispondi a questa email o visita il nostro sito %s.</string>
     <string name="email_signature">Gabriele Giordano, di Gente Strana</string>
-    <string name="website_url">https://appgentestrana.wordpress.com</string>
+    <string name="website_url">https://quirky-people.web.app/</string>
 
     <!-- ===== Stringhe Termini di Servizio (Italiano) ===== -->
     <string name="tos_screen_title">Termini di servizio</string>
-    <string name="tos_last_updated">Ultimo Aggiornamento: 28 Marzo 2025</string> <!-- Modifica con la data reale -->
+    <string name="tos_last_updated">Ultimo Aggiornamento: 22 Ottobre 2026</string> <!-- Modifica con la data reale -->
     <string name="tos_introduction_header">Benvenuto/a in Gente Strana!</string>
-    <string name="tos_introduction_text">Questi termini di servizio ("Termini") regolano il tuo utilizzo dell\'applicazione mobile Gente Strana ("App", "Servizio"), fornita da <b>Gabriele Giordano</b> ("noi"). Utilizzando l\'App, accetti questi Termini, la nostra Informativa sulla Privacy (https://appgentestrana.wordpress.com/trattamento-dati-personali/) e le nostre Linee Guida della Community (accessibili dalla schermata Impostazioni dell\'App). Se non sei d\'accordo con uno qualsiasi di questi documenti, ti preghiamo di non utilizzare l\'App.</string>
+    <string name="tos_introduction_text">Questi termini di servizio ("Termini") regolano il tuo utilizzo dell\'applicazione mobile Gente Strana ("App", "Servizio"), fornita da <b>Gabriele Giordano</b> ("noi"). Utilizzando l\'App, accetti questi Termini, la nostra Informativa sulla Privacy (https://quirky-people.web.app/trattamento-dati-personali/) e le nostre Linee Guida della Community (accessibili dalla schermata Impostazioni dell\'App). Se non sei d\'accordo con uno qualsiasi di questi documenti, ti preghiamo di non utilizzare l\'App.</string>
     <string name="tos_eligibility_header">Chi può usare l\'App</string>
     <string name="tos_eligibility_text">• Devi avere almeno 16 anni.\n• Fornisci informazioni di registrazione accurate e mantienile aggiornate.\n• L\'App è destinata a persone neurodivergenti e a coloro che desiderano connettersi rispettosamente con la community.</string>
     <string name="tos_account_header">Il Tuo Account</string>
-    <string name="tos_account_text">• Mantieni la tua password segreta e al sicuro.\n• Sei responsabile per tutte le attività svolte tramite il tuo account.\n• Segnalaci immediatamente qualsiasi uso non autorizzato a: info.gestestrana@gmail.com</string>
+    <string name="tos_account_text">• Mantieni la tua password segreta e al sicuro.\n• Sei responsabile per tutte le attività svolte tramite il tuo account.\n• Segnalaci immediatamente qualsiasi uso non autorizzato a: info.gentestrana@gmail.com</string>
     <string name="tos_conduct_header">La tua condotta e i tuoi Contenuti</string>
     <string name="tos_conduct_text">• Il nostro obiettivo è uno spazio sicuro e rispettoso. DEVI seguire le nostre <b>Linee Guida della Community</b> (in Impostazioni).\n• Non usare l\'App per attività illegali, molestie, linguaggio d\'odio, spam, impersonificazione o per violare la privacy altrui.</string>
     <string name="tos_user_content_header">I tuoi contenuti, la nostra licenza</string>
@@ -335,7 +335,7 @@
     <string name="tos_app_ip_header">Proprietà dell\'App</string>
     <string name="tos_app_ip_text">L\'App, il suo design, il nome e logo "Gente Strana" sono di nostra proprietà. Il codice sorgente open-source è disponibile sotto Licenza MIT.</string> <!-- Riferimento alla MIT -->
     <string name="tos_privacy_header">Privacy</string>
-    <string name="tos_privacy_text">La nostra <a href="https://appgentestrana.wordpress.com/trattamento-dati-personali/">Informativa sulla Privacy</a> spiega come trattiamo i tuoi dati. Usando l\'App, la accetti.</string>
+    <string name="tos_privacy_text">La nostra <a href="https://quirky-people.web.app/trattamento-dati-personali/">Informativa sulla Privacy</a> spiega come trattiamo i tuoi dati. Usando l\'App, la accetti.</string>
     <string name="tos_changes_header">Modifiche ai termini</string>
     <string name="tos_changes_text">Potremmo aggiornare questi Termini. Cercheremo di notificarti le modifiche importanti. L\'uso continuato dopo le modifiche implica l\'accettazione.</string>
     <string name="tos_termination_header">Cessazione dell\'accordo</string>
@@ -343,7 +343,7 @@
     <string name="tos_law_header">Legge applicabile e controversie</string>
     <string name="tos_law_text">Questi termini sono regolati dalla legge italiana. Speriamo di risolvere amichevolmente eventuali dispute, altrimenti la competenza esclusiva sarà del foro di Busto Arsizio (VA), Italia.</string>
     <string name="tos_contact_header">Contatti</string>
-    <string name="tos_contact_text">Domande? Scrivici a: info.gestestrana@gmail.com</string>
+    <string name="tos_contact_text">Domande? Scrivici a: info.gentestrana@gmail.com</string>
 
     <!-- ===== Fine Stringhe Termini di Servizio ===== -->
 
@@ -387,5 +387,24 @@
     <string name="unblock_user_dialog_confirm">Sblocca</string>
     <string name="unblock_user_success_toast">Utente sbloccato.</string>
     <string name="report_sent_success">Segnalazione inviata, grazie.</string>
+
+    <!-- Zone Batteria Sociale -->
+    <string name="social_battery_title">Batteria Sociale</string>
+    <string name="social_battery_high">🟢 Alta (100%)</string>
+    <string name="social_battery_medium">🟡 Media (50%)</string>
+    <string name="social_battery_low">🔴 Bassa (20%)</string>
+    <string name="social_battery_recharging">⚡ In Ricarica</string>
+    <string name="social_battery_focus">🎯 Solo Focus</string>
+    <string name="social_battery_low_disclaimer">La batteria sociale di %s è bassa. Le risposte potrebbero richiedere più tempo.</string>
+    <string name="social_battery_recharging_disclaimer">%s è in fase di ricarica della batteria sociale.</string>
+    <string name="social_battery_focus_disclaimer">%s è in modalità Solo Focus.</string>
+    <string name="social_battery_updated_toast">Batteria sociale aggiornata!</string>
+
+    <!-- Social Battery Requests & Calls -->
+    <string name="pending_request_chip">nuova richiesta</string>
+    <string name="pending_requests_banner">Hai %d nuove richieste di conversazione. Rispondi quando te la senti.</string>
+    <string name="calls_section">Chiamate</string>
+    <string name="accept_calls_label">Accetto chiamate</string>
+    <string name="accept_calls_description">Possono chiamarti solo le persone con cui avete scritto almeno 5 messaggi ciascuno. Audio e video passano da Agora e non vengono registrati.</string>
 
 </resources>

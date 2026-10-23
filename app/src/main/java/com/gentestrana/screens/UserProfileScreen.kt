@@ -228,8 +228,9 @@ fun UserProfileScreen(
                     if (selectedReportReason == ReportReason.ALTRO) {
                         OutlinedTextField(
                             value = additionalComments,
-                            onValueChange = { additionalComments = it },
-                            label = { Text(stringResource(R.string.report_reason_other_comments_label)) }
+                            onValueChange = { if (it.length <= 500) additionalComments = it },
+                            label = { Text(stringResource(R.string.report_reason_other_comments_label)) },
+                            supportingText = { Text("${additionalComments.length}/500") }
                         )
                     }
                 }

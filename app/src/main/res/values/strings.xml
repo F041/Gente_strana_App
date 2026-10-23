@@ -306,18 +306,18 @@
     <string name="email_body_3">On Quirky People, having a verified diagnosis (in the future we will do more to facilitate this) increases the quality of the community.</string>
     <string name="email_footer">If you have questions or want to know more about how to obtain a diagnosis, reply to this email or visit our website %s.</string>
     <string name="email_signature">Gabriele Giordano, of Quirky People</string>
-    <string name="website_url">https://appgentestrana.wordpress.com</string>
+    <string name="website_url">https://quirky-people.web.app/en/</string>
 
     <!-- ===== Terms of Service Strings ===== -->
     <string name="tos_screen_title">Terms of Service</string>
-    <string name="tos_last_updated">Last Updated: March 28, 2025</string>
+    <string name="tos_last_updated">Last Updated: October 22, 2026</string>
     <string name="tos_introduction_header">Welcome to Quirky People!</string>
-    <string name="tos_introduction_text">These terms of service ("Terms") govern your use of the Quirky People mobile application ("App", "Service"), provided by <b>Gabriele Giordano</b> ("we", "us"). By using the App, you agree to these Terms, our Privacy Policy (<a href="https://appgentestrana.wordpress.com/trattamento-dati-personali/">available here</a>), and our Community Guidelines (accessible within the App\'s Settings screen). If you don\'t agree, please do not use the App.</string>
+    <string name="tos_introduction_text">These terms of service ("Terms") govern your use of the Quirky People mobile application ("App", "Service"), provided by <b>Gabriele Giordano</b> ("we", "us"). By using the App, you agree to these Terms, our Privacy Policy (<a href="https://quirky-people.web.app/en/privacy-policy/">available here</a>), and our Community Guidelines (accessible within the App\'s Settings screen). If you don\'t agree, please do not use the App.</string>
     <string name="tos_eligibility_header">Who can use the app</string>
     <!-- Google Play gestisce la distribuzione, ma devi impostare un requisito per il tuo servizio -->
     <string name="tos_eligibility_text"> You must be at least 16 years old.\n Provide accurate registration info.\n The App is intended for neurodivergent individuals and those wishing to connect respectfully with the community.</string>
     <string name="tos_account_header">Your account</string>
-    <string name="tos_account_text"> Keep your password secret and secure.\n You are responsible for all activity on your account.\n Report any unauthorized use immediately to: info.gestestrana@gmail.com</string>
+    <string name="tos_account_text"> Keep your password secret and secure.\n You are responsible for all activity on your account.\n Report any unauthorized use immediately to: info.gentestrana@gmail.com</string>
     <string name="tos_conduct_header">Your conduct and content</string>
     <string name="tos_conduct_text"> Our goal is a safe and respectful space. You MUST follow our <b>Community Guidelines</b> (in Settings).\n Do not use the App for illegal activities, harassment, hate speech, spam, impersonation, or violating others\' privacy.</string>
     <string name="tos_user_content_header">Your content, our license</string>
@@ -329,7 +329,7 @@
     <string name="tos_app_ip_header">App ownership</string>
     <string name="tos_app_ip_text">The App, its design, the "Quirky People" name and logo belong to us. The open-source code is available under the MIT License.</string> <!-- Riferimento alla MIT -->
     <string name="tos_privacy_header">Privacy</string>
-    <string name="tos_privacy_text">Our <a href="https://appgentestrana.wordpress.com/trattamento-dati-personali/">Privacy Policy</a> explains how we handle your data. Using the App means you agree to it.</string>
+    <string name="tos_privacy_text">Our <a href="https://quirky-people.web.app/en/privacy-policy/">Privacy Policy</a> explains how we handle your data. Using the App means you agree to it.</string>
     <string name="tos_changes_header">Changes to terms</string>
     <string name="tos_changes_text">We may update these Terms. We\'ll try to notify you of significant changes. Continued use after changes means you accept them.</string>
     <string name="tos_termination_header">Ending this agreement</string>
@@ -337,7 +337,7 @@
     <string name="tos_law_header">Governing law and disputes</string>
     <string name="tos_law_text">These Terms are governed by Italian law. We hope to resolve any disputes amicably, but otherwise, they will be handled exclusively in the courts of Busto Arsizio (VA), Italy. <b>(Seek legal advice for this section!)</b></string>
     <string name="tos_contact_header">Contact us</string>
-    <string name="tos_contact_text">Questions? Email us at: info.gestestrana@gmail.com</string>
+    <string name="tos_contact_text">Questions? Email us at: info.gentestrana@gmail.com</string>
     <!-- ===== Fine Terms of Service Strings ===== -->
 
     <!-- Stringhe per CommunityGuidelinesScreen -->
@@ -382,5 +382,24 @@
     <string name="unblock_user_dialog_confirm">Unblock</string>
     <string name="unblock_user_success_toast">User unblocked.</string>
     <string name="report_sent_success">Report sent, thank you.</string>
+
+    <!-- Zone Batteria Sociale -->
+    <string name="social_battery_title">Social Battery</string>
+    <string name="social_battery_high">🟢 High (100%)</string>
+    <string name="social_battery_medium">🟡 Medium (50%)</string>
+    <string name="social_battery_low">🔴 Low (20%)</string>
+    <string name="social_battery_recharging">⚡ Recharging</string>
+    <string name="social_battery_focus">🎯 Focus Mode</string>
+    <string name="social_battery_low_disclaimer">%s\'s social battery is low. Replies might take longer.</string>
+    <string name="social_battery_recharging_disclaimer">%s is currently recharging their social battery.</string>
+    <string name="social_battery_focus_disclaimer">%s is in Focus Mode.</string>
+    <string name="social_battery_updated_toast">Social battery updated!</string>
+
+    <!-- Social Battery Requests & Calls -->
+    <string name="pending_request_chip">new request</string>
+    <string name="pending_requests_banner">You have %d new conversation requests. Reply whenever you feel like it.</string>
+    <string name="calls_section">Calls</string>
+    <string name="accept_calls_label">Accept calls</string>
+    <string name="accept_calls_description">Only people with whom you have exchanged at least 5 messages each can call you. Audio and video pass through Agora and are not recorded.</string>
 
 </resources>

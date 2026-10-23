@@ -24,6 +24,7 @@ import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -160,6 +161,20 @@ fun ChatListItem(
                             color = MaterialTheme.colorScheme.onSurface,
                             modifier = Modifier.weight(1f, fill = false)
                         )
+                        if (chat.isPendingRequest) {
+                            Surface(
+                                color = MaterialTheme.colorScheme.secondaryContainer,
+                                shape = CircleShape,
+                                modifier = Modifier.padding(start = 6.dp)
+                            ) {
+                                Text(
+                                    text = stringResource(R.string.pending_request_chip),
+                                    style = MaterialTheme.typography.labelSmall,
+                                    color = MaterialTheme.colorScheme.onSecondaryContainer,
+                                    modifier = Modifier.padding(horizontal = 8.dp, vertical = 2.dp)
+                                )
+                            }
+                        }
                         if (chat.isPinned) {
                             Icon(
                                 imageVector = Icons.Default.PushPin,

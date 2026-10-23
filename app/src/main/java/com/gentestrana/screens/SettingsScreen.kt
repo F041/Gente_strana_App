@@ -227,7 +227,7 @@ fun SettingsScreen(
                 modifier = Modifier.clickable {
                     val intent = Intent(
                         Intent.ACTION_VIEW,
-                        Uri.parse("https://appgentestrana.wordpress.com/trattamento-dati-personali/")
+                        Uri.parse("https://quirky-people.web.app/trattamento-dati-personali/")
                     )
                     context.startActivity(intent)
                 }

@@ -3,24 +3,32 @@ package com.gentestrana
 import androidx.annotation.StringRes
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
+import androidx.compose.material3.Badge
+import androidx.compose.material3.BadgedBox
 import androidx.compose.material3.Icon
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.currentBackStackEntryAsState
-import androidx.compose.ui.platform.LocalConfiguration
-
+import com.gentestrana.users.UserRepository
+import com.gentestrana.utils.calculateProfileCompletion
+import com.google.firebase.auth.FirebaseAuth
 
 sealed class BottomNavItem(
     val route: String,
-    @StringRes val titleResId: Int,  // da String a Int (ID risorsa)
+    @StringRes val titleResId: Int,
     val icon: ImageVector
 ) {
     object Community : BottomNavItem(
@@ -41,13 +49,6 @@ sealed class BottomNavItem(
         Icons.Default.Person
     )
 
-    // Services will become a part of Gente Strana, but for your own social you can delete it
-//    object Services : BottomNavItem(
-//        "services",
-//        R.string.services,
-//        Icons.Default.BusinessCenter
-//    )
-
     object Settings : BottomNavItem(
         "settings",
         R.string.settings,
@@ -61,11 +62,22 @@ fun BottomNavigationBar(navController: NavHostController) {
         BottomNavItem.Community,
         BottomNavItem.Chat,
         BottomNavItem.Profile,
- //  services will become a part of Gente Strana, but for your own social you can delete it
-
-//        BottomNavItem.Services,
         BottomNavItem.Settings
     )
+
+    val currentUserId = remember { FirebaseAuth.getInstance().currentUser?.uid }
+    var unreadCount by remember { mutableIntStateOf(0) }
+    var profileCompletionPct by remember { mutableIntStateOf(100) }
+
+    val userRepo = remember { UserRepository() }
+
+    LaunchedEffect(currentUserId) {
+        if (currentUserId != null) {
+            userRepo.getUser(currentUserId, onSuccess = { u ->
+                profileCompletionPct = calculateProfileCompletion(u).percentage
+            }, onFailure = {})
+        }
+    }
 
     NavigationBar {
         val navBackStackEntry by navController.currentBackStackEntryAsState()
@@ -75,7 +87,31 @@ fun BottomNavigationBar(navController: NavHostController) {
 
         items.forEach { item ->
             NavigationBarItem(
-                icon = { Icon(item.icon, contentDescription = null) },
+                icon = {
+                    if (item == BottomNavItem.Chat && unreadCount > 0) {
+                        BadgedBox(
+                            badge = {
+                                Badge {
+                                    Text(if (unreadCount > 9) "9+" else "$unreadCount")
+                                }
+                            }
+                        ) {
+                            Icon(item.icon, contentDescription = null)
+                        }
+                    } else if (item == BottomNavItem.Profile && profileCompletionPct in 1..99) {
+                        BadgedBox(
+                            badge = {
+                                Badge {
+                                    Text("$profileCompletionPct%")
+                                }
+                            }
+                        ) {
+                            Icon(item.icon, contentDescription = null)
+                        }
+                    } else {
+                        Icon(item.icon, contentDescription = null)
+                    }
+                },
                 label = {
                     Text(
                         text = stringResource(id = item.titleResId),
@@ -99,4 +135,3 @@ fun BottomNavigationBar(navController: NavHostController) {
         }
     }
 }
-

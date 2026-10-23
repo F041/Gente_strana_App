@@ -65,6 +65,23 @@ class ProfileViewModel : ViewModel() {
     private val _birthTimestamp = mutableStateOf<Long?>(null)
     val birthTimestamp: State<Long?> = _birthTimestamp
 
+    private val _socialBatteryStatus = MutableStateFlow("HIGH")
+    val socialBatteryStatus: StateFlow<String> = _socialBatteryStatus.asStateFlow()
+
+    fun setSocialBatteryStatus(status: String, onSuccess: () -> Unit = {}, onFailure: (String) -> Unit = {}) {
+        _socialBatteryStatus.value = status
+        val uid = getUid() ?: return
+        firestore.collection("users").document(uid)
+            .update("socialBatteryStatus", status)
+            .addOnSuccessListener {
+                _userState.value = _userState.value?.copy(socialBatteryStatus = status)
+                onSuccess()
+            }
+            .addOnFailureListener { e ->
+                onFailure(e.localizedMessage ?: "Error")
+            }
+    }
+
     fun setBirthTimestamp(newTimestamp: Long?) {
         _birthTimestamp.value = newTimestamp
         val uid = getUid() ?: return // FIX: uid reattivo
@@ -132,6 +149,8 @@ class ProfileViewModel : ViewModel() {
                 if (rawBirthTimestamp is com.google.firebase.Timestamp) {
                     _birthTimestamp.value = rawBirthTimestamp.toDate().time
                 }
+                // Carica socialBatteryStatus
+                _socialBatteryStatus.value = userDoc.getString("socialBatteryStatus") ?: "HIGH"
                 
                 // Aggiorna userState
                 val user = userDoc.toObject(User::class.java)?.copy(docId = userDoc.id)

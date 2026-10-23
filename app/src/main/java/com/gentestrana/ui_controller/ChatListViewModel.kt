@@ -36,6 +36,18 @@ class ChatListViewModel(
     // Stato per gli ID degli utenti bloccati
     private val _blockedUserIds = MutableStateFlow<Set<String>>(emptySet())
 
+    val userSocialBatteryStatus = MutableStateFlow("HIGH")
+
+    val pendingRequestsCount: StateFlow<Int> = combine(_processedChats, _blockedUserIds) { processedList, blockedIds ->
+        processedList
+            .filterNot { chat -> blockedIds.contains(chat.participantId) }
+            .count { it.isPendingRequest }
+    }.stateIn(
+        scope = viewModelScope,
+        started = SharingStarted.WhileSubscribed(5000),
+        initialValue = 0
+    )
+
     // Filtri e Ricerca per la UI
     val searchQuery = MutableStateFlow("")
     val selectedFilter = MutableStateFlow(ChatFilter.ALL)
@@ -122,9 +134,8 @@ class ChatListViewModel(
                 if (newBlockedSet != _blockedUserIds.value) { // Aggiorna solo se cambia
                     _blockedUserIds.value = newBlockedSet
                     Log.d("ChatListVM_Listener", "Listener blockedUsers aggiornato (ChatListVM): ${newBlockedSet.size} utenti.")
-                    // L'aggiornamento di _blockedUserIds triggererà il 'combine' e aggiornerà 'chats'.
-                    // Il collect su 'chats' nell'init si occuperà di chiamare updateMessageListeners.
                 }
+                userSocialBatteryStatus.value = snapshot.getString("socialBatteryStatus") ?: "HIGH"
             } else {
                 Log.w("ChatListVM_Listener", "Documento utente $userId non trovato o snapshot nullo.")
                 _blockedUserIds.value = emptySet() // Documento non trovato

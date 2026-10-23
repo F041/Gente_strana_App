@@ -28,14 +28,16 @@ android {
         }
     }
 
-    val gitCommitCount = try {
-        val process = ProcessBuilder("git", "rev-list", "--count", "HEAD").start()
-        process.inputStream.bufferedReader().readText().trim().toIntOrNull() ?: 12
-    } catch (_: Exception) {
-        12
-    }
-    val calculatedVersionCode = 100 + gitCommitCount
-    val vCode = project.findProperty("versionCode")?.toString()?.toIntOrNull() ?: calculatedVersionCode
+    val gitCommitCount = providers.exec {
+        commandLine("git", "rev-list", "--count", "HEAD")
+        workingDir = rootDir
+        isIgnoreExitValue = true
+    }.standardOutput.asText.get().trim().toIntOrNull()
+
+    val vCode = project.findProperty("versionCode")?.toString()?.toIntOrNull()
+        ?: gitCommitCount?.let { 100 + it }
+        ?: if (gradle.startParameter.taskNames.any { it.contains("Release", ignoreCase = true) })
+            error("versionCode: git non trovato") else 1
     val vName = project.findProperty("versionName")?.toString() ?: "1.0.$vCode"
 
     defaultConfig {
@@ -58,8 +60,10 @@ android {
         kotlinCompilerExtensionVersion = "1.5.0" // Matches Compose version
     }
 
-// Assicurati che il blocco buildTypes sia così:
     buildTypes {
+        debug {
+            versionNameSuffix = "-debug"
+        }
         release {
             isMinifyEnabled = false
             proguardFiles(
@@ -119,7 +123,9 @@ dependencies {
     // tested 33.0.0 to try to fix isAdmin problem
     implementation("com.google.firebase:firebase-firestore-ktx")
     implementation("com.google.firebase:firebase-config-ktx")
+    implementation("com.google.firebase:firebase-functions-ktx")
     implementation("com.google.firebase:firebase-analytics")
+    implementation("io.agora.rtc:full-sdk:4.3.0")
     implementation("io.coil-kt:coil-compose:2.4.0")
     implementation("androidx.navigation:navigation-compose:2.7.5")
 

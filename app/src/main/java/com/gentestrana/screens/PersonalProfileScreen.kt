@@ -10,6 +10,7 @@ import android.util.Log
 import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
@@ -22,8 +23,10 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
@@ -266,6 +269,46 @@ fun PersonalProfileScreen(
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
 
+                val currentUserObj by profileViewModel.userState.collectAsState()
+                val completionStatus = remember(currentUserObj) {
+                    com.gentestrana.utils.calculateProfileCompletion(currentUserObj)
+                }
+
+                if (completionStatus.percentage < 100) {
+                    Card(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 16.dp, vertical = 8.dp),
+                        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primaryContainer)
+                    ) {
+                        Column(modifier = Modifier.padding(16.dp)) {
+                            Text(
+                                text = "Profilo completo al ${completionStatus.percentage}%",
+                                style = MaterialTheme.typography.titleMedium,
+                                fontWeight = FontWeight.Bold,
+                                color = MaterialTheme.colorScheme.onPrimaryContainer
+                            )
+                            Spacer(modifier = Modifier.height(8.dp))
+                            LinearProgressIndicator(
+                                progress = { completionStatus.percentage / 100f },
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .height(8.dp)
+                                    .clip(androidx.compose.foundation.shape.RoundedCornerShape(4.dp)),
+                                color = MaterialTheme.colorScheme.primary
+                            )
+                            if (completionStatus.missingItems.isNotEmpty()) {
+                                Spacer(modifier = Modifier.height(8.dp))
+                                Text(
+                                    text = "Manca: ${completionStatus.missingItems.joinToString(", ")}",
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.8f)
+                                )
+                            }
+                        }
+                    }
+                }
+
                 // Zona gallery immagini profilo
                 Box {
                     key(profilePicUrl) {
@@ -339,7 +382,87 @@ fun PersonalProfileScreen(
                         .padding(horizontal = 16.dp)
                 )
 
-                Spacer(modifier = Modifier.height(8.dp))
+                Spacer(modifier = Modifier.height(16.dp))
+
+                // Sezione Batteria Sociale
+                val currentSocialBattery by profileViewModel.socialBatteryStatus.collectAsState()
+
+                Card(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 16.dp),
+                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
+                ) {
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(16.dp)
+                    ) {
+                        Text(
+                            text = "🔋 " + stringResource(R.string.social_battery_title),
+                            style = MaterialTheme.typography.titleMedium
+                        )
+                        Spacer(modifier = Modifier.height(8.dp))
+
+                        val options = listOf(
+                            "HIGH" to stringResource(R.string.social_battery_high),
+                            "MEDIUM" to stringResource(R.string.social_battery_medium),
+                            "LOW" to stringResource(R.string.social_battery_low),
+                            "RECHARGING" to stringResource(R.string.social_battery_recharging),
+                            "FOCUS_ONLY" to stringResource(R.string.social_battery_focus)
+                        )
+
+                        Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                            options.forEach { (key, label) ->
+                                Row(
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .clickable {
+                                            profileViewModel.setSocialBatteryStatus(key, onSuccess = {
+                                                Toast.makeText(context, context.getString(R.string.social_battery_updated_toast), Toast.LENGTH_SHORT).show()
+                                            })
+                                        }
+                                        .padding(vertical = 2.dp)
+                                ) {
+                                    RadioButton(
+                                        selected = (currentSocialBattery == key),
+                                        onClick = {
+                                            profileViewModel.setSocialBatteryStatus(key, onSuccess = {
+                                                Toast.makeText(context, context.getString(R.string.social_battery_updated_toast), Toast.LENGTH_SHORT).show()
+                                            })
+                                        }
+                                    )
+                                    Spacer(modifier = Modifier.width(6.dp))
+                                    Text(text = label, style = MaterialTheme.typography.bodyMedium)
+                                }
+                            }
+                        }
+
+                        val chatRepo = remember { com.gentestrana.chat.ChatRepository() }
+                        var count24h by remember { mutableIntStateOf(0) }
+                        val uid = remember { FirebaseAuth.getInstance().currentUser?.uid }
+                        LaunchedEffect(uid) {
+                            if (uid != null) {
+                                count24h = chatRepo.getNewConversationsCountInLast24Hours(uid)
+                            }
+                        }
+
+                        val currentLevel = com.gentestrana.users.SocialBatteryLevel.fromString(currentSocialBattery)
+                        val limitStr = if (currentLevel.maxNewConversations24h == Int.MAX_VALUE) "senza limite" else "${currentLevel.maxNewConversations24h}"
+
+                        Spacer(modifier = Modifier.height(12.dp))
+                        HorizontalDivider()
+                        Spacer(modifier = Modifier.height(8.dp))
+                        Text(
+                            text = "Nuove conversazioni nelle ultime 24 ore: $count24h di $limitStr",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(16.dp))
 
                 Column(
                     modifier = Modifier

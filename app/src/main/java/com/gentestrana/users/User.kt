@@ -36,6 +36,20 @@ data class Memory(
     @PropertyName("timestamp") val timestamp: Timestamp? = null
 )
 
+enum class SocialBatteryLevel(val id: String, val maxNewConversations24h: Int) {
+    HIGH("HIGH", Int.MAX_VALUE),
+    MEDIUM("MEDIUM", 3),
+    LOW("LOW", 1),
+    RECHARGING("RECHARGING", 0),
+    FOCUS_ONLY("FOCUS_ONLY", 0);
+
+    companion object {
+        fun fromString(value: String?): SocialBatteryLevel {
+            return values().find { it.id.equals(value, ignoreCase = true) } ?: HIGH
+        }
+    }
+}
+
 data class User(
      @PropertyName("username")
     val username: String = "",
@@ -64,8 +78,21 @@ data class User(
     @PropertyName("memories")
     val memories: List<Memory> = emptyList(),
     @PropertyName("isHot")
-    val isHot: Boolean = false
+    val isHot: Boolean = false,
+    @PropertyName("socialBatteryStatus")
+    val socialBatteryStatus: String = "HIGH",
+    @PropertyName("acceptCalls")
+    val acceptCalls: Boolean = true,
+    @PropertyName("callClients")
+    val callClients: List<String> = emptyList(),
+    @PropertyName("webPushTokens")
+    val webPushTokens: List<String> = emptyList(),
+    @PropertyName("onboardingCompleted")
+    val onboardingCompleted: Boolean? = null
 ) {
+
+    val socialBatteryLevel: SocialBatteryLevel
+        get() = SocialBatteryLevel.fromString(socialBatteryStatus)
 
     // Proprietà calcolata per ottenere il timestamp in millisecondi
     val birthTimestamp: Long

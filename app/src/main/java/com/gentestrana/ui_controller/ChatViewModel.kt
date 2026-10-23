@@ -58,6 +58,8 @@ class ChatViewModel(
     val recipientTopics: StateFlow<List<String>> = _recipientTopics
     private val _recipientAutopilotEnabled = MutableStateFlow<Boolean>(false)
     val recipientAutopilotEnabled: StateFlow<Boolean> = _recipientAutopilotEnabled
+    private val _recipientSocialBatteryStatus = MutableStateFlow<String>("HIGH")
+    val recipientSocialBatteryStatus: StateFlow<String> = _recipientSocialBatteryStatus.asStateFlow()
     private val _sendMessageEvent = MutableSharedFlow<SendMessageEvent>()
     val sendMessageEvent = _sendMessageEvent.asSharedFlow()
     private val _messages = MutableStateFlow<List<ChatMessage>>(emptyList())
@@ -219,6 +221,7 @@ class ChatViewModel(
                 _recipientBio.value = userDoc.getString("bio") ?: ""
                 _recipientTopics.value = (userDoc.get("topics") as? List<String>) ?: emptyList()
                 _recipientAutopilotEnabled.value = userDoc.getBoolean("autopilotEnabled") ?: false
+                _recipientSocialBatteryStatus.value = userDoc.getString("socialBatteryStatus") ?: "HIGH"
 
                 // Calcola le metriche della conversazione in background
                 viewModelScope.launch { fetchConversationMetrics(otherUserId) }

@@ -16,6 +16,8 @@ jobs:
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - name: Set up JDK 17
         uses: actions/setup-java@v4
@@ -33,11 +35,9 @@ jobs:
         run: |
           echo "$G_SERVICES_CONTENT" | base64 --decode > app/google-services.json 2>/dev/null || echo "$G_SERVICES_CONTENT" > app/google-services.json
 
-      - name: Build Android App Bundle (AAB) with Auto-Incremented VersionCode
+      - name: Build Android App Bundle (AAB)
         run: |
-          BUILD_NUMBER=${{ github.run_number }}
-          AUTO_VERSION_CODE=$(( 100 + BUILD_NUMBER ))
-          ./gradlew :app:bundleRelease -PversionCode=$AUTO_VERSION_CODE -PversionName="1.0.$AUTO_VERSION_CODE"
+          ./gradlew :app:bundleRelease
 
       - name: Sign App Bundle
         env:

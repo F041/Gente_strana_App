@@ -38,6 +38,7 @@ import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import com.gentestrana.utils.ActiveChatTracker
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
@@ -81,6 +82,7 @@ fun ChatScreen(docId: String, navController: NavController) {
     val recipientBio by viewModel.recipientBio.collectAsState()
     val recipientTopics by viewModel.recipientTopics.collectAsState()
     val recipientAutopilotEnabled by viewModel.recipientAutopilotEnabled.collectAsState()
+    val recipientSocialBatteryStatus by viewModel.recipientSocialBatteryStatus.collectAsState()
     val messages by viewModel.messages.collectAsState()
     val isLoadingOlderMessages by viewModel.isLoadingOlderMessages.collectAsState()
     val hasMoreMessages by viewModel.hasMoreMessages.collectAsState()
@@ -344,8 +346,15 @@ fun ChatScreen(docId: String, navController: NavController) {
                             verticalAlignment = Alignment.CenterVertically,
                             horizontalArrangement = Arrangement.spacedBy(4.dp)
                         ) {
+                            val batteryIcon = when (recipientSocialBatteryStatus) {
+                                "MEDIUM" -> " 🟡"
+                                "LOW" -> " 🪫"
+                                "RECHARGING" -> " ⚡"
+                                "FOCUS_ONLY" -> " 🎯"
+                                else -> ""
+                            }
                             Text(
-                                text = currentRecipientName,
+                                text = currentRecipientName + batteryIcon,
                                 style = MaterialTheme.typography.titleLarge.copy(
                                     color = MaterialTheme.colorScheme.primary,
                                     textDecoration = TextDecoration.Underline
@@ -424,6 +433,45 @@ fun ChatScreen(docId: String, navController: NavController) {
                     .imePadding()
                     .navigationBarsPadding()
             ) {
+                // Banner Batteria Sociale se non ad alta carica
+                val socialBatteryDisclaimer = when (recipientSocialBatteryStatus) {
+                    "LOW" -> stringResource(R.string.social_battery_low_disclaimer, recipientName ?: "")
+                    "RECHARGING" -> stringResource(R.string.social_battery_recharging_disclaimer, recipientName ?: "")
+                    "FOCUS_ONLY" -> stringResource(R.string.social_battery_focus_disclaimer, recipientName ?: "")
+                    else -> null
+                }
+
+                if (socialBatteryDisclaimer != null) {
+                    Surface(
+                        color = MaterialTheme.colorScheme.tertiaryContainer,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 12.dp, vertical = 6.dp),
+                        shape = RoundedCornerShape(8.dp)
+                    ) {
+                        Row(
+                            modifier = Modifier.padding(10.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            Text(
+                                text = when (recipientSocialBatteryStatus) {
+                                    "LOW" -> "🪫"
+                                    "RECHARGING" -> "⚡"
+                                    "FOCUS_ONLY" -> "🎯"
+                                    else -> "🔋"
+                                },
+                                fontSize = 18.sp
+                            )
+                            Text(
+                                text = socialBatteryDisclaimer,
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onTertiaryContainer
+                            )
+                        }
+                    }
+                }
+
                 LazyColumn(
                     state = listState,
                     modifier = Modifier

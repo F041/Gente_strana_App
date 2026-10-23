@@ -150,6 +150,32 @@ fun UserProfileCard(
                                 }
                             }
 
+                            // Badge Batteria Sociale: Visibile se non al 100%
+                            val batteryBadge = when (user.socialBatteryStatus) {
+                                "MEDIUM" -> Pair("🟡 50%", androidx.compose.ui.graphics.Color(0xFFFFC107))
+                                "LOW" -> Pair("🪫 20%", androidx.compose.ui.graphics.Color(0xFFF44336))
+                                "RECHARGING" -> Pair("⚡ Ricarica", androidx.compose.ui.graphics.Color(0xFF2196F3))
+                                "FOCUS_ONLY" -> Pair("🎯 Focus", androidx.compose.ui.graphics.Color(0xFF9C27B0))
+                                else -> null
+                            }
+
+                            if (batteryBadge != null) {
+                                Surface(
+                                    shape = RoundedCornerShape(8.dp),
+                                    color = batteryBadge.second,
+                                    modifier = Modifier.padding(end = 4.dp)
+                                ) {
+                                    Text(
+                                        text = batteryBadge.first,
+                                        style = MaterialTheme.typography.labelSmall,
+                                        color = androidx.compose.ui.graphics.Color.White,
+                                        fontWeight = androidx.compose.ui.text.font.FontWeight.Bold,
+                                        fontSize = 9.sp,
+                                        modifier = Modifier.padding(horizontal = 5.dp, vertical = 2.dp)
+                                    )
+                                }
+                            }
+
                             // Badge Memorie: Sempre visibile se l'utente ha memorie
                             if (user.memories.isNotEmpty()) {
                                 Surface(

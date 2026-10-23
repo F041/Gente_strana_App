@@ -37,8 +37,10 @@ fun PersonalProfilePreviewCard(
             .padding(16.dp) // Aggiunto padding esterno per separarlo dal bordo schermo
     ) {
         // Nome ed età
+        val age = computeAgeFromTimestamp(user.birthTimestamp)
+        val nameAndAge = if (age > 0) "${user.username}, $age" else user.username
         Text(
-            text = "${user.username}, ${computeAgeFromTimestamp(user.birthTimestamp)}",
+            text = nameAndAge,
             style = MaterialTheme.typography.headlineMedium,
             modifier = Modifier
                 .padding(horizontal = 16.dp)

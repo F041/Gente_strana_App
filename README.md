@@ -49,7 +49,7 @@ The visual design of the app, as shown in the screenshots, might change as I dev
 As you read from the name of this repository, Gente Strana becomes the Italian version of Quirky People. The infinite became the symbol of neurodiverse people, hence the logo that reminds that symbol. A bit more difficult to create that with the initials Q and P of Quirky People. The dots inside the letters represent a social network. 
      
 ### To do:
-- fix keyboard white space gap above text input field in chat screen on 21:9 devices (e.g. Sony Xperia 10 VI)
+- fix  white space gap in community,  chat screen, settings, community, etc. on 21:9 devices (e.g. Sony Xperia 10 VI). Solved only in the chat screen with a user, when the keyboard appears
 
 ### Customizing the App (For Developers)
 

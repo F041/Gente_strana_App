@@ -11,7 +11,8 @@ data class Chat(
     val photoUrl: String,
     val timestamp: Timestamp,
     val isOnline: Boolean = false, // Campo per lo stato online
-    val isPinned: Boolean = false  // Chat fissata in cima dall'utente corrente
+    val isPinned: Boolean = false, // Chat fissata in cima dall'utente corrente
+    val isPendingRequest: Boolean = false
 )
 
 enum class MessageStatus { SENT, DELIVERED, READ }

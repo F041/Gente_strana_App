@@ -30,6 +30,10 @@ fun ChatListScreen(
     val chats by viewModel.chats.collectAsState()
     val searchQuery by viewModel.searchQuery.collectAsState()
     val selectedFilter by viewModel.selectedFilter.collectAsState()
+    val pendingRequestsCount by viewModel.pendingRequestsCount.collectAsState()
+    val socialBatteryStatus by viewModel.userSocialBatteryStatus.collectAsState()
+
+    val isQuietBattery = socialBatteryStatus == "LOW" || socialBatteryStatus == "RECHARGING" || socialBatteryStatus == "FOCUS_ONLY"
 
     var isSearchActive by remember { mutableStateOf(false) }
 
@@ -85,6 +89,22 @@ fun ChatListScreen(
                     .fillMaxSize()
                     .padding(paddingValues)
             ) {
+                if (isQuietBattery && pendingRequestsCount > 0) {
+                    Card(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = dimensions.smallPadding, vertical = 4.dp),
+                        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.secondaryContainer)
+                    ) {
+                        Text(
+                            text = stringResource(R.string.pending_requests_banner, pendingRequestsCount),
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onSecondaryContainer,
+                            modifier = Modifier.padding(12.dp)
+                        )
+                    }
+                }
+
                 // Filtri stile Tandem: Tutti, Senza risposta, Non letti
                 Row(
                     modifier = Modifier

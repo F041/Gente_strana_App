@@ -7,8 +7,11 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Alignment
@@ -57,8 +60,10 @@ fun ProfileContent(
             .verticalScroll(rememberScrollState())
     ) {
         // Nome ed età
+        val age = computeAgeFromTimestamp(user.birthTimestamp)
+        val nameAndAge = if (age > 0) "${user.username}, $age" else user.username
         Text(
-            text = "${user.username}, ${computeAgeFromTimestamp(user.birthTimestamp)}",
+            text = nameAndAge,
             style = MaterialTheme.typography.headlineMedium,
             modifier = Modifier
                 .padding(horizontal = 16.dp)
@@ -119,6 +124,39 @@ fun ProfileContent(
                 ReadOnlyBioBox(
                     bioText = user.bio
                 )
+                Spacer(modifier = Modifier.height(16.dp))
+
+                // Display Batteria Sociale
+                val batteryText = when (user.socialBatteryStatus) {
+                    "MEDIUM" -> stringResource(R.string.social_battery_medium)
+                    "LOW" -> stringResource(R.string.social_battery_low)
+                    "RECHARGING" -> stringResource(R.string.social_battery_recharging)
+                    "FOCUS_ONLY" -> stringResource(R.string.social_battery_focus)
+                    else -> stringResource(R.string.social_battery_high)
+                }
+
+                Card(
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
+                ) {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(14.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ) {
+                        Text(
+                            text = "🔋 " + stringResource(R.string.social_battery_title),
+                            style = MaterialTheme.typography.titleMedium
+                        )
+                        Text(
+                            text = batteryText,
+                            style = MaterialTheme.typography.bodyMedium,
+                            fontWeight = FontWeight.Bold
+                        )
+                    }
+                }
             }
         }
 
