@@ -23,31 +23,36 @@ fun DateOfBirthPicker(
     birthTimestamp: Long,
     onDateSelected: (Long) -> Unit
 ) {
-    val calendar = remember { Calendar.getInstance() }
-    // 0L e la convenzione per "data non impostata".
-    // Attenzione: un timestamp negativo indica una data precedente al 1970 ed e valido.
-    if (birthTimestamp != 0L) {
-        calendar.timeInMillis = birthTimestamp
+    val calendar = remember(birthTimestamp) {
+        Calendar.getInstance().apply {
+            if (birthTimestamp != 0L) {
+                timeInMillis = birthTimestamp
+            } else {
+                add(Calendar.YEAR, -25)
+            }
+        }
     }
     var showDialog by remember { mutableStateOf(false) }
 
     if (showDialog) {
+        val maxCalendar = Calendar.getInstance().apply { add(Calendar.YEAR, -16) }
         val dialog = DatePickerDialog(
             context,
             android.R.style.Theme_Material_Light_Dialog_Alert,
-        { _, selectedYear, selectedMonth, selectedDay ->
-            val newCalendar = Calendar.getInstance().apply {
-                set(Calendar.YEAR, selectedYear)
-                set(Calendar.MONTH, selectedMonth)
-                set(Calendar.DAY_OF_MONTH, selectedDay)
-            }
-            onDateSelected(newCalendar.timeInMillis)
-            showDialog = false
-        },
-        calendar.get(Calendar.YEAR),
-        calendar.get(Calendar.MONTH),
-        calendar.get(Calendar.DAY_OF_MONTH)
+            { _, selectedYear, selectedMonth, selectedDay ->
+                val newCalendar = Calendar.getInstance().apply {
+                    set(Calendar.YEAR, selectedYear)
+                    set(Calendar.MONTH, selectedMonth)
+                    set(Calendar.DAY_OF_MONTH, selectedDay)
+                }
+                onDateSelected(newCalendar.timeInMillis)
+                showDialog = false
+            },
+            calendar.get(Calendar.YEAR),
+            calendar.get(Calendar.MONTH),
+            calendar.get(Calendar.DAY_OF_MONTH)
         )
+        dialog.datePicker.maxDate = maxCalendar.timeInMillis
 
         dialog.setOnCancelListener {
             showDialog = false

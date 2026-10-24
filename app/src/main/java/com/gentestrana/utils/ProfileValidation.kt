@@ -36,7 +36,9 @@ fun missingRequiredProfileFields(
     val missing = mutableListOf<RequiredProfileField>()
     if (bio.isNullOrBlank()) missing.add(RequiredProfileField.BIO)
     if (topics.isNullOrEmpty()) missing.add(RequiredProfileField.TOPICS)
-    if (rawBirthTimestamp == 0L) missing.add(RequiredProfileField.BIRTH_DATE)
+    if (rawBirthTimestamp == 0L || computeAgeFromTimestamp(rawBirthTimestamp) < 16) {
+        missing.add(RequiredProfileField.BIRTH_DATE)
+    }
     return missing
 }
 

@@ -192,26 +192,6 @@ fun PersonalProfileScreen(
                 title = { Text(stringResource(id = R.string.personal_profile)) },
                 actions = {
 
-                    // Icona Autopilot (search_hands_free) — stile B-Spec GT4
-                    val isAutopilotOn = user?.autopilotEnabled == true
-                    IconButton(onClick = {
-                        val newStatus = !isAutopilotOn
-                        profileViewModel.setAutopilotEnabled(
-                            enabled = newStatus,
-                            onSuccess = {
-                                val msg = if (newStatus) context.getString(R.string.autopilot_enabled_toast) else context.getString(R.string.autopilot_disabled_toast)
-                                Toast.makeText(context, msg, Toast.LENGTH_SHORT).show()
-                            }
-                        )
-                    }) {
-                        Icon(
-                            painter = painterResource(id = R.drawable.search_hands_free),
-                            contentDescription = stringResource(R.string.autopilot_title),
-                            tint = if (isAutopilotOn) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outline,
-                            modifier = Modifier.size(28.dp)
-                        )
-                    }
-
                     IconButton(onClick = {
                         val videoUrl = "https://youtube.com/shorts/hD9KP_bgxuE"
                         // TikTok darebbe problemi in Italia, richiederebbe Login

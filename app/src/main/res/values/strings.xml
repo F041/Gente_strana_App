@@ -409,4 +409,13 @@
     <string name="invite_text">Want to try Quirky People? It\'s a social network for neurodivergent people, where you talk about your interests. Here\'s how to join:</string>
     <string name="invite_url">https://quirky-people.web.app/en/</string>
 
+    <string-array name="icebreaker_topic_templates">
+        <item>What part of “%1$s” could you talk about for hours?</item>
+        <item>Is there a detail about “%1$s” that almost nobody knows?</item>
+        <item>How did it start with “%1$s”?</item>
+        <item>If you had one minute to get me hooked on “%1$s”, what would you tell me?</item>
+        <item>What do you wish people understood about “%1$s”?</item>
+    </string-array>
+    <string name="birthdate_min_age_error">You must be at least 16 to use Quirky People (terms of service).</string>
+
 </resources>

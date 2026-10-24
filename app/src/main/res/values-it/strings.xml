@@ -414,4 +414,13 @@
     <string name="invite_text">Ti va di provare Gente Strana? È un social per persone neurodivergenti, dove si parla dei propri interessi. Qui c\'è come entrare:</string>
     <string name="invite_url">https://quirky-people.web.app/</string>
 
+    <string-array name="icebreaker_topic_templates">
+        <item>Qual è la cosa di «%1$s» di cui potresti parlare per ore?</item>
+        <item>C\'è un dettaglio su «%1$s» che quasi nessuno conosce?</item>
+        <item>Com\'è iniziata con «%1$s»?</item>
+        <item>Se dovessi farmi appassionare a «%1$s» in un minuto, cosa mi racconteresti?</item>
+        <item>Cosa vorresti che la gente capisse di «%1$s»?</item>
+    </string-array>
+    <string name="birthdate_min_age_error">Per usare Gente Strana devi avere almeno 16 anni (termini di servizio).</string>
+
 </resources>

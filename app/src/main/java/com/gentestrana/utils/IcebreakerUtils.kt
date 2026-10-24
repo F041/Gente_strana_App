@@ -7,14 +7,10 @@ import com.gentestrana.R
  * Utility per la gestione degli icebreaker (domande rompighiaccio) in chat.
  *
  * Fase 0 + Fase 1 del piano Icebreaker → Autopilot.
- * Fase 0: domande casuali da arrays.xml.
- * Fase 1: Smart Matching basato su keyword da bio/topics del destinatario.
+ * Genera domande rompighiaccio per ogni chat vuota basandosi sugli argomenti (topics) e la bio del destinatario.
  */
 object IcebreakerUtils {
 
-    // --- FASE 1: Keyword → Domande mirate ---
-
-    // Mappa: nome categoria → lista di keyword da cercare in bio/topics
     private val categoryKeywords: Map<String, List<String>> = mapOf(
         "Viaggi" to listOf("viaggio", "viaggiare", "vacanza", "volare", "turista", "zaino", "travel", "trip", "holiday"),
         "Fotografia" to listOf("foto", "fotografia", "scattare", "obiettivo", "reflex", "photography", "photo", "camera"),
@@ -30,8 +26,6 @@ object IcebreakerUtils {
         "Tecnologia" to listOf("tech", "programmazione", "codice", "app", "startup", "technology", "programming", "code", "software")
     )
 
-    // Mappa: nome categoria → domande mirate (localizzate in italiano e inglese)
-    // NOTA: in futuro queste potrebbero essere spostate in arrays.xml per full i18n
     private val categoryQuestions: Map<String, List<String>> = mapOf(
         "Viaggi" to listOf(
             "Qual è stato il tuo viaggio più memorabile?",
@@ -109,10 +103,6 @@ object IcebreakerUtils {
         )
     )
 
-    /**
-     * Seleziona [count] domande casuali dalla resource [R.array.icebreakers].
-     * (Fase 0 — fallback generico)
-     */
     fun getRandomIcebreakers(context: Context, count: Int = 3): List<String> {
         val allIcebreakers = context.resources.getStringArray(R.array.icebreakers).toList()
         if (allIcebreakers.isEmpty()) return emptyList()
@@ -120,80 +110,87 @@ object IcebreakerUtils {
         return shuffled.take(minOf(count, shuffled.size))
     }
 
-    /**
-     * Seleziona solo le domande nella lingua corrente dell'app (dalle risorse,
-     * non dal locale di sistema) da una lista bilingue (IT/EN).
-     * Le domande sono organizzate con IT prima, EN dopo in ogni lista categoria.
-     */
     private fun filterQuestionsByLocale(questions: List<String>, context: Context): List<String> {
         if (questions.isEmpty()) return questions
-        // Usa la lingua delle risorse attive, non il Locale di sistema
         val appLanguage = context.resources.configuration.locales.get(0).language
         val isItalian = appLanguage == "it"
         val half = questions.size / 2
         return if (isItalian) {
-            questions.take(half) // Prime metà = italiano
+            questions.take(half)
         } else {
-            questions.drop(half) // Seconda metà = inglese
+            questions.drop(half)
         }
     }
 
-    /**
-     * Fase 1 — Smart Matching: seleziona domande in base a bio e topics del destinatario.
-     *
-     * @param bio La bio del destinatario (può essere null o vuota)
-     * @param topics La lista di topics del destinatario (può essere vuota)
-     * @param context Serve per accedere alle risorse (fallback Fase 0)
-     * @param count Quante domande selezionare (default 3)
-     * @return Lista di domande mirate nella lingua del dispositivo (se match trovate), altrimenti Fase 0
-     */
+    private fun truncateTopic(topic: String): String {
+        val trimmed = topic.trim()
+        if (trimmed.length <= 40) return trimmed
+        val sub = trimmed.substring(0, 40)
+        val lastSpace = sub.lastIndexOf(' ')
+        val truncated = if (lastSpace > 10) sub.substring(0, lastSpace) else sub
+        return "$truncated…"
+    }
+
     fun matchIcebreakers(
         bio: String?,
         topics: List<String>?,
         context: Context,
         count: Int = 3
     ): List<String> {
-        val textToMatch = buildString {
-            bio?.let { append(" $it") }
-            topics?.forEach { append(" $it") }
-        }.trim().lowercase()
+        val bioText = bio?.trim()?.lowercase() ?: ""
+        val cleanTopics = topics?.map { it.trim() }?.filter { it.isNotBlank() } ?: emptyList()
 
-        // Se non c'è testo da matchare, ricadi su Fase 0
-        if (textToMatch.isEmpty()) {
-            return getRandomIcebreakers(context, count)
+        val templates = try {
+            context.resources.getStringArray(R.array.icebreaker_topic_templates).toList()
+        } catch (_: Exception) {
+            emptyList()
         }
 
-        // Trova le categorie che matchano
+        val topicQuestions = mutableListOf<String>()
+        val shuffledTemplates = templates.shuffled()
+        var templateIndex = 0
+
+        for (topic in cleanTopics.take(2)) {
+            if (shuffledTemplates.isNotEmpty()) {
+                val template = shuffledTemplates[templateIndex % shuffledTemplates.size]
+                templateIndex++
+                val truncated = truncateTopic(topic)
+                topicQuestions.add(String.format(template, truncated))
+            }
+        }
+
         val matchedCategories = mutableSetOf<String>()
+        val textToMatch = "$bioText ${cleanTopics.joinToString(" ").lowercase()}"
+
         for ((category, keywords) in categoryKeywords) {
             for (keyword in keywords) {
-                if (textToMatch.contains(keyword)) {
+                val regex = Regex("\\b${Regex.escape(keyword)}\\b", RegexOption.IGNORE_CASE)
+                if (regex.containsMatchIn(textToMatch)) {
                     matchedCategories.add(category)
-                    break // Una keyword matchata è sufficiente per la categoria
+                    break
                 }
             }
         }
 
-        // Raccogli TUTTE le domande bilingue delle categorie matchate
-        val allMatchedQuestions = matchedCategories.flatMap { category ->
+        val allCategoryQuestions = matchedCategories.flatMap { category ->
             categoryQuestions[category] ?: emptyList()
         }
+        val categoryQuestionsFiltered = filterQuestionsByLocale(allCategoryQuestions, context).shuffled()
 
-        // Filtra SOLO quelle nella lingua corrente
-        val matchedQuestions = filterQuestionsByLocale(allMatchedQuestions, context)
-
-        // Se abbiamo abbastanza domande nella lingua giusta, pesca count casuali
-        if (matchedQuestions.size >= count) {
-            return matchedQuestions.shuffled().take(count)
+        val combined = mutableListOf<String>()
+        val maxLen = maxOf(topicQuestions.size, categoryQuestionsFiltered.size)
+        for (i in 0 until maxLen) {
+            if (i < topicQuestions.size) combined.add(topicQuestions[i])
+            if (i < categoryQuestionsFiltered.size) combined.add(categoryQuestionsFiltered[i])
         }
 
-        // Se abbiamo qualche domanda ma non abbastanza, aggiungi dalla Fase 0
-        if (matchedQuestions.isNotEmpty()) {
-            val randomOnes = getRandomIcebreakers(context, count - matchedQuestions.size)
-            return (matchedQuestions.shuffled() + randomOnes).take(count)
+        val result = combined.distinct().take(count)
+        if (result.size < count) {
+            val genericNeeded = count - result.size
+            val genericList = getRandomIcebreakers(context, count = genericNeeded * 2).filterNot { result.contains(it) }
+            return (result + genericList).take(count)
         }
 
-        // Nessun match: ricadi su Fase 0
-        return getRandomIcebreakers(context, count)
+        return result
     }
 }

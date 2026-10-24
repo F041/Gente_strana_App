@@ -14,5 +14,5 @@ fun computeAgeFromTimestamp(timestamp: Long): Int {
     if (today.get(Calendar.DAY_OF_YEAR) < dob.get(Calendar.DAY_OF_YEAR)) {
         age--
     }
-    return if (age < 0) 0 else age
+    return if (age < 16) 0 else age
 }

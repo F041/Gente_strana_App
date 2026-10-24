@@ -113,23 +113,20 @@ fun ChatScreen(docId: String, navController: NavController) {
     }
     var isIcebreakerLoading by remember { mutableStateOf(false) }
 
-    // Aggiorna gli icebreaker quando i messaggi cambiano o arrivano bio/topics/autopilot (solo se vuoti)
-    LaunchedEffect(messages.size, recipientName, recipientBio, recipientTopics, recipientAutopilotEnabled) {
+    // Aggiorna gli icebreaker quando i messaggi cambiano o arrivano bio/topics (solo se vuoti)
+    LaunchedEffect(messages.size, recipientName, recipientBio, recipientTopics) {
         if (messages.isEmpty() && recipientName != null) {
-            if (recipientAutopilotEnabled) {
-                // Calcola subito gli icebreaker senza ritardi artificiali
-                isIcebreakerLoading = true
-                icebreakerQuestions.value = IcebreakerUtils.matchIcebreakers(
-                    bio = recipientBio,
-                    topics = recipientTopics,
-                    context = context,
-                    count = 3
-                )
-                isIcebreakerLoading = false
-            } else {
-                isIcebreakerLoading = false
-                icebreakerQuestions.value = emptyList()
-            }
+            isIcebreakerLoading = true
+            icebreakerQuestions.value = IcebreakerUtils.matchIcebreakers(
+                bio = recipientBio,
+                topics = recipientTopics,
+                context = context,
+                count = 3
+            )
+            isIcebreakerLoading = false
+        } else {
+            isIcebreakerLoading = false
+            icebreakerQuestions.value = emptyList()
         }
     }
     val focusRequester = remember { FocusRequester() }
