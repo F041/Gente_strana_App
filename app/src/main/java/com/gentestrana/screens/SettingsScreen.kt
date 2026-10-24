@@ -22,8 +22,11 @@ import androidx.navigation.NavController
 import com.gentestrana.R
 import androidx.compose.foundation.border
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Share
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.text.font.FontWeight
 import com.gentestrana.users.UserRepository
 import com.google.firebase.auth.FirebaseAuth
 import kotlinx.coroutines.CoroutineScope
@@ -231,10 +234,17 @@ fun SettingsScreen(
                 style = MaterialTheme.typography.titleMedium
             )
             HorizontalDivider()
-            ListItem(
-                headlineContent = { Text(stringResource(R.string.invite_button)) },
-                supportingContent = { Text(stringResource(R.string.invite_description)) },
-                modifier = Modifier.clickable {
+            Spacer(modifier = Modifier.height(12.dp))
+
+            Text(
+                text = stringResource(R.string.invite_description),
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+            Spacer(modifier = Modifier.height(12.dp))
+
+            OutlinedButton(
+                onClick = {
                     val sendIntent = Intent(Intent.ACTION_SEND).apply {
                         type = "text/plain"
                         putExtra(
@@ -245,8 +255,20 @@ fun SettingsScreen(
                     context.startActivity(
                         Intent.createChooser(sendIntent, context.getString(R.string.invite_button))
                     )
-                }
-            )
+                },
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Icon(
+                    imageVector = Icons.Default.Share,
+                    contentDescription = null,
+                    modifier = Modifier.size(18.dp)
+                )
+                Spacer(modifier = Modifier.width(8.dp))
+                Text(
+                    text = stringResource(R.string.invite_button),
+                    fontWeight = FontWeight.Bold
+                )
+            }
 
             Spacer(modifier = Modifier.height(16.dp))
 
