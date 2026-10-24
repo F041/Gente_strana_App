@@ -201,6 +201,10 @@ class CallViewModel(
                     renewAgoraToken(callId)
                 }
 
+                if (tokenResult.encryptionKey.isNotBlank()) {
+                    agoraManager?.enableEncryption(tokenResult.encryptionKey, tokenResult.encryptionSalt)
+                }
+
                 agoraManager?.joinChannel(
                     token = tokenResult.token,
                     channelId = callId,

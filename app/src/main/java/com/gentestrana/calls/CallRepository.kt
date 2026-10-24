@@ -18,7 +18,9 @@ data class CallTokenResult(
     val appId: String,
     val channel: String,
     val account: String,
-    val expiresAt: Long
+    val expiresAt: Long,
+    val encryptionKey: String = "",
+    val encryptionSalt: String = ""
 )
 
 class CallRepository(
@@ -55,12 +57,18 @@ class CallRepository(
             val data = result.getData() as? Map<*, *>
                 ?: throw Exception("Risposta non valida dal server")
 
+            val encMap = data["encryption"] as? Map<*, *>
+            val key = encMap?.get("key") as? String ?: ""
+            val salt = encMap?.get("salt") as? String ?: ""
+
             return CallTokenResult(
                 token = data["token"] as? String ?: "",
                 appId = data["appId"] as? String ?: "",
                 channel = data["channel"] as? String ?: "",
                 account = data["account"] as? String ?: "",
-                expiresAt = (data["expiresAt"] as? Number)?.toLong() ?: 0L
+                expiresAt = (data["expiresAt"] as? Number)?.toLong() ?: 0L,
+                encryptionKey = key,
+                encryptionSalt = salt
             )
         } catch (e: FirebaseFunctionsException) {
             val reason = (e.details as? Map<*, *>)?.get("reason") as? String ?: e.message

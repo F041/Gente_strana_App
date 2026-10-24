@@ -29,7 +29,6 @@ import com.gentestrana.utils.computeAgeFromTimestamp
 import com.gentestrana.utils.getFlagEmoji
 import com.gentestrana.utils.getLanguageName
 import coil.request.ImageRequest
-import com.gentestrana.utils.incrementProfileView
 import com.google.firebase.auth.FirebaseAuth
 
 
@@ -46,11 +45,6 @@ fun ProfileContent(
     onEditMemoryClick: ((com.gentestrana.users.Memory) -> Unit)? = null
 ) {
     val currentUser = FirebaseAuth.getInstance().currentUser
-    LaunchedEffect(user.docId) {
-        if (currentUser?.uid != user.docId) {
-            incrementProfileView(user.docId)
-        }
-    }
 
     val context = LocalContext.current
     Column(

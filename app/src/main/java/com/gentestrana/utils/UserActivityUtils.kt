@@ -24,20 +24,3 @@ fun updateUserLastActive() {
             // Logga o gestisci l'errore se necessario
         }
 }
-
-fun incrementProfileView(userId: String) {
-    val db = FirebaseFirestore.getInstance()
-    val viewData = hashMapOf(
-        "timestamp" to Timestamp.now()
-    )
-    db.collection("users")
-        .document(userId)
-        .collection("profileViews")
-        .add(viewData)
-        .addOnSuccessListener {
-//            Log.d("UserActivityUtils", "Visualizzazione registrata per l'utente: $userId")
-        }
-        .addOnFailureListener { e ->
-//            Log.e("UserActivityUtils", "Errore durante la registrazione della visualizzazione per l'utente: $userId", e)
-        }
-}

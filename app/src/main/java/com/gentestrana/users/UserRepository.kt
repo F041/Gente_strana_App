@@ -84,7 +84,6 @@ class UserRepository(
                     .set(userData)
                     .addOnSuccessListener {
                         retrieveAndSaveFcmToken(uid)
-                        incrementCommunityUserStats()
 
                         // FIX: l'email di verifica parte solo DOPO il salvataggio del profilo,
                         // cosi' non arriva mai per un account che viene poi cancellato.
@@ -232,7 +231,6 @@ class UserRepository(
                                     .addOnSuccessListener {
                                         Log.d("UserRepository", "Documento Firestore creato con successo per l'utente $uid.")
                                         retrieveAndSaveFcmToken(uid)
-                                        incrementCommunityUserStats()
                                         onSuccess()
                                     }
                                     .addOnFailureListener { e ->
@@ -932,14 +930,13 @@ class UserRepository(
             }
     }
 
-    fun incrementCommunityUserStats() {
-        val statsRef = firestore.collection("stats").document("community")
-        statsRef.set(
-            mapOf("totalUsers" to com.google.firebase.firestore.FieldValue.increment(1)),
-            com.google.firebase.firestore.SetOptions.merge()
-        ).addOnFailureListener { e ->
-            Log.e("UserRepository", "Errore incremento contatore community", e)
-        }
+    fun updateUserAcceptCalls(acceptCalls: Boolean) {
+        val uid = auth.currentUser?.uid ?: return
+        firestore.collection("users").document(uid)
+            .update("acceptCalls", acceptCalls)
+            .addOnFailureListener { e ->
+                Log.e("UserRepository", "Error updating acceptCalls: ${e.message}", e)
+            }
     }
 
 

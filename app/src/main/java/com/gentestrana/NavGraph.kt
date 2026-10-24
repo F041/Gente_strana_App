@@ -1,6 +1,7 @@
 package com.gentestrana
 
 import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.consumeWindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Scaffold
@@ -95,6 +96,21 @@ fun AppNavHost(navController: NavHostController,
                 val docId = backStackEntry.arguments?.getString("docId") ?: ""
                 ChatScreen(docId = docId, navController = navController)
             }
+            composable("call/{chatId}/{otherName}") { backStackEntry ->
+                val chatId = backStackEntry.arguments?.getString("chatId") ?: ""
+                val otherName = backStackEntry.arguments?.getString("otherName") ?: "Utente"
+                val context = androidx.compose.ui.platform.LocalContext.current
+                val callViewModel: com.gentestrana.calls.CallViewModel = androidx.lifecycle.viewmodel.compose.viewModel()
+
+                LaunchedEffect(chatId) {
+                    callViewModel.initOutgoingCall(context, chatId, otherName, "")
+                }
+
+                com.gentestrana.calls.CallScreen(
+                    viewModel = callViewModel,
+                    onCallFinished = { navController.popBackStack() }
+                )
+            }
         }
 
         composable("profile_pictures_screen") {
@@ -125,6 +141,55 @@ fun MainTabsScreen(navController: NavHostController,
                    onThemeChange: (AppTheme) -> Unit) {
     val tabsNavController = rememberNavController()
 
+    val currentUserId = remember { FirebaseAuth.getInstance().currentUser?.uid }
+    val callRepo = remember { com.gentestrana.calls.CallRepository() }
+    var incomingCall by remember { mutableStateOf<com.gentestrana.calls.Call?>(null) }
+
+    LaunchedEffect(currentUserId) {
+        if (currentUserId != null) {
+            callRepo.observeIncomingCalls(currentUserId).collect { calls ->
+                incomingCall = calls.firstOrNull()
+            }
+        }
+    }
+
+    val activeIncomingCall = incomingCall
+    if (activeIncomingCall != null) {
+        val callViewModel: com.gentestrana.calls.CallViewModel = androidx.lifecycle.viewmodel.compose.viewModel()
+        val context = androidx.compose.ui.platform.LocalContext.current
+        LaunchedEffect(activeIncomingCall.id) {
+            callViewModel.initIncomingCall(context, activeIncomingCall)
+        }
+
+        androidx.compose.material3.AlertDialog(
+            onDismissRequest = {
+                callViewModel.declineCall()
+                incomingCall = null
+            },
+            title = { androidx.compose.material3.Text("📞 Chiamata in arrivo") },
+            text = { androidx.compose.material3.Text("${activeIncomingCall.callerName} ti sta chiamando.") },
+            confirmButton = {
+                androidx.compose.material3.Button(onClick = {
+                    val cId = activeIncomingCall.chatId
+                    val cName = activeIncomingCall.callerName
+                    callViewModel.answerCall()
+                    incomingCall = null
+                    navController.navigate("call/$cId/$cName")
+                }) {
+                    androidx.compose.material3.Text("Rispondi")
+                }
+            },
+            dismissButton = {
+                androidx.compose.material3.TextButton(onClick = {
+                    callViewModel.declineCall()
+                    incomingCall = null
+                }) {
+                    androidx.compose.material3.Text("Rifiuta")
+                }
+            }
+        )
+    }
+
     Scaffold(
         contentWindowInsets = WindowInsets(0, 0, 0, 0),
         bottomBar = { BottomNavigationBar(tabsNavController) }
@@ -132,7 +197,9 @@ fun MainTabsScreen(navController: NavHostController,
         NavHost(
             navController = tabsNavController,
             startDestination = "community",
-            modifier = Modifier.padding(innerPadding)
+            modifier = Modifier
+                .padding(innerPadding)
+                .consumeWindowInsets(innerPadding)
         ) {
             composable("community") {
                 UsersListScreen(navController = navController)

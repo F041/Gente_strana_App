@@ -407,4 +407,11 @@
     <string name="accept_calls_label">Accetto chiamate</string>
     <string name="accept_calls_description">Possono chiamarti solo le persone con cui avete scritto almeno 5 messaggi ciascuno. Audio e video passano da Agora e non vengono registrati.</string>
 
+    <!-- Invite Someone -->
+    <string name="invite_section">Invita qualcuno</string>
+    <string name="invite_description">Manda il link del sito a chi pensi che si troverebbe bene qui: spiega come entrare, con Android, iPhone o computer.</string>
+    <string name="invite_button">Condividi il link</string>
+    <string name="invite_text">Ti va di provare Gente Strana? È un social per persone neurodivergenti, dove si parla dei propri interessi. Qui c\'è come entrare:</string>
+    <string name="invite_url">https://quirky-people.web.app/</string>
+
 </resources>

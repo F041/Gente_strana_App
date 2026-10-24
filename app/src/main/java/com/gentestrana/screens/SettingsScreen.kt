@@ -92,6 +92,16 @@ fun SettingsScreen(
         auth.currentUser?.providerData?.any { it.providerId == "password" } == true
     }
 
+    var acceptCallsState by remember { mutableStateOf(true) }
+    val currentUserId = auth.currentUser?.uid
+    LaunchedEffect(currentUserId) {
+        if (currentUserId != null) {
+            userRepository.getUser(currentUserId, onSuccess = { u ->
+                acceptCallsState = u.acceptCalls
+            }, onFailure = {})
+        }
+    }
+
     Scaffold(
         topBar = {
             TopAppBar(
@@ -105,59 +115,12 @@ fun SettingsScreen(
                 .padding(16.dp)
                 .verticalScroll(rememberScrollState())
         ) {
-            Text(
-                text = stringResource(R.string.account_section),
-                style = MaterialTheme.typography.titleMedium
-            )
-            HorizontalDivider()
-            if (isEmailPasswordUser) {
-                ListItem(
-                    headlineContent = { Text(stringResource(R.string.change_password)) },
-                    modifier = Modifier.clickable { navController.navigate("changePassword") }
-                )
-            }
-
-            ListItem(
-                headlineContent = { Text(stringResource(R.string.blocked_users_navigation_title)) },
-                modifier = Modifier.clickable { navController.navigate("blockedUsers") }
-            )
-
-            ListItem(
-                headlineContent = { Text(stringResource(R.string.delete_account)) },
-                colors = ListItemDefaults.colors(headlineColor = MaterialTheme.colorScheme.error),
-                modifier = Modifier.clickable { showDeleteConfirmationDialog = true }
-            )
-
-            Spacer(modifier = Modifier.height(16.dp))
-
-            Text(
-                text = stringResource(R.string.notifications_section),
-                style = MaterialTheme.typography.titleMedium
-            )
-            HorizontalDivider()
-            ListItem(
-                headlineContent = { Text(stringResource(R.string.push_notifications)) },
-                trailingContent = {
-                    Switch(
-                        checked = pushNotificationsEnabled.value,
-                        onCheckedChange = { isChecked ->
-                            pushNotificationsEnabled.value = isChecked
-                            sharedPreferences.edit()
-                                .putBoolean(pushNotificationsKey, isChecked)
-                                .apply()
-                        }
-                    )
-                }
-            )
-
-            Spacer(modifier = Modifier.height(16.dp))
-
+            // 1. Tema
             Text(
                 text = stringResource(R.string.theme_section),
                 style = MaterialTheme.typography.titleMedium
             )
             HorizontalDivider()
-            // Opzioni Tema
             Row(verticalAlignment = Alignment.CenterVertically) {
                 RadioButton(
                     selected = selectedTheme.value == AppTheme.SYSTEM,
@@ -217,6 +180,97 @@ fun SettingsScreen(
 
             Spacer(modifier = Modifier.height(16.dp))
 
+            // 2. Notifiche
+            Text(
+                text = stringResource(R.string.notifications_section),
+                style = MaterialTheme.typography.titleMedium
+            )
+            HorizontalDivider()
+            ListItem(
+                headlineContent = { Text(stringResource(R.string.push_notifications)) },
+                trailingContent = {
+                    Switch(
+                        checked = pushNotificationsEnabled.value,
+                        onCheckedChange = { isChecked ->
+                            pushNotificationsEnabled.value = isChecked
+                            sharedPreferences.edit()
+                                .putBoolean(pushNotificationsKey, isChecked)
+                                .apply()
+                        }
+                    )
+                }
+            )
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            // 3. Chiamate
+            Text(
+                text = stringResource(R.string.calls_section),
+                style = MaterialTheme.typography.titleMedium
+            )
+            HorizontalDivider()
+            ListItem(
+                headlineContent = { Text(stringResource(R.string.accept_calls_label)) },
+                supportingContent = { Text(stringResource(R.string.accept_calls_description)) },
+                trailingContent = {
+                    Switch(
+                        checked = acceptCallsState,
+                        onCheckedChange = { isChecked ->
+                            acceptCallsState = isChecked
+                            userRepository.updateUserAcceptCalls(isChecked)
+                        }
+                    )
+                }
+            )
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            // 4. Invita Qualcuno
+            Text(
+                text = stringResource(R.string.invite_section),
+                style = MaterialTheme.typography.titleMedium
+            )
+            HorizontalDivider()
+            ListItem(
+                headlineContent = { Text(stringResource(R.string.invite_button)) },
+                supportingContent = { Text(stringResource(R.string.invite_description)) },
+                modifier = Modifier.clickable {
+                    val sendIntent = Intent(Intent.ACTION_SEND).apply {
+                        type = "text/plain"
+                        putExtra(
+                            Intent.EXTRA_TEXT,
+                            "${context.getString(R.string.invite_text)} ${context.getString(R.string.invite_url)}"
+                        )
+                    }
+                    context.startActivity(
+                        Intent.createChooser(sendIntent, context.getString(R.string.invite_button))
+                    )
+                }
+            )
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            // 5. Account
+            Text(
+                text = stringResource(R.string.account_section),
+                style = MaterialTheme.typography.titleMedium
+            )
+            HorizontalDivider()
+            if (isEmailPasswordUser) {
+                ListItem(
+                    headlineContent = { Text(stringResource(R.string.change_password)) },
+                    modifier = Modifier.clickable { navController.navigate("changePassword") }
+                )
+            }
+
+            ListItem(
+                headlineContent = { Text(stringResource(R.string.blocked_users_navigation_title)) },
+                modifier = Modifier.clickable { navController.navigate("blockedUsers") }
+            )
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            // 6. Informazioni
             Text(
                 text = stringResource(R.string.info_section),
                 style = MaterialTheme.typography.titleMedium
@@ -247,6 +301,15 @@ fun SettingsScreen(
                 trailingContent = {
                     Text("Versione: $versionName (Code: $versionCode)")
                 }
+            )
+
+            // 7. Elimina Account (In fondo)
+            Spacer(modifier = Modifier.height(24.dp))
+            HorizontalDivider()
+            ListItem(
+                headlineContent = { Text(stringResource(R.string.delete_account)) },
+                colors = ListItemDefaults.colors(headlineColor = MaterialTheme.colorScheme.error),
+                modifier = Modifier.clickable { showDeleteConfirmationDialog = true }
             )
         }
         if (showDeleteConfirmationDialog) {

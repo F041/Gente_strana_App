@@ -66,6 +66,20 @@ class AgoraManager(private val context: Context) {
         rtcEngine?.joinChannelWithUserAccount(token, channelId, userAccount)
     }
 
+    fun enableEncryption(key: String, saltBase64: String) {
+        if (key.isBlank() || saltBase64.isBlank()) return
+        try {
+            val config = io.agora.rtc2.internal.EncryptionConfig()
+            config.encryptionMode = io.agora.rtc2.internal.EncryptionConfig.EncryptionMode.AES_128_GCM2
+            config.encryptionKey = key
+            val saltBytes = android.util.Base64.decode(saltBase64, android.util.Base64.DEFAULT)
+            System.arraycopy(saltBytes, 0, config.encryptionKdfSalt, 0, saltBytes.size.coerceAtMost(config.encryptionKdfSalt.size))
+            rtcEngine?.enableEncryption(true, config)
+        } catch (e: Exception) {
+            Log.e("AgoraManager", "Failed to enable encryption: ${e.message}", e)
+        }
+    }
+
     fun renewToken(newToken: String) {
         rtcEngine?.renewToken(newToken)
     }

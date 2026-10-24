@@ -20,6 +20,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.ArrowForward
 import androidx.compose.material.icons.automirrored.filled.Send
+import androidx.compose.material.icons.filled.Call
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material3.*
@@ -83,6 +84,7 @@ fun ChatScreen(docId: String, navController: NavController) {
     val recipientTopics by viewModel.recipientTopics.collectAsState()
     val recipientAutopilotEnabled by viewModel.recipientAutopilotEnabled.collectAsState()
     val recipientSocialBatteryStatus by viewModel.recipientSocialBatteryStatus.collectAsState()
+    val recipientLastActive by viewModel.recipientLastActive.collectAsState()
     val messages by viewModel.messages.collectAsState()
     val isLoadingOlderMessages by viewModel.isLoadingOlderMessages.collectAsState()
     val hasMoreMessages by viewModel.hasMoreMessages.collectAsState()
@@ -330,7 +332,7 @@ fun ChatScreen(docId: String, navController: NavController) {
                     val currentRecipientName = recipientName
                     val currentRecipientDocId = recipientDocId
                     if (currentRecipientName != null) {
-                        Row(
+                        Column(
                             modifier = Modifier
                                 .clickable {
                                     if (!currentRecipientDocId.isNullOrEmpty()) {
@@ -342,30 +344,48 @@ fun ChatScreen(docId: String, navController: NavController) {
                                     color = MaterialTheme.colorScheme.primary,
                                     shape = RoundedCornerShape(4.dp)
                                 )
-                                .padding(horizontal = 4.dp, vertical = 2.dp),
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.spacedBy(4.dp)
+                                .padding(horizontal = 6.dp, vertical = 2.dp)
                         ) {
-                            val batteryIcon = when (recipientSocialBatteryStatus) {
-                                "MEDIUM" -> " 🟡"
-                                "LOW" -> " 🪫"
-                                "RECHARGING" -> " ⚡"
-                                "FOCUS_ONLY" -> " 🎯"
-                                else -> ""
-                            }
-                            Text(
-                                text = currentRecipientName + batteryIcon,
-                                style = MaterialTheme.typography.titleLarge.copy(
-                                    color = MaterialTheme.colorScheme.primary,
-                                    textDecoration = TextDecoration.Underline
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(4.dp)
+                            ) {
+                                val batteryIcon = when (recipientSocialBatteryStatus) {
+                                    "MEDIUM" -> " 🟡"
+                                    "LOW" -> " 🪫"
+                                    "RECHARGING" -> " ⚡"
+                                    "FOCUS_ONLY" -> " 🎯"
+                                    else -> ""
+                                }
+                                Text(
+                                    text = currentRecipientName + batteryIcon,
+                                    style = MaterialTheme.typography.titleLarge.copy(
+                                        color = MaterialTheme.colorScheme.primary,
+                                        textDecoration = TextDecoration.Underline
+                                    )
                                 )
-                            )
-                            Icon(
-                                imageVector = Icons.Default.Info,
-                                contentDescription = "Visualizza profilo",
-                                tint = MaterialTheme.colorScheme.primary,
-                                modifier = Modifier.size(20.dp)
-                            )
+                                Icon(
+                                    imageVector = Icons.Default.Info,
+                                    contentDescription = "Visualizza profilo",
+                                    tint = MaterialTheme.colorScheme.primary,
+                                    modifier = Modifier.size(18.dp)
+                                )
+                            }
+
+                            val lastSeenStr = remember(recipientLastActive) {
+                                com.gentestrana.utils.formatLastSeen(recipientLastActive)
+                            }
+                            if (lastSeenStr != null) {
+                                val isOnlineNow = lastSeenStr.contains("ora") || lastSeenStr.contains("now")
+                                Text(
+                                    text = lastSeenStr,
+                                    style = MaterialTheme.typography.labelSmall,
+                                    color = if (isOnlineNow) androidx.compose.ui.graphics.Color(0xFF2E7D32) else MaterialTheme.colorScheme.onSurfaceVariant,
+                                    fontWeight = if (isOnlineNow) FontWeight.Bold else FontWeight.Normal,
+                                    maxLines = 1,
+                                    overflow = TextOverflow.Ellipsis
+                                )
+                            }
                         }
                     } else {
                         CircularProgressIndicator(
@@ -421,6 +441,54 @@ fun ChatScreen(docId: String, navController: NavController) {
                                 }
                             }
                         }
+                    }
+
+                    // Pulsante Chiamata
+                    val mySentCount = messages.count { it.sender == currentUserId }
+                    val otherSentCount = metrics.recipientMessageCount
+                    val isCallUnlocked = mySentCount >= 5 && otherSentCount >= 5
+
+                    var showCallExplanationDialog by remember { mutableStateOf(false) }
+                    var callExplanationText by remember { mutableStateOf("") }
+
+                    IconButton(
+                        onClick = {
+                            if (isCallUnlocked) {
+                                navController.navigate("call/$docId/${recipientName ?: "Utente"}")
+                            } else {
+                                val myMissing = (5 - mySentCount).coerceAtLeast(0)
+                                val otherMissing = (5 - otherSentCount).coerceAtLeast(0)
+                                callExplanationText = "Le chiamate si sbloccano quando avete scritto almeno 5 messaggi ciascuno.\n" +
+                                    when {
+                                        myMissing > 0 && otherMissing > 0 -> "A te ne mancano $myMissing, a ${recipientName ?: "L'utente"} ne mancano $otherMissing."
+                                        myMissing > 0 -> "A te ne mancano $myMissing."
+                                        else -> "A ${recipientName ?: "L'utente"} ne mancano $otherMissing."
+                                    }
+                                showCallExplanationDialog = true
+                            }
+                        }
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Call,
+                            contentDescription = "Chiamata",
+                            tint = if (isCallUnlocked)
+                                androidx.compose.ui.graphics.Color(0xFF2E7D32)
+                            else
+                                MaterialTheme.colorScheme.onSurface.copy(alpha = 0.4f)
+                        )
+                    }
+
+                    if (showCallExplanationDialog) {
+                        AlertDialog(
+                            onDismissRequest = { showCallExplanationDialog = false },
+                            title = { Text("📞 Chiamate") },
+                            text = { Text(callExplanationText) },
+                            confirmButton = {
+                                TextButton(onClick = { showCallExplanationDialog = false }) {
+                                    Text("OK")
+                                }
+                            }
+                        )
                     }
                 }
             )
