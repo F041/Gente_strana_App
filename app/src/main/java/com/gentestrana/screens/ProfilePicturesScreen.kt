@@ -25,6 +25,9 @@ fun ProfilePicturesScreen(
     navController: NavHostController
 ) {
 //    Log.d("ProfilePicturesScreen", "DEBUG - Numero immagini: ${imageUrls.size}")
+    val savedStateHandle = navController.previousBackStackEntry?.savedStateHandle
+    val startIndex = savedStateHandle?.get<Int>("startIndex") ?: 0
+
     Scaffold(
         topBar = {
             TopAppBar(
@@ -46,8 +49,8 @@ fun ProfilePicturesScreen(
             // Qui chiamiamo il ProfilePhotoCarousel
             ProfilePhotoCarousel(
                 imageUrls = imageUrls,
-                modifier = Modifier
-                    .weight(1f)
+                modifier = Modifier.weight(1f),
+                initialPage = startIndex
             )
         }
     }

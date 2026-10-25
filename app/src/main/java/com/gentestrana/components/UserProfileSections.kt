@@ -48,11 +48,14 @@ import java.util.Locale
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun ProfilePhotoCarousel(
-    // ha senso metterlo qui? Secondo Gemini si
     imageUrls: List<String>,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    initialPage: Int = 0
 ) {
-    val pagerState = rememberPagerState(pageCount = { imageUrls.size })
+    val pagerState = rememberPagerState(
+        initialPage = initialPage.coerceIn(0, (imageUrls.size - 1).coerceAtLeast(0)),
+        pageCount = { imageUrls.size }
+    )
     Column(modifier = modifier) {
         HorizontalPager(
             state = pagerState,

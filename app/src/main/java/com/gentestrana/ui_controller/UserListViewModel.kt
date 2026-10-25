@@ -77,10 +77,20 @@ class UserListViewModel : ViewModel() {
         viewModelScope.launch {
             try {
                 val snapshot = firestore.collection("users")
+                    .orderBy("lastActive", com.google.firebase.firestore.Query.Direction.DESCENDING)
                     .count()
                     .get(com.google.firebase.firestore.AggregateSource.SERVER)
                     .await()
-                _totalUserServerCount.value = snapshot.count.toInt()
+
+                var totalCount = snapshot.count.toInt()
+                if (currentUserId != null) {
+                    totalCount = (totalCount - 1).coerceAtLeast(0)
+                }
+                val blockedSet = _blockedUserIds.value
+                if (blockedSet.isNotEmpty()) {
+                    totalCount = (totalCount - blockedSet.size).coerceAtLeast(0)
+                }
+                _totalUserServerCount.value = totalCount
             } catch (e: Exception) {
                 Log.e("UserListVM", "Error fetching total user count from server", e)
             }
@@ -114,8 +124,7 @@ class UserListViewModel : ViewModel() {
                 if (newBlockedSet != _blockedUserIds.value) { // Aggiorna solo se è cambiato
                     _blockedUserIds.value = newBlockedSet
                     Log.d("UserListVM_Listener", "Listener blockedUsers aggiornato: ${newBlockedSet.size} utenti.")
-                } else {
-                    // Log.d("UserListVM_Listener", "Listener blockedUsers: Nessun cambiamento rilevato.")
+                    fetchTotalUserServerCount()
                 }
             } else {
                 Log.w("UserListVM_Listener", "Documento utente $currentUserId non trovato o snapshot nullo.")

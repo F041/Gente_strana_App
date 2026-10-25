@@ -4,12 +4,15 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.ui.graphics.Color
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.runtime.Composable
@@ -69,20 +72,27 @@ fun ProfileContent(
         // per niente elegante ma pazienza
 
         // Immagine profilo
+        val photoClickModifier = if (user.profilePicUrl.isNotEmpty()) {
+            Modifier.clickable {
+                navController.currentBackStackEntry?.savedStateHandle?.set("imageUrls", user.profilePicUrl)
+                navController.currentBackStackEntry?.savedStateHandle?.set("startIndex", 0)
+                navController.navigate("profile_pictures_screen")
+            }
+        } else Modifier
+
         Box(
             modifier = Modifier
                 .fillMaxWidth(0.4f)
                 .aspectRatio(1f)
-                // Forza aspect ratio 1:1 (quadrato)
                 .clip(RoundedCornerShape(8.dp))
                 .background(MaterialTheme.colorScheme.surfaceVariant)
-                .align(Alignment.CenterHorizontally),
+                .align(Alignment.CenterHorizontally)
+                .then(photoClickModifier),
             contentAlignment = Alignment.Center
         ) {
             val imageUrlToLoad: String = if (user.profilePicUrl.isEmpty()) {
-                DEFAULT_PROFILE_IMAGE_URL // Usa default se la lista è vuota
+                DEFAULT_PROFILE_IMAGE_URL
             } else {
-                // Se non è vuota, prendi la prima (non serve thumbnail qui, è già piccola)
                 user.profilePicUrl.first()
             }
 
@@ -97,6 +107,48 @@ fun ProfileContent(
                 modifier = Modifier.fillMaxSize(),
                 contentScale = ContentScale.Crop
             )
+
+            if (user.profilePicUrl.size > 1) {
+                Surface(
+                    color = Color.Black.copy(alpha = 0.55f),
+                    shape = CircleShape,
+                    modifier = Modifier
+                        .align(Alignment.BottomEnd)
+                        .padding(8.dp)
+                ) {
+                    Text(
+                        text = "1/${user.profilePicUrl.size}",
+                        style = MaterialTheme.typography.labelSmall,
+                        color = Color.White,
+                        modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
+                    )
+                }
+            }
+        }
+
+        if (user.profilePicUrl.size > 1) {
+            Spacer(modifier = Modifier.height(8.dp))
+            Row(
+                modifier = Modifier.align(Alignment.CenterHorizontally),
+                horizontalArrangement = Arrangement.spacedBy(6.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                user.profilePicUrl.forEachIndexed { index, _ ->
+                    Box(
+                        modifier = Modifier
+                            .size(if (index == 0) 8.dp else 6.dp)
+                            .clip(CircleShape)
+                            .background(
+                                if (index == 0) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outlineVariant
+                            )
+                            .clickable {
+                                navController.currentBackStackEntry?.savedStateHandle?.set("imageUrls", user.profilePicUrl)
+                                navController.currentBackStackEntry?.savedStateHandle?.set("startIndex", index)
+                                navController.navigate("profile_pictures_screen")
+                            }
+                    )
+                }
+            }
         }
 
         Spacer(modifier = Modifier.height(16.dp))
