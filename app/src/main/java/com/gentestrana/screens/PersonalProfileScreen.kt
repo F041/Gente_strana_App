@@ -138,37 +138,41 @@ fun PersonalProfileScreen(
         }
     }
 
-    // Launcher per selezionare nuove immagini dalla galleria
+    // Launcher per selezionare una nuova immagine dalla galleria
     val imagePickerLauncher = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.GetMultipleContents()
-    ) { uris: List<Uri> ->
-        if (uris.isNotEmpty()) {
-            val currentCount = profilePicUrl.size
-            val availableSlots = (3 - currentCount).coerceAtLeast(0)
-            val selected = uris.take(availableSlots)
+        contract = ActivityResultContracts.GetContent()
+    ) { uri: Uri? ->
+        if (uri != null) {
+            isUploading = true  // Attiva l'indicatore di caricamento
+            profileViewModel.uploadNewProfileImage(uri, context) { result ->
+                isUploading = false  // Disattiva l'indicatore in ogni caso
+                when {
+                    result == "DUPLICATE" -> {
+                        Toast.makeText(
+                            context,
+                            context.getString(R.string.duplicate_image),
+                            Toast.LENGTH_SHORT
+                        ).show()
+                        uploadLimitExceeded = false
+                    }
 
-            if (selected.isNotEmpty()) {
-                isUploading = true
-                coroutineScope.launch {
-                    var addedCount = 0
-                    var duplicatesCount = 0
-                    for (uri in selected) {
-                        kotlinx.coroutines.suspendCancellableCoroutine<Unit> { continuation ->
-                            profileViewModel.uploadNewProfileImage(uri, context) { result ->
-                                if (result == "DUPLICATE") duplicatesCount++
-                                else if (result.isNotEmpty() && result != "LIMIT_EXCEEDED") addedCount++
-                                continuation.resume(Unit) {}
-                            }
-                        }
+                    result == "LIMIT_EXCEEDED" -> {
+                        // Imposta lo stato per mostrare il messaggio con la clessidra
+                        uploadLimitExceeded = true
                     }
-                    isUploading = false
-                    val msg = when {
-                        addedCount > 0 && duplicatesCount > 0 -> "$addedCount foto aggiunte, $duplicatesCount già presente"
-                        addedCount > 0 -> "$addedCount foto aggiunte 👌"
-                        duplicatesCount > 0 -> "Foto già presente"
-                        else -> "❌"
+
+                    result.isEmpty() -> {
+                        Toast.makeText(
+                            context, "❌",
+                            Toast.LENGTH_SHORT
+                        ).show()
+                        uploadLimitExceeded = false
                     }
-                    Toast.makeText(context, msg, Toast.LENGTH_SHORT).show()
+
+                    else -> {
+                        Toast.makeText(context, "👌", Toast.LENGTH_SHORT).show()
+                        uploadLimitExceeded = false
+                    }
                 }
             }
         } else {
@@ -286,22 +290,26 @@ fun PersonalProfileScreen(
                 }
 
                 // Zona gallery immagini profilo
-                ReorderableProfileImageGridWithAdd(
-                    images = profilePicUrl,
-                    maxImages = 3,
-                    isUploading = isUploading,
-                    onImageOrderChanged = { newOrder ->
-                        profileViewModel.setProfilePicOrder(newOrder)
-                    },
-                    onDeleteImage = { imageUrl ->
-                        coroutineScope.launch {
-                            profileViewModel.deleteProfileImage(imageUrl)
-                        }
-                    },
-                    onAddImage = {
-                        imagePickerLauncher.launch("image/*")
+                Box {
+                    key(profilePicUrl) {
+                        ReorderableProfileImageGridWithAdd(
+                            images = profilePicUrl,
+                            maxImages = 3,
+                            isUploading = isUploading,
+                            onImageOrderChanged = { newOrder ->
+                                profileViewModel.setProfilePicOrder(newOrder)
+                            },
+                            onDeleteImage = { imageUrl ->
+                                coroutineScope.launch {
+                                    profileViewModel.deleteProfileImage(imageUrl)
+                                }
+                            },
+                            onAddImage = {
+                                imagePickerLauncher.launch("image/*")
+                            }
+                        )
                     }
-                )
+                }
 
                 Spacer(modifier = Modifier.height(8.dp))
 

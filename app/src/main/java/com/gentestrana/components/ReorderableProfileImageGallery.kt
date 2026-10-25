@@ -18,7 +18,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
@@ -27,12 +26,13 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.zIndex
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
 import com.gentestrana.R
 import com.gentestrana.ui.theme.LocalDimensions
 import kotlin.math.roundToInt
+
+// Rimosso DEFAULT_PROFILE_IMAGE_URL perché usiamo il drawable di fallback direttamente in AsyncImage
 
 private fun <T> List<T>.chunkedBy(count: Int): List<List<T>> = this.chunked(count)
 
@@ -60,13 +60,18 @@ fun ReorderableProfileImageGridWithAdd(
         listCopy
     }
 
+    // Non raggruppiamo più in righe, useremo una griglia flessibile.
+    // val rows = displayList.chunkedBy(3) // <-- RIMOSSO
+
     var draggingIndex by remember { mutableStateOf<Int?>(null) }
     var dragOffset by remember { mutableStateOf(Offset.Zero) }
     val density = LocalDensity.current
 
+    // Usiamo BoxWithConstraints per ottenere la larghezza totale disponibile per la griglia
     BoxWithConstraints(modifier = Modifier.fillMaxWidth().padding(dimensions.largePadding)) {
-        val gridWidthPx = with(density) { this@BoxWithConstraints.maxWidth.toPx() }
+        val gridWidthPx = with(density) { maxWidth.toPx() }
         val spacingPx = with(density) { dimensions.mediumPadding.toPx() }
+        // La larghezza di ogni cella è (larghezza totale - 2 spazi) / 3
         val cellWidthPx = (gridWidthPx - (2 * spacingPx)) / 3f
 
         fun calculateNewIndex(originalIndex: Int, offset: Offset): Int {
@@ -90,111 +95,107 @@ fun ReorderableProfileImageGridWithAdd(
             modifier = Modifier.fillMaxWidth(),
             verticalArrangement = Arrangement.spacedBy(dimensions.mediumPadding)
         ) {
+            // Unica Row che si adatta e va a capo automaticamente
             FlowRow(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(dimensions.mediumPadding),
-                maxItemsInEachRow = 3
+                maxItemsInEachRow = 3 // Specifichiamo che vogliamo 3 elementi per riga
             ) {
                 displayList.forEachIndexed { index, item ->
-                    key(item) {
-                        val cellModifier = Modifier
-                            .weight(1f)
-                            .aspectRatio(1f)
-                            .clip(MaterialTheme.shapes.medium)
 
-                        if (item == "ADD_CELL") {
-                            Box(
-                                modifier = cellModifier
-                                    .background(MaterialTheme.colorScheme.surfaceVariant)
-                                    .clickable { onAddImage() },
-                                contentAlignment = Alignment.Center
-                            ) {
-                                if (isUploading) {
-                                    GenericLoadingScreen(
-                                        modifier = Modifier.size(24.dp),
-                                        color = MaterialTheme.colorScheme.primary
-                                    )
-                                } else {
-                                    Text(
-                                        text = "+",
-                                        style = MaterialTheme.typography.headlineMedium,
-                                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                                    )
-                                }
-                            }
-                        } else {
-                            val isDragging = (draggingIndex == index)
-                            Box(
-                                modifier = cellModifier
-                                    .zIndex(if (isDragging) 1f else 0f)
-                                    .graphicsLayer {
-                                        scaleX = if (isDragging) 1.05f else 1f
-                                        scaleY = if (isDragging) 1.05f else 1f
-                                        shadowElevation = if (isDragging) 8.dp.toPx() else 0f
-                                    }
-                                    .then(if (isDragging) Modifier.offset { IntOffset(dragOffset.x.roundToInt(), dragOffset.y.roundToInt()) } else Modifier)
-                                    .then(if (index == 0) Modifier.border(BorderStroke(2.dp, MaterialTheme.colorScheme.primary)) else Modifier)
-                                    .pointerInput(item) {
-                                        detectDragGestures(
-                                            onDragStart = { if (draggingIndex == null) { draggingIndex = index } },
-                                            onDrag = { change, dragAmount ->
-                                                if (draggingIndex == index) {
-                                                    change.consume()
-                                                    dragOffset += dragAmount
-                                                }
-                                            },
-                                            onDragEnd = {
-                                                draggingIndex?.let { originalIndex ->
-                                                    val targetIndex = calculateNewIndex(originalIndex, dragOffset).coerceIn(0, imageList.size - 1)
-                                                    if (targetIndex != originalIndex) {
-                                                        val mutable = imageList.toMutableList()
-                                                        val draggedItem = mutable.removeAt(originalIndex)
-                                                        mutable.add(targetIndex.coerceAtMost(mutable.size), draggedItem)
-                                                        imageList = mutable
-                                                        onImageOrderChanged(mutable)
-                                                    }
-                                                }
-                                                draggingIndex = null
-                                                dragOffset = Offset.Zero
-                                            },
-                                            onDragCancel = {
-                                                draggingIndex = null
-                                                dragOffset = Offset.Zero
-                                            }
-                                        )
-                                    },
-                                contentAlignment = Alignment.TopEnd
-                            ) {
-                                AsyncImage(
-                                    model = ImageRequest.Builder(context)
-                                        .data(item)
-                                        .placeholder(R.drawable.random_user)
-                                        .error(R.drawable.random_user)
-                                        .crossfade(true)
-                                        .build(),
-                                    contentDescription = "Profile Image $index",
-                                    modifier = Modifier.fillMaxSize(),
-                                    contentScale = ContentScale.Crop
+                    // Modifier comune per tutte le celle, ora è dinamico
+                    val cellModifier = Modifier
+                        .weight(1f)
+                        .aspectRatio(1f) // Mantiene le celle quadrate
+                        .clip(MaterialTheme.shapes.medium)
+
+                    if (item == "ADD_CELL") {
+                        Box(
+                            modifier = cellModifier
+                                .background(MaterialTheme.colorScheme.surfaceVariant)
+                                .clickable { onAddImage() },
+                            contentAlignment = Alignment.Center
+                        ) {
+                            if (isUploading) {
+                                GenericLoadingScreen(
+                                    modifier = Modifier.size(24.dp),
+                                    color = MaterialTheme.colorScheme.primary
                                 )
-                                IconButton(
-                                    onClick = {
-                                        val realIndex = imageList.indexOf(item)
-                                        if (realIndex >= 0) {
-                                            val removedItem = imageList.removeAt(realIndex)
-                                            onImageOrderChanged(imageList.toList())
-                                            onDeleteImage(removedItem)
-                                        } else {
-                                            Log.e("DeleteImage", "URL '$item' non trovato in imageList, size: ${imageList.size}")
+                            } else {
+                                Text(
+                                    text = "+",
+                                    style = MaterialTheme.typography.headlineMedium,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                            }
+                        }
+                    } else {
+                        Box(
+                            modifier = cellModifier
+                                .then(if (draggingIndex == index) Modifier.offset { IntOffset(dragOffset.x.roundToInt(), dragOffset.y.roundToInt()) } else Modifier)
+                                .then(if (index == 0) Modifier.border(BorderStroke(2.dp, MaterialTheme.colorScheme.primary)) else Modifier)
+                                .pointerInput(Unit) {
+                                    detectDragGestures(
+                                        onDragStart = { if (draggingIndex == null) { draggingIndex = index } },
+                                        onDrag = { change, dragAmount ->
+                                            if (draggingIndex == index) {
+                                                change.consume()
+                                                dragOffset += dragAmount
+                                            }
+                                        },
+                                        onDragEnd = {
+                                            draggingIndex?.let { originalIndex ->
+                                                val targetIndex = calculateNewIndex(originalIndex, dragOffset).coerceIn(0, imageList.size -1)
+                                                if (targetIndex != originalIndex) {
+                                                    val mutable = imageList.toMutableList()
+                                                    val draggedItem = mutable.removeAt(originalIndex)
+                                                    mutable.add(targetIndex.coerceAtMost(mutable.size), draggedItem)
+                                                    imageList = mutable
+                                                    onImageOrderChanged(mutable)
+                                                }
+                                            }
+                                            draggingIndex = null
+                                            dragOffset = Offset.Zero
+                                        },
+                                        onDragCancel = {
+                                            draggingIndex = null
+                                            dragOffset = Offset.Zero
                                         }
-                                    },
-                                    modifier = Modifier.size(24.dp)
-                                ) {
-                                    Icon(
-                                        imageVector = Icons.Default.Close,
-                                        contentDescription = "Elimina immagine",
-                                        tint = MaterialTheme.colorScheme.error
                                     )
-                                }
+                                },
+                            contentAlignment = Alignment.TopEnd
+                        ) {
+                            AsyncImage(
+                                model = ImageRequest.Builder(context)
+                                    .data(item)
+                                    .placeholder(R.drawable.random_user) // Placeholder locale
+                                    .error(R.drawable.random_user) // Fallback locale
+                                    .crossfade(true)
+                                    .build(),
+                                contentDescription = "Profile Image $index",
+                                modifier = Modifier.fillMaxSize(),
+                                contentScale = ContentScale.Crop
+                            )
+                            IconButton(
+                                onClick = {
+                                    // Usa indexOf su imageList invece dell'indice di displayList
+                                    // perché displayList può includere "ADD_CELL" e divergere da imageList
+                                    val realIndex = imageList.indexOf(item)
+                                    if (realIndex >= 0) {
+                                        val removedItem = imageList.removeAt(realIndex)
+                                        onImageOrderChanged(imageList.toList()) // Notifica la nuova lista
+                                        onDeleteImage(removedItem)
+                                    } else {
+                                        Log.e("DeleteImage", "URL '$item' non trovato in imageList, size: ${imageList.size}")
+                                    }
+                                },
+                                modifier = Modifier.size(24.dp) // Leggermente più grande per essere più facile da toccare
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.Close,
+                                    contentDescription = "Elimina immagine",
+                                    tint = MaterialTheme.colorScheme.error
+                                )
                             }
                         }
                     }
