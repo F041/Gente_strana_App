@@ -510,9 +510,9 @@ fun RecommendationSystemMessageBubble(
     val reviewText = if (parts.size > 2) parts.drop(2).joinToString("|") else ""
 
     val cardTitle = if (isCurrentUser) {
-        "Hai lasciato una memoria a $recipientName"
+        androidx.compose.ui.res.stringResource(R.string.memory_card_title_sent, recipientName)
     } else {
-        "$authorName ti ha lasciato una memoria"
+        androidx.compose.ui.res.stringResource(R.string.memory_card_title_received, authorName)
     }
 
     Box(

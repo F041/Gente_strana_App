@@ -229,21 +229,21 @@ fun ChatScreen(docId: String, navController: NavController) {
         val name = recipientName ?: "L'utente"
         AlertDialog(
             onDismissRequest = { showMetricsDialog = false },
-            title = { Text("📊 Metriche Conversazione") },
+            title = { Text(stringResource(R.string.metrics_dialog_title)) },
             text = {
                 Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    Text("• Messaggi inviati da $name: ${metrics.recipientMessageCount}")
-                    Text("• Anzianità conversazione: ${metrics.conversationAgeText} (dal ${metrics.startDateText})")
-                    Text("• Infodump Index: ~${metrics.avgWordsPerMessage} parole per messaggio")
+                    Text(stringResource(R.string.metrics_dialog_sent, name, metrics.recipientMessageCount))
+                    Text(stringResource(R.string.metrics_dialog_age, metrics.conversationAgeText, metrics.startDateText))
+                    Text(stringResource(R.string.metrics_dialog_infodump, metrics.avgWordsPerMessage))
                     if (metrics.isMemoryUnlocked) {
                         Text(
-                            text = "✨ Trigger Memorie: SBLOCCATO (soglia di 50 messaggi raggiunta!)",
+                            text = stringResource(R.string.metrics_dialog_unlocked),
                             color = MaterialTheme.colorScheme.primary,
                             fontWeight = FontWeight.Bold
                         )
                     } else {
                         Text(
-                            text = "🔒 Trigger Memorie: in corso (${metrics.recipientMessageCount}/50 messaggi)",
+                            text = stringResource(R.string.metrics_dialog_locked, metrics.recipientMessageCount),
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
                     }
@@ -261,7 +261,7 @@ fun ChatScreen(docId: String, navController: NavController) {
                             }
                             showWriteRecommendationDialog = true
                         }) {
-                            Text(if (myExistingMemoryInChat != null) "✏️ Modifica memoria" else "✍️ Scrivi memoria")
+                            Text(stringResource(if (myExistingMemoryInChat != null) R.string.metrics_edit_memory else R.string.metrics_write_memory))
                         }
                     }
                     TextButton(onClick = { showMetricsDialog = false }) {

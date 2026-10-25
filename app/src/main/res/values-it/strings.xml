@@ -423,4 +423,16 @@
     </string-array>
     <string name="birthdate_min_age_error">Per usare Gente Strana devi avere almeno 16 anni (termini di servizio).</string>
 
+    <!-- Memory Card & Metrics -->
+    <string name="memory_card_title_sent">Hai lasciato una memoria a %s</string>
+    <string name="memory_card_title_received">%s ti ha lasciato una memoria</string>
+    <string name="metrics_dialog_title">📊 Metriche Conversazione</string>
+    <string name="metrics_dialog_sent">• Messaggi inviati da %1$s: %2$d</string>
+    <string name="metrics_dialog_age">• Anzianità conversazione: %1$s (dal %2$s)</string>
+    <string name="metrics_dialog_infodump">• Infodump Index: ~%d parole per messaggio</string>
+    <string name="metrics_dialog_unlocked">✨ Trigger Memorie: SBLOCCATO (soglia di 50 messaggi raggiunta!)</string>
+    <string name="metrics_dialog_locked">🔒 Trigger Memorie: in corso (%d/50 messaggi)</string>
+    <string name="metrics_edit_memory">✏️ Modifica memoria</string>
+    <string name="metrics_write_memory">✍️ Scrivi memoria</string>
+
 </resources>

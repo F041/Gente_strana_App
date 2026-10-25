@@ -418,4 +418,16 @@
     </string-array>
     <string name="birthdate_min_age_error">You must be at least 16 to use Quirky People (terms of service).</string>
 
+    <!-- Memory Card & Metrics -->
+    <string name="memory_card_title_sent">You left a memory for %s</string>
+    <string name="memory_card_title_received">%s left you a memory</string>
+    <string name="metrics_dialog_title">📊 Conversation Metrics</string>
+    <string name="metrics_dialog_sent">• Messages sent by %1$s: %2$d</string>
+    <string name="metrics_dialog_age">• Conversation age: %1$s (since %2$s)</string>
+    <string name="metrics_dialog_infodump">• Infodump Index: ~%d words per message</string>
+    <string name="metrics_dialog_unlocked">✨ Memory Trigger: UNLOCKED (50 message threshold reached!)</string>
+    <string name="metrics_dialog_locked">🔒 Memory Trigger: in progress (%d/50 messages)</string>
+    <string name="metrics_edit_memory">✏️ Edit memory</string>
+    <string name="metrics_write_memory">✍️ Write memory</string>
+
 </resources>
