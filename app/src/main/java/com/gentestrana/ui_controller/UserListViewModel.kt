@@ -83,13 +83,29 @@ class UserListViewModel : ViewModel() {
                     .await()
 
                 var totalCount = snapshot.count.toInt()
+
+                // Sottrai 1 per l'utente corrente se ha lastActive
                 if (currentUserId != null) {
-                    totalCount = (totalCount - 1).coerceAtLeast(0)
+                    try {
+                        val myDoc = firestore.collection("users").document(currentUserId).get().await()
+                        if (myDoc.exists() && myDoc.get("lastActive") != null) {
+                            totalCount = (totalCount - 1).coerceAtLeast(0)
+                        }
+                    } catch (_: Exception) {}
                 }
+
+                // Sottrai solo gli utenti bloccati che esistono effettivamente e hanno lastActive
                 val blockedSet = _blockedUserIds.value
-                if (blockedSet.isNotEmpty()) {
-                    totalCount = (totalCount - blockedSet.size).coerceAtLeast(0)
+                for (blockedId in blockedSet) {
+                    if (blockedId == currentUserId) continue
+                    try {
+                        val doc = firestore.collection("users").document(blockedId).get().await()
+                        if (doc.exists() && doc.get("lastActive") != null) {
+                            totalCount = (totalCount - 1).coerceAtLeast(0)
+                        }
+                    } catch (_: Exception) {}
                 }
+
                 _totalUserServerCount.value = totalCount
             } catch (e: Exception) {
                 Log.e("UserListVM", "Error fetching total user count from server", e)
