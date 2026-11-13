@@ -292,7 +292,7 @@
     <string name="apply">applica</string>
     <string name="enter_location">inserisci paese</string>
     <string name="notification_new_user_title">Nuovo arrivo! 🎉</string>
-    <string name="notification_new_user_body">%1$s si è unito alla comunità!</string>
+    <string name="notification_new_user_body">Nella community c\'è una persona nuova: %1$s</string>
     <string name="default_notification_title">Nuovo messaggio</string>
     <string name="default_notification_body">Hai ricevuto una nuova notifica</string>
     <string name="no_topics_defined_placeholder">Nessun argomento definito dall\'utente.</string>
@@ -434,5 +434,9 @@
     <string name="metrics_dialog_locked">🔒 Trigger Memorie: in corso (%d/50 messaggi)</string>
     <string name="metrics_edit_memory">✏️ Modifica memoria</string>
     <string name="metrics_write_memory">✍️ Scrivi memoria</string>
+
+    <!-- Email Reminders -->
+    <string name="email_reminders_label">Avvisi via email</string>
+    <string name="email_reminders_description">Se qualcuno ti scrive e per un giorno non apri l\'app, ricevi un\'email: al massimo una al giorno, senza il testo dei messaggi.</string>
 
 </resources>

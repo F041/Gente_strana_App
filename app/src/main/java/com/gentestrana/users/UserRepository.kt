@@ -939,5 +939,14 @@ class UserRepository(
             }
     }
 
+    fun updateUserEmailDigest(enabled: Boolean) {
+        val uid = auth.currentUser?.uid ?: return
+        firestore.collection("users").document(uid)
+            .update("emailDigest", enabled)
+            .addOnFailureListener { e ->
+                Log.e("UserRepository", "Error updating emailDigest: ${e.message}", e)
+            }
+    }
+
 
 }

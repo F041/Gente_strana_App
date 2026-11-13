@@ -430,4 +430,8 @@
     <string name="metrics_edit_memory">✏️ Edit memory</string>
     <string name="metrics_write_memory">✍️ Write memory</string>
 
+    <!-- Email Reminders -->
+    <string name="email_reminders_label">Email reminders</string>
+    <string name="email_reminders_description">If someone messages you and you don\'t open the app for a day, you get an email: at most one a day, without the text of the messages.</string>
+
 </resources>

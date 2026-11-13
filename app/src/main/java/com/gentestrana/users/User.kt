@@ -88,7 +88,9 @@ data class User(
     @PropertyName("webPushTokens")
     val webPushTokens: List<String> = emptyList(),
     @PropertyName("onboardingCompleted")
-    val onboardingCompleted: Boolean? = null
+    val onboardingCompleted: Boolean? = null,
+    @PropertyName("emailDigest")
+    val emailDigest: Boolean = true
 ) {
 
     val socialBatteryLevel: SocialBatteryLevel

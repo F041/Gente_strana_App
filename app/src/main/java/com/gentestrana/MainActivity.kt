@@ -40,6 +40,9 @@ class MainActivity : ComponentActivity() {
     // Stato reactive per la navigazione pendente dalle notifiche chat.
     private val pendingChatId = mutableStateOf<String?>(null)
 
+    // Stato reactive per la navigazione pendente dalle notifiche di nuovi utenti.
+    private val pendingNewUserId = mutableStateOf<String?>(null)
+
     // Stato reactive per gestire il deep link di reset password (oobCode).
     private val pendingOobCode = mutableStateOf<String?>(null)
 
@@ -124,6 +127,21 @@ class MainActivity : ComponentActivity() {
                         Log.w("MainActivity", "Utente non loggato o onboarding non completato. Chat navigazione rimandata.")
                     }
                     pendingChatId.value = null
+                }
+            }
+
+            // ===== GESTIONE NOTIFICA: Navigazione al profilo nuovo utente =====
+            val currentPendingUserId = pendingNewUserId.value
+            LaunchedEffect(currentPendingUserId) {
+                if (currentPendingUserId != null) {
+                    val currentUser = FirebaseAuth.getInstance().currentUser
+                    if (currentUser != null && isOnboardingCompleted()) {
+                        Log.d("MainActivity", "Navigazione pendente verso il profilo del nuovo utente: $currentPendingUserId")
+                        rememberedNavController.navigate("userProfile/$currentPendingUserId") {
+                            launchSingleTop = true
+                        }
+                    }
+                    pendingNewUserId.value = null
                 }
             }
 
@@ -220,6 +238,34 @@ class MainActivity : ComponentActivity() {
         return null
     }
 
+    private fun extractNewUserIdFromIntent(intent: Intent): String? {
+        @Suppress("DEPRECATION")
+        if (intent.hasExtra("notification_data")) {
+            val notificationData = intent.getSerializableExtra("notification_data") as? HashMap<*, *>
+            if (notificationData != null) {
+                val type = notificationData["type"] as? String
+                if (type == "new_user_profile" || type == "new_user") {
+                    val userId = notificationData["userId"] as? String
+                    if (!userId.isNullOrEmpty()) {
+                        Log.d("MainActivity", "userId estratto da notification_data: $userId")
+                        return userId
+                    }
+                }
+            }
+        }
+
+        val type = intent.getStringExtra("type")
+        if (type == "new_user_profile" || type == "new_user") {
+            val userId = intent.getStringExtra("userId")
+            if (!userId.isNullOrEmpty()) {
+                Log.d("MainActivity", "userId estratto come direct extra dall'Intent: $userId")
+                return userId
+            }
+        }
+
+        return null
+    }
+
     private fun handleIntent(intent: Intent) {
         val action = intent.action
         val data = intent.data
@@ -228,10 +274,16 @@ class MainActivity : ComponentActivity() {
 
         // Estrai chatId dall'Intent, indipendentemente dalla provenienza
         val chatId = extractChatIdFromIntent(intent)
-
         if (chatId != null) {
             Log.d("MainActivity", "handleIntent: chatId=$chatId. Imposto navigazione pendente.")
             pendingChatId.value = chatId
+        }
+
+        // Estrai userId per notifiche nuovo utente
+        val newUserId = extractNewUserIdFromIntent(intent)
+        if (newUserId != null) {
+            Log.d("MainActivity", "handleIntent: newUserId=$newUserId. Imposto navigazione pendente.")
+            pendingNewUserId.value = newUserId
         }
 
         // Gestione del deep link: intercetta link da email Firebase

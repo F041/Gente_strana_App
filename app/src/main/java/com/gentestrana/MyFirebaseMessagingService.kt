@@ -78,7 +78,7 @@ class MyFirebaseMessagingService : FirebaseMessagingService() {
             // clickActionData già contiene il reportId dal payload data
         }
         // 2. Notifica Nuovo Utente (Controlla campo 'type')
-        else if (dataPayload["type"] == "new_user") {
+        else if (dataPayload["type"] == "new_user_profile" || dataPayload["type"] == "new_user") {
             Log.d(TAG, "Type: New User Notification")
             val userName = dataPayload["userName"] ?: "Un nuovo utente"
             notificationTitle = notificationPayload?.title ?: getString(R.string.notification_new_user_title)

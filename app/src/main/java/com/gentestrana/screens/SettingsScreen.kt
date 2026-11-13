@@ -96,11 +96,13 @@ fun SettingsScreen(
     }
 
     var acceptCallsState by remember { mutableStateOf(true) }
+    var emailDigestState by remember { mutableStateOf(true) }
     val currentUserId = auth.currentUser?.uid
     LaunchedEffect(currentUserId) {
         if (currentUserId != null) {
             userRepository.getUser(currentUserId, onSuccess = { u ->
                 acceptCallsState = u.acceptCalls
+                emailDigestState = u.emailDigest
             }, onFailure = {})
         }
     }
@@ -199,6 +201,19 @@ fun SettingsScreen(
                             sharedPreferences.edit()
                                 .putBoolean(pushNotificationsKey, isChecked)
                                 .apply()
+                        }
+                    )
+                }
+            )
+            ListItem(
+                headlineContent = { Text(stringResource(R.string.email_reminders_label)) },
+                supportingContent = { Text(stringResource(R.string.email_reminders_description)) },
+                trailingContent = {
+                    Switch(
+                        checked = emailDigestState,
+                        onCheckedChange = { isChecked ->
+                            emailDigestState = isChecked
+                            userRepository.updateUserEmailDigest(isChecked)
                         }
                     )
                 }
